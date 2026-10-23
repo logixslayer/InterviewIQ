@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 20;font-size:18px;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "surface-container-low": "#f6f3f2",
+          "on-tertiary-fixed-variant": "#604100",
+          "error-container": "#ffdad6",
+          "on-secondary-fixed": "#002112",
+          "error": "#ba1a1a",
+          "on-tertiary": "#ffffff",
+          "on-tertiary-container": "#fff5eb",
+          "surface-variant": "#e5e2e1",
+          "outline-variant": "#c5c5d5",
+          "on-error": "#ffffff",
+          "background": "#fcf9f8",
+          "secondary-container": "#92f3be",
+          "on-secondary": "#ffffff",
+          "outline": "#757685",
+          "primary-container": "#5267d8",
+          "on-background": "#1c1b1b",
+          "secondary-fixed": "#95f6c0",
+          "on-primary-container": "#f7f5ff",
+          "secondary": "#006c45",
+          "on-error-container": "#93000a",
+          "surface-container-lowest": "#ffffff",
+          "inverse-surface": "#313030",
+          "surface-bright": "#fcf9f8",
+          "surface": "#fcf9f8",
+          "primary": "#374dbe",
+          "surface-container-highest": "#e5e2e1",
+          "on-primary-fixed": "#00105b",
+          "tertiary-fixed-dim": "#fcbb48",
+          "inverse-primary": "#bac3ff",
+          "tertiary": "#775100",
+          "on-surface-variant": "#444653",
+          "on-secondary-fixed-variant": "#005233",
+          "primary-fixed-dim": "#bac3ff",
+          "surface-tint": "#3e53c4",
+          "surface-dim": "#dcd9d9",
+          "surface-container-high": "#eae7e7",
+          "on-primary": "#ffffff",
+          "tertiary-container": "#976800",
+          "on-primary-fixed-variant": "#2239ab",
+          "secondary-fixed-dim": "#79d9a6",
+          "on-secondary-container": "#007148",
+          "tertiary-fixed": "#ffdead",
+          "on-tertiary-fixed": "#281900",
+          "inverse-on-surface": "#f3f0ef",
+          "primary-fixed": "#dee0ff",
+          "surface-container": "#f0eded",
+          "on-surface": "#1c1b1b"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "space-xs": "0.25rem",
+          "gutter-desktop": "1.25rem",
+          "margin": "1rem",
+          "space-lg": "1rem",
+          "space-xl": "1.5rem",
+          "gutter": "1rem",
+          "space-md": "0.75rem",
+          "space-sm": "0.5rem",
+          "margin-desktop": "1.5rem"
+        },
+        "fontFamily": {
+          "label-md": ["Geist"],
+          "headline-lg": ["Geist"],
+          "label-sm": ["Geist"],
+          "headline-xl": ["Geist"],
+          "headline-sm": ["Geist"],
+          "body-sm": ["Inter"],
+          "label-micro": ["Geist"],
+          "body-lg": ["Inter"],
+          "headline-xl-mobile": ["Geist"],
+          "body-md": ["Inter"],
+          "headline-lg-mobile": ["Geist"]
+        },
+        "fontSize": {
+          "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+          "headline-lg": ["20px", {"lineHeight": "26px", "letterSpacing": "-0.015em", "fontWeight": "600"}],
+          "label-sm": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+          "headline-xl": ["28px", {"lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+          "headline-sm": ["15px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+          "body-sm": ["12px", {"lineHeight": "17px", "fontWeight": "400"}],
+          "label-micro": ["10px", {"lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "600"}],
+          "body-lg": ["14px", {"lineHeight": "21px", "letterSpacing": "-0.005em", "fontWeight": "400"}],
+          "headline-xl-mobile": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600"}],
+          "body-md": ["13px", {"lineHeight": "19px", "fontWeight": "400"}],
+          "headline-lg-mobile": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+        }
+      }
+    }
+  }</script></head><body class="bg-surface-container font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-[230px] bg-surface-container-lowest z-50 flex flex-col justify-between border-r border-surface-variant"><div class="flex flex-col"><div class="h-[52px] px-space-md flex items-center gap-space-sm border-b border-surface-variant"><img alt="INTERVIEWIQ Monogram Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1W7bN-uWE4eBNeEzmIyQWD7Khfd1x6Fef-_WlxnkacRgLVf0GRPkzOdprOxVmjz61kWwKGf9Vjbpu2T6SDJkgUSCkSnXcOjFmsiVF2ZWt9f7Nhnwwso94xzh9M3sYJVFtYQvbytw8SG_RlfUe9UE_q_5w0WE0tCQ20tz08BVGSSaZx-bb8_PLJlBRDAAqAEHIe_tJR-KH1tTxarnOPa0Vm4L8mOLtfNEGCy_a5skbSzYUkzB5TorW61_dRR"/><div class="flex flex-col justify-center"><span class="font-headline-sm text-headline-sm font-semibold tracking-tight text-on-surface leading-none">INTERVIEWIQ</span><span class="font-label-micro text-label-micro text-outline tracking-wider uppercase mt-0.5">AI Interview Coach</span></div></div><div class="py-space-md px-space-xs flex flex-col gap-space-lg"><div class="flex flex-col gap-0.5"><div class="px-space-md py-1 font-label-micro text-label-micro text-outline uppercase tracking-wider">Workspace</div><nav class="flex flex-col gap-0.5" data-active-classes="bg-surface-container-low text-primary font-medium border-l-2 border-primary"><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="overview-dashboard" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span>Overview</span></a><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="mock-interview-setup" href="#"><span class="material-symbols-outlined text-[18px]">videocam</span><span>Mock Interviews</span></a><div class="ml-space-md pl-space-sm flex flex-col gap-0.5 border-l border-surface-variant my-0.5"><a class="flex items-center gap-space-xs px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="mock-interview-workspace" href="#"><span class="material-symbols-outlined text-[15px]">record_voice_over</span><span>Live Workspace</span></a><a aria-current="page" class="flex items-center gap-space-xs px-space-sm py-1.5 rounded transition-colors bg-surface-container-low text-primary font-medium border-l-2 border-primary" data-path="evaluation-report" href="#"><span class="material-symbols-outlined text-[15px]">analytics</span><span>Evaluation Report</span></a></div><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="question-library" href="#"><span class="material-symbols-outlined text-[18px]">library_books</span><span>Question Library</span></a></nav></div><div class="flex flex-col gap-0.5"><div class="px-space-md py-1 font-label-micro text-label-micro text-outline uppercase tracking-wider">Improvement</div><nav class="flex flex-col gap-0.5" data-active-classes="bg-surface-container-low text-primary font-medium border-l-2 border-primary"><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="my-progress" href="#"><span class="material-symbols-outlined text-[18px]">insights</span><span>My Progress</span></a><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="practice-plan" href="#"><span class="material-symbols-outlined text-[18px]">checklist</span><span>Practice Plan</span></a><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="learning-resources" href="#"><span class="material-symbols-outlined text-[18px]">school</span><span>Learning Resources</span></a></nav></div><div class="flex flex-col gap-0.5"><div class="px-space-md py-1 font-label-micro text-label-micro text-outline uppercase tracking-wider">Account</div><nav class="flex flex-col gap-0.5" data-active-classes="bg-surface-container-low text-primary font-medium border-l-2 border-primary"><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="profile" href="#"><span class="material-symbols-outlined text-[18px]">person</span><span>Profile</span></a><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="settings" href="#"><span class="material-symbols-outlined text-[18px]">tune</span><span>Settings</span></a></nav></div></div></div><div class="p-space-sm border-t border-surface-variant bg-surface-container-lowest"><div class="flex items-center justify-between p-1.5 rounded hover:bg-surface-container-low transition-colors cursor-pointer"><div class="flex items-center gap-space-sm overflow-hidden"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-ufpXP7wA7dxSJprxCBStWlTEFsM2Vhn6daGcU_Lh5wkm8uDUj7O-xX-B-iZuk3vu1DbuEKpb0eaBe-JLvyCf8_eeXTJ9QYzgZBAFgA6KBwxHo7QYUG3FMVmiHYzLYAEDMkB_7uIefkS-VLZixwCd0xL2z65L8bygEjkK9MNkXC84BxPxEgAGC7JsgWuuSwtHHkOQftqWYSrKP75sZcmAWLJCNQ9_RCNc_xq9a3T9RtEQI4CzS2uomQ"/><div class="flex flex-col truncate"><span class="font-label-md text-label-md text-on-surface font-medium truncate">Alex Morgan</span><span class="font-label-micro text-label-micro text-outline truncate">Student Account</span></div></div><span class="material-symbols-outlined text-outline text-[16px]">unfold_more</span></div></div></aside><div class="pl-[230px]"><header class="fixed top-0 left-[230px] right-0 h-[52px] bg-surface-container-lowest/90 backdrop-blur-md border-b border-surface-variant z-40 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm text-outline font-label-md text-label-md"><span class="hover:text-on-surface cursor-pointer">Workspace</span><span class="material-symbols-outlined text-[14px] text-outline">chevron_right</span><span class="hover:text-on-surface cursor-pointer">Mock Interviews</span><span class="material-symbols-outlined text-[14px] text-outline">chevron_right</span><span class="text-on-surface font-medium">Session</span></div><div class="flex items-center gap-space-md"><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-2.5 text-outline pointer-events-none text-[16px]">search</span><input class="w-56 h-[34px] pl-8 pr-12 rounded bg-surface-container-low border border-surface-variant font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary" placeholder="Search questions, plans..." type="text"/><div class="absolute right-2 px-1 py-0.5 bg-surface-container border border-surface-variant rounded text-[10px] font-label-micro text-outline pointer-events-none">⌘K</div></div><div class="flex items-center gap-1 border-l border-surface-variant pl-space-md"><button class="relative p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded transition-colors"><span class="material-symbols-outlined text-[18px]">notifications</span><span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-error rounded-full"></span></button><button class="p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded transition-colors"><span class="material-symbols-outlined text-[18px]">help_outline</span></button></div></div></header><main class="relative pt-[52px] w-full min-h-screen p-space-lg"><div class="flex flex-col w-full">
+<!-- Top Utility Context Bar / Breadcrumb Strip -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between pb-space-md gap-space-sm">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-space-xs font-label-micro text-label-micro text-outline uppercase tracking-wider">
+<span>Workspace</span>
+<span>/</span>
+<span>Mock Interviews</span>
+<span>/</span>
+<span>Technical (Frontend)</span>
+<span>/</span>
+<span class="text-on-surface font-semibold">Evaluation #IV-8492</span>
+</div>
+<div class="flex items-baseline gap-space-md mt-0.5">
+<h1 class="font-headline-xl text-headline-xl text-on-surface tracking-tight font-semibold">Interview Evaluation Report</h1>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-secondary-fixed/30 text-secondary font-label-micro text-label-micro uppercase tracking-wider font-semibold">
+          Finalized
+        </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+        Detailed AI performance review, rubric scoring breakdown, and structured remediation paths.
+      </p>
+</div>
+<!-- Actions & Quick Triggers -->
+<div class="flex items-center gap-space-sm self-start lg:self-center shrink-0">
+<button class="h-[34px] px-3.5 bg-surface-container-lowest hover:bg-surface-container-low text-on-surface text-label-md font-label-md rounded shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer" onclick="window.print()">
+<span class="material-symbols-outlined text-[16px] text-outline">download</span>
+<span>Download PDF</span>
+</button>
+<button class="h-[34px] px-4 bg-primary hover:bg-on-primary-fixed-variant text-on-primary text-label-md font-label-md rounded shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-[16px]">replay</span>
+<span>Practice Again / Retry</span>
+</button>
+</div>
+</div>
+<!-- Telemetry & Session Metadata Strip -->
+<div class="w-full bg-surface-container-lowest rounded shadow-sm p-space-md flex flex-wrap items-center justify-between gap-space-md mb-space-lg">
+<div class="flex flex-wrap items-center gap-x-space-xl gap-y-space-xs font-label-md text-label-md text-on-surface">
+<div class="flex items-center gap-1.5">
+<span class="font-label-micro text-label-micro uppercase tracking-wider text-outline">Role Target:</span>
+<span class="font-semibold text-on-surface">Frontend Developer (L5)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-micro text-label-micro uppercase tracking-wider text-outline">Duration:</span>
+<span class="font-medium">24 mins 12 secs</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-micro text-label-micro uppercase tracking-wider text-outline">Completed:</span>
+<span class="font-medium">Oct 5, 2026 • 9:30 AM</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-micro text-label-micro uppercase tracking-wider text-outline">Evaluator:</span>
+<span class="font-medium flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-[14px]">neurology</span>
+          AI Coach Engine v3.4
+        </span>
+</div>
+</div>
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container font-label-micro text-label-micro text-outline tracking-wider uppercase font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+      Sample Benchmarking Session
+    </div>
+</div>
+<!-- Top Metric Highlights (4 Dense Bento Cards) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md mb-space-lg">
+<!-- Score 1: Overall Readiness -->
+<div class="bg-surface-container-lowest rounded shadow-sm p-space-lg flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-micro text-label-micro uppercase tracking-wider text-outline">Overall Readiness</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary-fixed/40 text-secondary font-label-micro text-label-micro font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+          Passed Benchmark
+        </span>
+</div>
+<div class="flex items-baseline gap-2 mb-2">
+<span class="font-headline-xl text-headline-xl font-bold text-on-surface tracking-tight">78</span>
+<span class="font-body-sm text-body-sm text-outline">/ 100</span>
+</div>
+<div class="flex items-center justify-between text-label-sm font-label-sm text-outline">
+<span>Percentile Tier</span>
+<span class="text-on-surface font-semibold text-secondary">Top 22% of Candidates</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1 mt-3 overflow-hidden">
+<div class="bg-secondary h-full rounded-full" style="width: 78%"></div>
+</div>
+</div>
+<!-- Score 2: Technical Correctness -->
+<div class="bg-surface-container-lowest rounded shadow-sm p-space-lg flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-micro text-label-micro uppercase tracking-wider text-outline">Technical Correctness</span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-surface-container font-label-micro text-label-micro font-medium text-on-surface">
+          Proficient
+        </span>
+</div>
+<div class="flex items-baseline gap-2 mb-2">
+<span class="font-headline-xl text-headline-xl font-bold text-on-surface tracking-tight">85%</span>
+<span class="font-label-sm text-label-sm text-secondary font-medium">+6% vs median</span>
+</div>
+<div class="flex items-center justify-between text-label-sm font-label-sm text-outline">
+<span>Accuracy Rating</span>
+<span class="text-on-surface font-medium">9 of 10 checks clear</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1 mt-3 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 85%"></div>
+</div>
+</div>
+<!-- Score 3: Answer Structure (STAR) -->
+<div class="bg-surface-container-lowest rounded shadow-sm p-space-lg flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-micro text-label-micro uppercase tracking-wider text-outline">STAR Framework Form</span>
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-tertiary-fixed/60 text-tertiary font-label-micro text-label-micro font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+          Needs Focus
+        </span>
+</div>
+<div class="flex items-baseline gap-2 mb-2">
+<span class="font-headline-xl text-headline-xl font-bold text-on-surface tracking-tight">68%</span>
+<span class="font-label-sm text-label-sm text-tertiary font-medium">Resolution thin</span>
+</div>
+<div class="flex items-center justify-between text-label-sm font-label-sm text-outline">
+<span>Framework Adherence</span>
+<span class="text-on-surface font-medium">S: High • T: High • R: Low</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1 mt-3 overflow-hidden">
+<div class="bg-tertiary-fixed-dim h-full rounded-full" style="width: 68%"></div>
+</div>
+</div>
+<!-- Score 4: Communication & Delivery -->
+<div class="bg-surface-container-lowest rounded shadow-sm p-space-lg flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-micro text-label-micro uppercase tracking-wider text-outline">Communication &amp; Pacing</span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-surface-container font-label-micro text-label-micro font-medium text-on-surface">
+          Strong
+        </span>
+</div>
+<div class="flex items-baseline gap-2 mb-2">
+<span class="font-headline-xl text-headline-xl font-bold text-on-surface tracking-tight">82%</span>
+<span class="font-label-sm text-label-sm text-secondary font-medium">138 WPM</span>
+</div>
+<div class="flex items-center justify-between text-label-sm font-label-sm text-outline">
+<span>Delivery Metrics</span>
+<span class="text-on-surface font-medium">Minimal fillers (4)</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1 mt-3 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 82%"></div>
+</div>
+</div>
+</div>
+<!-- Main Content Grid (62% / 38% split) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- Left Column (approx 62% -> 7 cols on large desktop or 8 on wide screen) -->
+<div class="lg:col-span-7 xl:col-span-8 flex flex-col gap-space-lg">
+<!-- Module 1: Comprehensive Rubric Evaluation -->
+<div class="bg-surface-container-lowest rounded shadow-sm overflow-hidden">
+<div class="h-11 px-space-lg flex items-center justify-between bg-surface-container-lowest">
+<div class="flex items-center gap-2">
+<span class="font-label-micro text-label-micro font-semibold uppercase tracking-wider text-outline">Rubric Matrix Breakdown</span>
+<span class="text-label-micro font-label-micro px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-medium">5 Competencies</span>
+</div>
+<span class="font-label-micro text-label-micro text-outline">Calibrated to Staff L5 Standards</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left font-body-md text-body-md border-collapse">
+<thead>
+<tr class="bg-surface-container-low text-outline font-label-micro text-label-micro uppercase tracking-wider">
+<th class="py-2.5 px-space-lg font-semibold">Competency / Dimension</th>
+<th class="py-2.5 px-space-md font-semibold text-center w-24">Score</th>
+<th class="py-2.5 px-space-md font-semibold w-28">Rating</th>
+<th class="py-2.5 px-space-lg font-semibold">Observation &amp; Direct Evidence</th>
+</tr>
+</thead>
+<tbody class="divide-y-0 text-on-surface">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-3 px-space-lg font-medium text-on-surface">
+<div class="flex flex-col">
+<span class="font-semibold">Architecture &amp; Modular Design</span>
+<span class="font-label-micro text-label-micro text-outline">Component decoupling, composability</span>
+</div>
+</td>
+<td class="py-3 px-space-md text-center">
+<span class="font-headline-sm text-headline-sm font-semibold">88</span>
+<span class="text-outline text-label-micro font-label-micro">/100</span>
+</td>
+<td class="py-3 px-space-md">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary-fixed/40 text-secondary text-label-micro font-label-micro font-semibold">
+<span class="w-1 h-1 rounded-full bg-secondary"></span>
+                    High
+                  </span>
+</td>
+<td class="py-3 px-space-lg text-on-surface-variant text-body-sm font-body-sm">
+                  Clear modular separation of concerns. Isolated state container logic cleanly from UI presentational layers.
+                </td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-3 px-space-lg font-medium text-on-surface">
+<div class="flex flex-col">
+<span class="font-semibold">Rendering &amp; Virtualization</span>
+<span class="font-label-micro text-label-micro text-outline">DOM recycling, memory safety</span>
+</div>
+</td>
+<td class="py-3 px-space-md text-center">
+<span class="font-headline-sm text-headline-sm font-semibold">84</span>
+<span class="text-outline text-label-micro font-label-micro">/100</span>
+</td>
+<td class="py-3 px-space-md">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary-fixed/40 text-secondary text-label-micro font-label-micro font-semibold">
+<span class="w-1 h-1 rounded-full bg-secondary"></span>
+                    High
+                  </span>
+</td>
+<td class="py-3 px-space-lg text-on-surface-variant text-body-sm font-body-sm">
+                  Sound strategy using windowing and decoupled hooks. Accurately handled high-frequency scroll reconciliation.
+                </td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors bg-tertiary-fixed/10">
+<td class="py-3 px-space-lg font-medium text-on-surface">
+<div class="flex flex-col">
+<span class="font-semibold">STAR Framework Adherence</span>
+<span class="font-label-micro text-label-micro text-outline">Behavioral storytelling structure</span>
+</div>
+</td>
+<td class="py-3 px-space-md text-center">
+<span class="font-headline-sm text-headline-sm font-semibold text-tertiary">62</span>
+<span class="text-outline text-label-micro font-label-micro">/100</span>
+</td>
+<td class="py-3 px-space-md">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-tertiary-fixed/60 text-tertiary text-label-micro font-label-micro font-semibold">
+<span class="w-1 h-1 rounded-full bg-tertiary"></span>
+                    Review
+                  </span>
+</td>
+<td class="py-3 px-space-lg text-on-surface-variant text-body-sm font-body-sm">
+                  Situation and Task were detailed, but Resolution lacked quantitative business and product metrics.
+                </td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-3 px-space-lg font-medium text-on-surface">
+<div class="flex flex-col">
+<span class="font-semibold">State Management Trade-offs</span>
+<span class="font-label-micro text-label-micro text-outline">Context vs atomic state stores</span>
+</div>
+</td>
+<td class="py-3 px-space-md text-center">
+<span class="font-headline-sm text-headline-sm font-semibold">76</span>
+<span class="text-outline text-label-micro font-label-micro">/100</span>
+</td>
+<td class="py-3 px-space-md">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container text-on-surface text-label-micro font-label-micro font-medium">
+                    Solid
+                  </span>
+</td>
+<td class="py-3 px-space-lg text-on-surface-variant text-body-sm font-body-sm">
+                  Contrasted Context API versus atomic stores well. Mentioned prop drilling prevention but missed selector memoization nuances.
+                </td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-3 px-space-lg font-medium text-on-surface">
+<div class="flex flex-col">
+<span class="font-semibold">Code Clarity &amp; Nomenclature</span>
+<span class="font-label-micro text-label-micro text-outline">Technical diction, standards</span>
+</div>
+</td>
+<td class="py-3 px-space-md text-center">
+<span class="font-headline-sm text-headline-sm font-semibold">82</span>
+<span class="text-outline text-label-micro font-label-micro">/100</span>
+</td>
+<td class="py-3 px-space-md">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary-fixed/40 text-secondary text-label-micro font-label-micro font-semibold">
+<span class="w-1 h-1 rounded-full bg-secondary"></span>
+                    High
+                  </span>
+</td>
+<td class="py-3 px-space-lg text-on-surface-variant text-body-sm font-body-sm">
+                  Precise frontend terminology throughout (e.g. layout thrashing, task queue, synthetic event pooling).
+                </td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Module 2: Deep Dive Observations (Side-by-Side Bento Tiles) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- What Went Well -->
+<div class="bg-surface-container-lowest rounded shadow-sm p-space-lg flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-2 mb-3">
+<span class="w-6 h-6 rounded-full bg-secondary-fixed/50 text-secondary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[15px]">check_circle</span>
+</span>
+<h3 class="font-label-micro text-label-micro font-bold uppercase tracking-wider text-secondary">
+                Validated Strengths
+              </h3>
+</div>
+<ul class="flex flex-col gap-2.5 font-body-sm text-body-sm text-on-surface-variant">
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-secondary text-[16px] shrink-0 mt-0.5">check</span>
+<span><strong>Deep browser lifecycle insight:</strong> Demonstrated clear mechanics of layout thrashing and forced reflow mitigation.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-secondary text-[16px] shrink-0 mt-0.5">check</span>
+<span><strong>Modern React patterns:</strong> Fluent explanation of memoization boundary limits and non-blocking Concurrent Mode hooks.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-secondary text-[16px] shrink-0 mt-0.5">check</span>
+<span><strong>Composure under pushback:</strong> Effectively recalibrated when interviewer probed edge cases regarding unmounted subscribers.</span>
+</li>
+</ul>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between text-outline font-label-micro text-label-micro">
+<span>Evaluated by AI Engine</span>
+<span class="text-secondary font-medium">+14 pts over target</span>
+</div>
+</div>
+<!-- Key Improvement Areas -->
+<div class="bg-surface-container-lowest rounded shadow-sm p-space-lg flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-2 mb-3">
+<span class="w-6 h-6 rounded-full bg-tertiary-fixed/60 text-tertiary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[15px]">priority_high</span>
+</span>
+<h3 class="font-label-micro text-label-micro font-bold uppercase tracking-wider text-tertiary">
+                High-Leverage Adjustments
+              </h3>
+</div>
+<ul class="flex flex-col gap-2.5 font-body-sm text-body-sm text-on-surface-variant">
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-tertiary text-[16px] shrink-0 mt-0.5">arrow_forward</span>
+<span><strong>Lack of quantifiable impact:</strong> State measurable metrics (e.g., <em>"reduced bundle by 34%"</em> or <em>"sustained 60fps"</em>).</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-tertiary text-[16px] shrink-0 mt-0.5">arrow_forward</span>
+<span><strong>Truncated STAR ending:</strong> You often concluded abruptly once the technical fix was explained without tying it back to user satisfaction.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-tertiary text-[16px] shrink-0 mt-0.5">arrow_forward</span>
+<span><strong>Pacing in opening statement:</strong> Take 3 seconds to organize thoughts before answering multi-part architecture prompts.</span>
+</li>
+</ul>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between text-outline font-label-micro text-label-micro">
+<span>Target Remediation</span>
+<span class="text-tertiary font-semibold">Priority 1 for next run</span>
+</div>
+</div>
+</div>
+<!-- Module 3: Transcript Transformation (Candidate vs AI Model Answer) -->
+<div class="bg-surface-container-lowest rounded shadow-sm p-space-lg">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">compare_arrows</span>
+<h3 class="font-label-micro text-label-micro font-bold uppercase tracking-wider text-outline">
+              Answer Refinement Comparison
+            </h3>
+</div>
+<span class="font-label-micro text-label-micro px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-medium">Question 3 • Performance Bottleneck</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- Raw Excerpt -->
+<div class="bg-surface-container-low rounded p-space-md flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-micro text-label-micro text-outline uppercase font-semibold">Your Verbatim Response</span>
+<span class="font-label-micro text-label-micro text-tertiary font-medium">Informal / Non-metric</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface italic leading-relaxed">
+                "We just put virtual-window on the table and it was way faster so users stopped complaining about the memory lags on long feeds."
+              </p>
+</div>
+<div class="mt-3 flex items-center gap-1.5 text-outline font-label-micro text-label-micro">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+<span>Missing diagnostic process and data evidence</span>
+</div>
+</div>
+<!-- Suggested Model Answer -->
+<div class="bg-surface-container-lowest rounded p-space-md shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-micro text-label-micro text-primary uppercase font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+                  Recommended Executive Delivery
+                </span>
+<span class="font-label-micro text-label-micro text-secondary font-semibold">Staff Benchmark</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+                "Profiling with Chrome DevTools exposed 1,200 idle DOM nodes causing layout thrashing. Integrating <code class="px-1 py-0.5 bg-surface-container rounded text-body-sm font-mono text-primary font-medium">@tanstack/virtual</code> bounded active rendering to 30 elements, reducing TTFB by 42% and guaranteeing 60fps scroll stability under 10k items."
+              </p>
+</div>
+<div class="mt-3 flex items-center gap-1.5 text-secondary font-label-micro text-label-micro font-medium">
+<span class="material-symbols-outlined text-[14px]">check</span>
+<span>Demonstrates diagnostic depth, concrete metric &amp; business impact</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column (approx 38% -> 5 cols on large desktop or 4 on wide screen) -->
+<div class="lg:col-span-5 xl:col-span-4 flex flex-col gap-space-lg">
+<!-- Right Card 1: Skill Distribution Breakdown -->
+<div class="bg-surface-container-lowest rounded shadow-sm p-space-lg">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-label-micro text-label-micro font-bold uppercase tracking-wider text-outline">
+            Skill Radar Spectrum
+          </h3>
+<span class="font-label-micro text-label-micro text-outline font-medium">L5 Evaluator Scale</span>
+</div>
+<div class="flex flex-col gap-3.5">
+<!-- Dimension 1 -->
+<div>
+<div class="flex justify-between font-label-md text-label-md mb-1">
+<span class="text-on-surface font-medium">Architecture Systematics</span>
+<span class="text-on-surface font-semibold">88%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 88%"></div>
+</div>
+</div>
+<!-- Dimension 2 -->
+<div>
+<div class="flex justify-between font-label-md text-label-md mb-1">
+<span class="text-on-surface font-medium">Browser Internals &amp; DOM</span>
+<span class="text-on-surface font-semibold">84%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 84%"></div>
+</div>
+</div>
+<!-- Dimension 3 -->
+<div>
+<div class="flex justify-between font-label-md text-label-md mb-1">
+<span class="text-on-surface font-medium">State Design Trade-offs</span>
+<span class="text-on-surface font-semibold">76%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary-container h-full rounded-full" style="width: 76%"></div>
+</div>
+</div>
+<!-- Dimension 4 -->
+<div>
+<div class="flex justify-between font-label-md text-label-md mb-1">
+<span class="text-on-surface font-medium">Behavioral STAR Framing</span>
+<span class="text-tertiary font-semibold">62%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-tertiary-fixed-dim h-full rounded-full" style="width: 62%"></div>
+</div>
+</div>
+<!-- Dimension 5 -->
+<div>
+<div class="flex justify-between font-label-md text-label-md mb-1">
+<span class="text-on-surface font-medium">Verbal Conciseness &amp; Flow</span>
+<span class="text-on-surface font-semibold">82%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 82%"></div>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 bg-surface-container-low rounded p-2.5 flex items-center justify-between text-outline font-label-micro text-label-micro">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px] text-primary">model_training</span>
+<span>Target gap to L6 Principal:</span>
+</div>
+<span class="text-on-surface font-semibold">+9 pts overall</span>
+</div>
+</div>
+<!-- Right Card 2: Audio & Delivery Diagnostics -->
+<div class="bg-surface-container-lowest rounded shadow-sm p-space-lg">
+<div class="flex items-center justify-between mb-3">
+<h3 class="font-label-micro text-label-micro font-bold uppercase tracking-wider text-outline">
+            Audio &amp; Delivery Telemetry
+          </h3>
+<span class="inline-flex items-center gap-1 text-secondary font-label-micro text-label-micro font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Live Analyzed
+          </span>
+</div>
+<div class="grid grid-cols-2 gap-space-sm mb-3">
+<div class="bg-surface-container-low rounded p-space-sm">
+<span class="font-label-micro text-label-micro uppercase text-outline block mb-0.5">Cadence / Pace</span>
+<div class="flex items-baseline gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface">138</span>
+<span class="font-label-micro text-label-micro text-outline">WPM</span>
+</div>
+<span class="font-label-micro text-label-micro text-secondary font-medium">Optimal range (130-150)</span>
+</div>
+<div class="bg-surface-container-low rounded p-space-sm">
+<span class="font-label-micro text-label-micro uppercase text-outline block mb-0.5">Filler Count</span>
+<div class="flex items-baseline gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface">4</span>
+<span class="font-label-micro text-label-micro text-outline">total</span>
+</div>
+<span class="font-label-micro text-label-micro text-secondary font-medium">2x "um", 2x "like"</span>
+</div>
+</div>
+<div class="bg-surface-container-low rounded p-space-sm flex items-center justify-between">
+<div>
+<span class="font-label-micro text-label-micro uppercase text-outline block mb-0.5">Tone &amp; Confidence</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">86% Assertive and Structured</span>
+</div>
+<span class="material-symbols-outlined text-secondary text-[22px]">graphic_eq</span>
+</div>
+</div>
+<!-- Right Card 3: Actionable Remediation / Practice Plan -->
+<div class="bg-surface-container-lowest rounded shadow-sm p-space-lg">
+<div class="flex items-center justify-between mb-3">
+<h3 class="font-label-micro text-label-micro font-bold uppercase tracking-wider text-outline">
+            Curated Next Steps
+          </h3>
+<span class="font-label-micro text-label-micro text-primary font-semibold">Priority Track</span>
+</div>
+<div class="flex flex-col gap-2.5">
+<!-- Drill 1 -->
+<div class="p-3 bg-surface-container-low rounded flex flex-col gap-2">
+<div class="flex items-start justify-between gap-2">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Mastering the 'Result' in STAR</span>
+<span class="font-label-micro text-label-micro text-outline">Targeted behavioral practice • 15 mins</span>
+</div>
+<span class="font-label-micro text-label-micro px-1.5 py-0.5 rounded bg-tertiary-fixed/60 text-tertiary font-bold shrink-0">High ROI</span>
+</div>
+<button class="w-full h-7 bg-surface-container-lowest hover:bg-surface-container text-on-surface text-label-sm font-label-sm rounded flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-sm">
+<span>Start Interactive Drill</span>
+<span class="material-symbols-outlined text-[13px]">arrow_forward</span>
+</button>
+</div>
+<!-- Drill 2 -->
+<div class="p-3 bg-surface-container-low rounded flex flex-col gap-2">
+<div class="flex items-start justify-between gap-2">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">React Profiling &amp; Leaks</span>
+<span class="font-label-micro text-label-micro text-outline">Interactive debugging scenario • 20 mins</span>
+</div>
+<span class="font-label-micro text-label-micro px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-medium shrink-0">Technical</span>
+</div>
+<button class="w-full h-7 bg-surface-container-lowest hover:bg-surface-container text-on-surface text-label-sm font-label-sm rounded flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-sm">
+<span>Launch Sandbox</span>
+<span class="material-symbols-outlined text-[13px]">code</span>
+</button>
+</div>
+<!-- Suggested Question -->
+<div class="p-3 bg-surface-container-low rounded flex flex-col gap-1.5">
+<span class="font-label-micro text-label-micro uppercase font-bold text-outline">Recommended Question for Next Run:</span>
+<p class="font-body-sm text-body-sm text-on-surface font-medium leading-snug">
+              "Describe a production incident where memory leak degraded client performance and how you root-caused it."
+            </p>
+<div class="flex items-center justify-between mt-1">
+<span class="font-label-micro text-label-micro text-outline">Staff L5 Rubric</span>
+<a class="text-primary font-label-micro text-label-micro font-semibold hover:underline flex items-center gap-0.5" href="#">
+                Queue Question
+                <span class="material-symbols-outlined text-[12px]">add</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></main></div></body></html>

@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 20;font-size:18px;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "on-tertiary-fixed-variant": "#604100",
+          "inverse-primary": "#bac3ff",
+          "surface-container-high": "#eae7e7",
+          "on-secondary-fixed-variant": "#005233",
+          "on-tertiary-fixed": "#281900",
+          "primary-container": "#5267d8",
+          "primary-fixed": "#dee0ff",
+          "surface": "#fcf9f8",
+          "secondary": "#006c45",
+          "on-surface": "#1c1b1b",
+          "secondary-fixed": "#95f6c0",
+          "surface-container": "#f0eded",
+          "on-tertiary": "#ffffff",
+          "inverse-surface": "#313030",
+          "tertiary": "#775100",
+          "surface-variant": "#e5e2e1",
+          "on-secondary": "#ffffff",
+          "on-error-container": "#93000a",
+          "tertiary-container": "#976800",
+          "error": "#ba1a1a",
+          "primary": "#374dbe",
+          "on-primary-fixed-variant": "#2239ab",
+          "on-background": "#1c1b1b",
+          "surface-bright": "#fcf9f8",
+          "on-primary-fixed": "#00105b",
+          "surface-tint": "#3e53c4",
+          "surface-container-lowest": "#ffffff",
+          "error-container": "#ffdad6",
+          "inverse-on-surface": "#f3f0ef",
+          "secondary-container": "#92f3be",
+          "outline-variant": "#c5c5d5",
+          "on-secondary-fixed": "#002112",
+          "surface-dim": "#dcd9d9",
+          "on-tertiary-container": "#fff5eb",
+          "outline": "#757685",
+          "primary-fixed-dim": "#bac3ff",
+          "surface-container-low": "#f6f3f2",
+          "on-error": "#ffffff",
+          "on-primary": "#ffffff",
+          "on-primary-container": "#f7f5ff",
+          "tertiary-fixed-dim": "#fcbb48",
+          "tertiary-fixed": "#ffdead",
+          "secondary-fixed-dim": "#79d9a6",
+          "on-secondary-container": "#007148",
+          "background": "#fcf9f8",
+          "surface-container-highest": "#e5e2e1",
+          "on-surface-variant": "#444653"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "margin-desktop": "1.5rem",
+          "space-lg": "1rem",
+          "space-md": "0.75rem",
+          "space-xs": "0.25rem",
+          "space-xl": "1.5rem",
+          "gutter": "1rem",
+          "space-sm": "0.5rem",
+          "gutter-desktop": "1.25rem",
+          "margin": "1rem"
+        },
+        "fontFamily": {
+          "body-md": ["Inter"],
+          "headline-lg": ["Geist"],
+          "headline-xl-mobile": ["Geist"],
+          "label-sm": ["Geist"],
+          "label-md": ["Geist"],
+          "body-sm": ["Inter"],
+          "headline-xl": ["Geist"],
+          "headline-lg-mobile": ["Geist"],
+          "headline-sm": ["Geist"],
+          "label-micro": ["Geist"],
+          "body-lg": ["Inter"]
+        },
+        "fontSize": {
+          "body-md": ["13px", {"lineHeight": "19px", "fontWeight": "400"}],
+          "headline-lg": ["20px", {"lineHeight": "26px", "letterSpacing": "-0.015em", "fontWeight": "600"}],
+          "headline-xl-mobile": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600"}],
+          "label-sm": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+          "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+          "body-sm": ["12px", {"lineHeight": "17px", "fontWeight": "400"}],
+          "headline-xl": ["28px", {"lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+          "headline-lg-mobile": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+          "headline-sm": ["15px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+          "label-micro": ["10px", {"lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "600"}],
+          "body-lg": ["14px", {"lineHeight": "21px", "letterSpacing": "-0.005em", "fontWeight": "400"}]
+        }
+      }
+    }
+  }</script></head><body class="bg-surface-container font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-[230px] bg-surface-container-lowest z-50 flex flex-col justify-between border-r border-surface-variant"><div class="flex flex-col"><div class="h-[52px] px-space-md flex items-center gap-space-sm border-b border-surface-variant"><img alt="INTERVIEWIQ Monogram Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1W7bN-uWE4eBNeEzmIyQWD7Khfd1x6Fef-_WlxnkacRgLVf0GRPkzOdprOxVmjz61kWwKGf9Vjbpu2T6SDJkgUSCkSnXcOjFmsiVF2ZWt9f7Nhnwwso94xzh9M3sYJVFtYQvbytw8SG_RlfUe9UE_q_5w0WE0tCQ20tz08BVGSSaZx-bb8_PLJlBRDAAqAEHIe_tJR-KH1tTxarnOPa0Vm4L8mOLtfNEGCy_a5skbSzYUkzB5TorW61_dRR"/><div class="flex flex-col justify-center"><span class="font-headline-sm text-headline-sm font-semibold tracking-tight text-on-surface leading-none">INTERVIEWIQ</span><span class="font-label-micro text-label-micro text-outline tracking-wider uppercase mt-0.5">AI Interview Coach</span></div></div><div class="py-space-md px-space-xs flex flex-col gap-space-lg"><div class="flex flex-col gap-0.5"><div class="px-space-md py-1 font-label-micro text-label-micro text-outline uppercase tracking-wider">Workspace</div><nav class="flex flex-col gap-0.5" data-active-classes="bg-surface-container-low text-primary font-medium border-l-2 border-primary"><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="overview" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span>Overview</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-2 rounded transition-colors bg-surface-container-low text-primary font-medium border-l-2 border-primary" data-path="mock-interviews" href="#"><span class="material-symbols-outlined text-[18px]">videocam</span><span>Mock Interviews</span></a><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="question-library" href="#"><span class="material-symbols-outlined text-[18px]">library_books</span><span>Question Library</span></a></nav></div><div class="flex flex-col gap-0.5"><div class="px-space-md py-1 font-label-micro text-label-micro text-outline uppercase tracking-wider">Improvement</div><nav class="flex flex-col gap-0.5" data-active-classes="bg-surface-container-low text-primary font-medium border-l-2 border-primary"><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="my-progress" href="#"><span class="material-symbols-outlined text-[18px]">insights</span><span>My Progress</span></a><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="practice-plan" href="#"><span class="material-symbols-outlined text-[18px]">checklist</span><span>Practice Plan</span></a><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="learning-resources" href="#"><span class="material-symbols-outlined text-[18px]">school</span><span>Learning Resources</span></a></nav></div><div class="flex flex-col gap-0.5"><div class="px-space-md py-1 font-label-micro text-label-micro text-outline uppercase tracking-wider">Account</div><nav class="flex flex-col gap-0.5" data-active-classes="bg-surface-container-low text-primary font-medium border-l-2 border-primary"><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="profile" href="#"><span class="material-symbols-outlined text-[18px]">person</span><span>Profile</span></a><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="settings" href="#"><span class="material-symbols-outlined text-[18px]">tune</span><span>Settings</span></a></nav></div></div></div><div class="p-space-sm border-t border-surface-variant bg-surface-container-lowest"><div class="flex items-center justify-between p-1.5 rounded hover:bg-surface-container-low transition-colors cursor-pointer"><div class="flex items-center gap-space-sm overflow-hidden"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-ufpXP7wA7dxSJprxCBStWlTEFsM2Vhn6daGcU_Lh5wkm8uDUj7O-xX-B-iZuk3vu1DbuEKpb0eaBe-JLvyCf8_eeXTJ9QYzgZBAFgA6KBwxHo7QYUG3FMVmiHYzLYAEDMkB_7uIefkS-VLZixwCd0xL2z65L8bygEjkK9MNkXC84BxPxEgAGC7JsgWuuSwtHHkOQftqWYSrKP75sZcmAWLJCNQ9_RCNc_xq9a3T9RtEQI4CzS2uomQ"/><div class="flex flex-col truncate"><span class="font-label-md text-label-md text-on-surface font-medium truncate">Alex Morgan</span><span class="font-label-micro text-label-micro text-outline truncate">Student Account</span></div></div><span class="material-symbols-outlined text-outline text-[16px]">unfold_more</span></div></div></aside><div class="pl-[230px]"><header class="fixed top-0 left-[230px] right-0 h-[52px] bg-surface-container-lowest/90 backdrop-blur-md border-b border-surface-variant z-40 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm text-outline font-label-md text-label-md"><span class="hover:text-on-surface cursor-pointer">Workspace</span><span class="material-symbols-outlined text-[14px] text-outline">chevron_right</span><span class="text-on-surface font-medium">Overview</span></div><div class="flex items-center gap-space-md"><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-2.5 text-outline pointer-events-none text-[16px]">search</span><input class="w-56 h-[34px] pl-8 pr-12 rounded bg-surface-container-low border border-surface-variant font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary" placeholder="Search questions, plans..." type="text"/><div class="absolute right-2 px-1 py-0.5 bg-surface-container border border-surface-variant rounded text-[10px] font-label-micro text-outline pointer-events-none">⌘K</div></div><div class="flex items-center gap-1 border-l border-surface-variant pl-space-md"><button class="relative p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded transition-colors"><span class="material-symbols-outlined text-[18px]">notifications</span><span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-error rounded-full"></span></button><button class="p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded transition-colors"><span class="material-symbols-outlined text-[18px]">help_outline</span></button></div></div></header><main class="relative pt-[52px] w-full min-h-screen p-space-lg"><div class="flex flex-col w-full">
+<!-- Top Context Header Area -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md mb-space-xl">
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 font-label-micro text-label-micro text-outline uppercase tracking-wider mb-1">
+<span>Workspace</span>
+<span>/</span>
+<span>Mock Interviews</span>
+<span>/</span>
+<span class="text-primary font-semibold">Setup</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface tracking-tight">Prepare for an interview</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Configure a tailored AI practice simulation for your target role and goals.</p>
+</div>
+<!-- Telemetry status indicator pill -->
+<div class="flex items-center gap-space-sm bg-surface-container-lowest px-3 py-1.5 rounded-lg shadow-sm self-start md:self-auto">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+</span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Engine v3.4 Active</span>
+<span class="font-label-micro text-label-micro text-outline px-1.5 py-0.5 rounded bg-surface-container">Zero Latency</span>
+</div>
+</div>
+<!-- Main 2-Column Workstation Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter-desktop items-start">
+<!-- Left Column: Interview Configuration (~64% -> col-span-12 lg:col-span-8) -->
+<div class="lg:col-span-8 flex flex-col gap-space-lg">
+<!-- SECTION 1: Target Role -->
+<section class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-2">
+<span class="flex items-center justify-center w-5 h-5 rounded-full bg-surface-container text-on-surface font-label-micro text-label-micro">01</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Target Role</h2>
+</div>
+<span class="font-label-micro text-label-micro uppercase tracking-wider text-outline">Select one primary track</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm" id="role-grid">
+<!-- Role 1: Frontend Developer (Default Selected) -->
+<button class="role-btn text-left p-space-md rounded-lg bg-surface-container-low transition-all duration-150 flex items-start justify-between cursor-pointer group shadow-sm bg-primary-fixed/25" data-role="Frontend Developer" type="button">
+<div class="flex flex-col pr-2">
+<span class="font-label-md text-label-md text-on-surface font-semibold group-hover:text-primary transition-colors">Frontend Developer</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">UI Architecture, React, CSS, Web Vitals &amp; Hydration</span>
+</div>
+<span class="material-symbols-outlined text-primary text-[18px] role-check shrink-0">check_circle</span>
+</button>
+<!-- Role 2: Backend Developer -->
+<button class="role-btn text-left p-space-md rounded-lg bg-surface-container-low transition-all duration-150 flex items-start justify-between cursor-pointer group hover:bg-surface-container shadow-sm" data-role="Backend Developer" type="button">
+<div class="flex flex-col pr-2">
+<span class="font-label-md text-label-md text-on-surface font-semibold group-hover:text-primary transition-colors">Backend Developer</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">APIs, Distributed Databases, Scalability &amp; Queues</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px] role-check shrink-0">radio_button_unchecked</span>
+</button>
+<!-- Role 3: Full Stack Developer -->
+<button class="role-btn text-left p-space-md rounded-lg bg-surface-container-low transition-all duration-150 flex items-start justify-between cursor-pointer group hover:bg-surface-container shadow-sm" data-role="Full Stack Developer" type="button">
+<div class="flex flex-col pr-2">
+<span class="font-label-md text-label-md text-on-surface font-semibold group-hover:text-primary transition-colors">Full Stack Developer</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">End-to-end Systems, Integrations, Auth &amp; State</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px] role-check shrink-0">radio_button_unchecked</span>
+</button>
+<!-- Role 4: Java Developer -->
+<button class="role-btn text-left p-space-md rounded-lg bg-surface-container-low transition-all duration-150 flex items-start justify-between cursor-pointer group hover:bg-surface-container shadow-sm" data-role="Java Developer" type="button">
+<div class="flex flex-col pr-2">
+<span class="font-label-md text-label-md text-on-surface font-semibold group-hover:text-primary transition-colors">Java Developer</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">OOP Principles, JVM Internals, Spring Boot, Threads</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px] role-check shrink-0">radio_button_unchecked</span>
+</button>
+<!-- Role 5: Data Analyst -->
+<button class="role-btn text-left p-space-md rounded-lg bg-surface-container-low transition-all duration-150 flex items-start justify-between cursor-pointer group hover:bg-surface-container shadow-sm" data-role="Data Analyst" type="button">
+<div class="flex flex-col pr-2">
+<span class="font-label-md text-label-md text-on-surface font-semibold group-hover:text-primary transition-colors">Data Analyst</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">SQL Performance, Metrics Modeling, Python &amp; Cohorts</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px] role-check shrink-0">radio_button_unchecked</span>
+</button>
+<!-- Role 6: Software Engineer -->
+<button class="role-btn text-left p-space-md rounded-lg bg-surface-container-low transition-all duration-150 flex items-start justify-between cursor-pointer group hover:bg-surface-container shadow-sm" data-role="Software Engineer" type="button">
+<div class="flex flex-col pr-2">
+<span class="font-label-md text-label-md text-on-surface font-semibold group-hover:text-primary transition-colors">Software Engineer</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Algorithms, Data Structures, Complexity Analysis</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px] role-check shrink-0">radio_button_unchecked</span>
+</button>
+</div>
+</section>
+<!-- SECTION 2: Experience Level -->
+<section class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-2">
+<span class="flex items-center justify-center w-5 h-5 rounded-full bg-surface-container text-on-surface font-label-micro text-label-micro">02</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Experience Level</h2>
+</div>
+<span class="font-label-micro text-label-micro uppercase tracking-wider text-outline">Adjusts question nuance</span>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 bg-surface-container-low rounded-lg" id="level-segmented">
+<button class="level-btn py-2 px-3 rounded font-label-md text-label-md font-medium text-on-surface-variant hover:text-on-surface transition-all text-center" data-level="Beginner" type="button">
+            Beginner
+          </button>
+<button class="level-btn py-2 px-3 rounded font-label-md text-label-md font-medium bg-surface-container-lowest text-primary shadow-sm text-center" data-level="Entry Level" type="button">
+            Entry Level
+          </button>
+<button class="level-btn py-2 px-3 rounded font-label-md text-label-md font-medium text-on-surface-variant hover:text-on-surface transition-all text-center" data-level="Intermediate" type="button">
+            Intermediate
+          </button>
+<button class="level-btn py-2 px-3 rounded font-label-md text-label-md font-medium text-on-surface-variant hover:text-on-surface transition-all text-center" data-level="Experienced" type="button">
+            Experienced
+          </button>
+</div>
+</section>
+<!-- SECTION 3: Interview Type -->
+<section class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-2">
+<span class="flex items-center justify-center w-5 h-5 rounded-full bg-surface-container text-on-surface font-label-micro text-label-micro">03</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Interview Type</h2>
+</div>
+<span class="font-label-micro text-label-micro uppercase tracking-wider text-outline">Evaluation modality</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-sm" id="type-grid">
+<!-- Type 1: Technical (Selected) -->
+<button class="type-btn p-3 rounded-lg bg-surface-container-low text-left flex flex-col justify-between h-28 cursor-pointer transition-all shadow-sm bg-primary-fixed/25" data-type="Technical" type="button">
+<div class="flex items-center justify-between w-full">
+<span class="material-symbols-outlined text-primary text-[20px]">terminal</span>
+<span class="w-2 h-2 rounded-full bg-primary type-indicator"></span>
+</div>
+<div>
+<span class="font-label-md text-label-md text-on-surface font-semibold block">Technical</span>
+<span class="font-label-micro text-label-micro text-on-surface-variant">Coding, Systems &amp; Core</span>
+</div>
+</button>
+<!-- Type 2: Behavioral -->
+<button class="type-btn p-3 rounded-lg bg-surface-container-low text-left flex flex-col justify-between h-28 cursor-pointer transition-all hover:bg-surface-container shadow-sm" data-type="Behavioral" type="button">
+<div class="flex items-center justify-between w-full">
+<span class="material-symbols-outlined text-outline text-[20px]">psychology</span>
+<span class="w-2 h-2 rounded-full bg-transparent type-indicator"></span>
+</div>
+<div>
+<span class="font-label-md text-label-md text-on-surface font-semibold block">Behavioral</span>
+<span class="font-label-micro text-label-micro text-on-surface-variant">STAR Method &amp; Conflict</span>
+</div>
+</button>
+<!-- Type 3: HR -->
+<button class="type-btn p-3 rounded-lg bg-surface-container-low text-left flex flex-col justify-between h-28 cursor-pointer transition-all hover:bg-surface-container shadow-sm" data-type="HR" type="button">
+<div class="flex items-center justify-between w-full">
+<span class="material-symbols-outlined text-outline text-[20px]">badge</span>
+<span class="w-2 h-2 rounded-full bg-transparent type-indicator"></span>
+</div>
+<div>
+<span class="font-label-md text-label-md text-on-surface font-semibold block">HR Screening</span>
+<span class="font-label-micro text-label-micro text-on-surface-variant">Culture Fit &amp; Goals</span>
+</div>
+</button>
+<!-- Type 4: Mixed -->
+<button class="type-btn p-3 rounded-lg bg-surface-container-low text-left flex flex-col justify-between h-28 cursor-pointer transition-all hover:bg-surface-container shadow-sm" data-type="Mixed" type="button">
+<div class="flex items-center justify-between w-full">
+<span class="material-symbols-outlined text-outline text-[20px]">tune</span>
+<span class="w-2 h-2 rounded-full bg-transparent type-indicator"></span>
+</div>
+<div>
+<span class="font-label-md text-label-md text-on-surface font-semibold block">Mixed</span>
+<span class="font-label-micro text-label-micro text-on-surface-variant">Balanced Assessment</span>
+</div>
+</button>
+</div>
+</section>
+<!-- SECTION 4 & 5: Difficulty & Duration (Combined in balanced grid) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-lg">
+<!-- SECTION 4: Difficulty -->
+<section class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-2">
+<span class="flex items-center justify-center w-5 h-5 rounded-full bg-surface-container text-on-surface font-label-micro text-label-micro">04</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Difficulty</h2>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2" id="difficulty-grid">
+<!-- Easy -->
+<button class="diff-btn py-2.5 px-2 rounded-lg bg-surface-container-low text-center flex flex-col items-center justify-center gap-1 cursor-pointer transition-all hover:bg-surface-container" data-difficulty="Easy" type="button">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-label-md text-label-md text-on-surface font-medium">Easy</span>
+</div>
+<span class="font-label-micro text-label-micro text-outline">Foundations</span>
+</button>
+<!-- Medium (Selected) -->
+<button class="diff-btn py-2.5 px-2 rounded-lg bg-surface-container-low text-center flex flex-col items-center justify-center gap-1 cursor-pointer transition-all shadow-sm bg-primary-fixed/25" data-difficulty="Medium" type="button">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-tertiary-container"></span>
+<span class="font-label-md text-label-md text-on-surface font-medium">Medium</span>
+</div>
+<span class="font-label-micro text-label-micro text-primary font-medium">Standard</span>
+</button>
+<!-- Hard -->
+<button class="diff-btn py-2.5 px-2 rounded-lg bg-surface-container-low text-center flex flex-col items-center justify-center gap-1 cursor-pointer transition-all hover:bg-surface-container" data-difficulty="Hard" type="button">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="font-label-md text-label-md text-on-surface font-medium">Hard</span>
+</div>
+<span class="font-label-micro text-label-micro text-outline">Edge-cases</span>
+</button>
+</div>
+</section>
+<!-- SECTION 5: Duration -->
+<section class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-2">
+<span class="flex items-center justify-center w-5 h-5 rounded-full bg-surface-container text-on-surface font-label-micro text-label-micro">05</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Duration</h2>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2" id="duration-grid">
+<!-- 10 mins -->
+<button class="dur-btn py-2.5 px-2 rounded-lg bg-surface-container-low text-center flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all hover:bg-surface-container" data-display="10 minutes" data-duration="10 minutes (3 questions)" type="button">
+<span class="font-label-md text-label-md text-on-surface font-medium">10 min</span>
+<span class="font-label-micro text-label-micro text-outline">3 questions</span>
+</button>
+<!-- 20 mins (Selected) -->
+<button class="dur-btn py-2.5 px-2 rounded-lg bg-surface-container-low text-center flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all shadow-sm bg-primary-fixed/25" data-display="20 minutes" data-duration="20 minutes (5 questions)" type="button">
+<span class="font-label-md text-label-md text-primary font-semibold">20 min</span>
+<span class="font-label-micro text-label-micro text-primary font-medium">5 questions</span>
+</button>
+<!-- 30 mins -->
+<button class="dur-btn py-2.5 px-2 rounded-lg bg-surface-container-low text-center flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all hover:bg-surface-container" data-display="30 minutes" data-duration="30 minutes (8 questions)" type="button">
+<span class="font-label-md text-label-md text-on-surface font-medium">30 min</span>
+<span class="font-label-micro text-label-micro text-outline">8 questions</span>
+</button>
+</div>
+</section>
+</div>
+<!-- SECTION 6: Optional Job Description -->
+<section class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="flex items-center justify-center w-5 h-5 rounded-full bg-surface-container text-on-surface font-label-micro text-label-micro">06</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Job Description</h2>
+</div>
+<span class="font-label-micro text-label-micro px-2 py-0.5 rounded bg-surface-container text-outline uppercase tracking-wider">Optional</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Paste the job description you are preparing for. Our AI will analyze requirements to synthesize realistic company-specific scenarios.
+        </p>
+<div class="relative mt-1">
+<textarea class="w-full p-3 rounded-lg bg-surface-container-low font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest transition-all resize-none" id="job-desc-input" placeholder="Paste requirements, tech stack details, or responsibilities here..." rows="4"></textarea>
+<div class="absolute bottom-2.5 right-3 font-label-micro text-label-micro text-outline pointer-events-none" id="char-counter">
+            0 chars
+          </div>
+</div>
+</section>
+</div>
+<!-- Right Column: Sticky Session Summary (~36% -> col-span-12 lg:col-span-4) -->
+<div class="lg:col-span-4 lg:sticky lg:top-[68px] flex flex-col gap-space-md">
+<!-- Summary Card Container -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+<!-- Card Header -->
+<div class="p-space-md bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">tune</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold">Session Summary</span>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-micro text-label-micro font-medium uppercase tracking-wider">Configured</span>
+</div>
+</div>
+<!-- Metric Tile List -->
+<div class="p-space-lg flex flex-col gap-3">
+<!-- Key 1: Target Role -->
+<div class="flex items-center justify-between py-1 bg-surface-container-low/50 px-2.5 rounded">
+<span class="font-label-sm text-label-sm text-outline">Target Role</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold" id="summary-role">Frontend Developer</span>
+</div>
+<!-- Key 2: Experience Level -->
+<div class="flex items-center justify-between py-1 bg-surface-container-low/50 px-2.5 rounded">
+<span class="font-label-sm text-label-sm text-outline">Experience Level</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold" id="summary-level">Entry Level</span>
+</div>
+<!-- Key 3: Interview Type -->
+<div class="flex items-center justify-between py-1 bg-surface-container-low/50 px-2.5 rounded">
+<span class="font-label-sm text-label-sm text-outline">Interview Type</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold" id="summary-type">Technical</span>
+</div>
+<!-- Key 4: Difficulty -->
+<div class="flex items-center justify-between py-1 bg-surface-container-low/50 px-2.5 rounded">
+<span class="font-label-sm text-label-sm text-outline">Difficulty</span>
+<div class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container" id="summary-diff-dot"></span>
+<span class="font-label-md text-label-md text-on-surface font-semibold" id="summary-difficulty">Medium</span>
+</div>
+</div>
+<!-- Key 5: Duration & Question Count -->
+<div class="flex items-center justify-between py-1 bg-surface-container-low/50 px-2.5 rounded">
+<span class="font-label-sm text-label-sm text-outline">Est. Duration</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold" id="summary-duration">20 min (5 questions)</span>
+</div>
+<!-- Key 6: Job Description Status -->
+<div class="flex items-center justify-between py-1 bg-surface-container-low/50 px-2.5 rounded">
+<span class="font-label-sm text-label-sm text-outline">Job Description</span>
+<span class="font-label-sm text-label-sm text-outline font-medium" id="summary-job-desc">Not provided</span>
+</div>
+<!-- Callout Note -->
+<div class="mt-2 p-3 rounded-lg bg-surface-container-low flex gap-2.5 items-start">
+<span class="material-symbols-outlined text-primary text-[18px] shrink-0 mt-0.5">auto_awesome</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface font-semibold leading-tight">Dynamic AI Calibration</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5 leading-snug">
+                AI Coach adapts conversational pacing, follow-ups, and grading criteria to your chosen level.
+              </span>
+</div>
+</div>
+<!-- Start Interview Primary CTA -->
+<button class="mt-2 w-full py-2.5 px-4 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md font-medium transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]" id="start-interview-btn" type="button">
+<span>Start Interview</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Quick Tips Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-label-micro text-label-micro uppercase tracking-wider text-outline">Session Protocol</span>
+<span class="font-label-micro text-label-micro text-secondary font-semibold">Audio &amp; Video Ready</span>
+</div>
+<ul class="flex flex-col gap-1.5 font-body-sm text-body-sm text-on-surface-variant">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[16px]">mic</span>
+<span>Microphone access will be requested on launch.</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[16px]">timer</span>
+<span>Pacing indicators show speech rate in real time.</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[16px]">analytics</span>
+<span>Comprehensive score matrix generated instantly.</span>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<!-- Interactive Modal / Banner: Coming Soon Prompt -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200" id="coming-soon-modal">
+<div class="bg-surface-container-lowest rounded-2xl shadow-xl max-w-md w-full p-space-xl flex flex-col items-center text-center transform scale-95 transition-transform duration-200" id="modal-card">
+<div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center text-primary mb-space-md">
+<span class="material-symbols-outlined text-[24px]">verified</span>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed mb-2">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-micro text-label-micro font-semibold uppercase tracking-wider">Ready for Next Phase</span>
+</div>
+<h3 class="font-headline-lg text-headline-lg text-on-surface font-semibold">Configuration Captured</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2 leading-relaxed">
+        Your mock interview session is configured for <strong class="text-on-surface font-medium" id="modal-role-name">Frontend Developer</strong> (<span id="modal-level-name">Entry Level</span>). The simulation workspace runtime is being prepared.
+      </p>
+<div class="w-full mt-space-lg p-space-md bg-surface-container-low rounded-lg text-left flex flex-col gap-1.5">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline">Mode:</span>
+<span class="font-medium text-on-surface" id="modal-mode-detail">Technical • 20 min</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline">Engine:</span>
+<span class="font-medium text-secondary">Neural Voice &amp; Assessment ready</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm w-full mt-space-lg">
+<button class="flex-1 py-2 px-4 rounded-lg bg-on-surface text-on-primary font-label-md text-label-md font-medium hover:bg-surface-container-highest transition-colors cursor-pointer" id="close-modal-btn" type="button">
+          Got it
+        </button>
+<button class="py-2 px-4 rounded-lg bg-surface-container hover:bg-surface-container-high font-label-md text-label-md text-on-surface transition-colors cursor-pointer" id="back-setup-btn" type="button">
+          Edit Setup
+        </button>
+</div>
+</div>
+</div>
+<!-- Vanilla JavaScript Logic for Interactive Updates -->
+<script>
+    (function initInterviewSetup() {
+      // Current State Storage
+      const state = {
+        role: "Frontend Developer",
+        level: "Entry Level",
+        type: "Technical",
+        difficulty: "Medium",
+        duration: "20 min (5 questions)",
+        jobDescLength: 0
+      };
+
+      // Summary Elements
+      const summaryRole = document.getElementById("summary-role");
+      const summaryLevel = document.getElementById("summary-level");
+      const summaryType = document.getElementById("summary-type");
+      const summaryDifficulty = document.getElementById("summary-difficulty");
+      const summaryDiffDot = document.getElementById("summary-diff-dot");
+      const summaryDuration = document.getElementById("summary-duration");
+      const summaryJobDesc = document.getElementById("summary-job-desc");
+
+      // Modal Elements
+      const modal = document.getElementById("coming-soon-modal");
+      const modalCard = document.getElementById("modal-card");
+      const startBtn = document.getElementById("start-interview-btn");
+      const closeModalBtn = document.getElementById("close-modal-btn");
+      const backSetupBtn = document.getElementById("back-setup-btn");
+      const modalRoleName = document.getElementById("modal-role-name");
+      const modalLevelName = document.getElementById("modal-level-name");
+      const modalModeDetail = document.getElementById("modal-mode-detail");
+
+      // 1. Role Selection
+      const roleButtons = document.querySelectorAll(".role-btn");
+      roleButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          roleButtons.forEach(b => {
+            b.classList.remove("bg-primary-fixed/25");
+            const icon = b.querySelector(".role-check");
+            if (icon) {
+              icon.textContent = "radio_button_unchecked";
+              icon.classList.remove("text-primary");
+              icon.classList.add("text-outline");
+            }
+          });
+
+          btn.classList.add("bg-primary-fixed/25");
+          const icon = btn.querySelector(".role-check");
+          if (icon) {
+            icon.textContent = "check_circle";
+            icon.classList.remove("text-outline");
+            icon.classList.add("text-primary");
+          }
+
+          state.role = btn.getAttribute("data-role");
+          summaryRole.textContent = state.role;
+        });
+      });
+
+      // 2. Experience Level Selection
+      const levelButtons = document.querySelectorAll(".level-btn");
+      levelButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          levelButtons.forEach(b => {
+            b.classList.remove("bg-surface-container-lowest", "text-primary", "shadow-sm");
+            b.classList.add("text-on-surface-variant");
+          });
+
+          btn.classList.add("bg-surface-container-lowest", "text-primary", "shadow-sm");
+          btn.classList.remove("text-on-surface-variant");
+
+          state.level = btn.getAttribute("data-level");
+          summaryLevel.textContent = state.level;
+        });
+      });
+
+      // 3. Interview Type Selection
+      const typeButtons = document.querySelectorAll(".type-btn");
+      typeButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          typeButtons.forEach(b => {
+            b.classList.remove("bg-primary-fixed/25");
+            const dot = b.querySelector(".type-indicator");
+            if (dot) dot.classList.replace("bg-primary", "bg-transparent");
+            const icon = b.querySelector(".material-symbols-outlined");
+            if (icon) icon.classList.replace("text-primary", "text-outline");
+          });
+
+          btn.classList.add("bg-primary-fixed/25");
+          const dot = btn.querySelector(".type-indicator");
+          if (dot) dot.classList.replace("bg-transparent", "bg-primary");
+          const icon = btn.querySelector(".material-symbols-outlined");
+          if (icon) icon.classList.replace("text-outline", "text-primary");
+
+          state.type = btn.getAttribute("data-type");
+          summaryType.textContent = state.type;
+        });
+      });
+
+      // 4. Difficulty Selection
+      const diffButtons = document.querySelectorAll(".diff-btn");
+      diffButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          diffButtons.forEach(b => {
+            b.classList.remove("bg-primary-fixed/25");
+            const sub = b.querySelector(".text-primary");
+            if (sub) {
+              sub.classList.remove("text-primary", "font-medium");
+              sub.classList.add("text-outline");
+            }
+          });
+
+          btn.classList.add("bg-primary-fixed/25");
+          const sub = btn.querySelector(".font-label-micro");
+          if (sub) {
+            sub.classList.remove("text-outline");
+            sub.classList.add("text-primary", "font-medium");
+          }
+
+          state.difficulty = btn.getAttribute("data-difficulty");
+          summaryDifficulty.textContent = state.difficulty;
+
+          // Colorize dot
+          if (state.difficulty === "Easy") {
+            summaryDiffDot.className = "w-1.5 h-1.5 rounded-full bg-secondary";
+          } else if (state.difficulty === "Medium") {
+            summaryDiffDot.className = "w-1.5 h-1.5 rounded-full bg-tertiary-container";
+          } else {
+            summaryDiffDot.className = "w-1.5 h-1.5 rounded-full bg-error";
+          }
+        });
+      });
+
+      // 5. Duration Selection
+      const durButtons = document.querySelectorAll(".dur-btn");
+      durButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          durButtons.forEach(b => {
+            b.classList.remove("bg-primary-fixed/25");
+            const title = b.querySelector(".font-label-md");
+            const sub = b.querySelector(".font-label-micro");
+            if (title) title.classList.remove("text-primary", "font-semibold");
+            if (sub) sub.classList.remove("text-primary", "font-medium");
+          });
+
+          btn.classList.add("bg-primary-fixed/25");
+          const title = btn.querySelector(".font-label-md");
+          const sub = btn.querySelector(".font-label-micro");
+          if (title) title.classList.add("text-primary", "font-semibold");
+          if (sub) sub.classList.add("text-primary", "font-medium");
+
+          state.duration = btn.getAttribute("data-duration");
+          summaryDuration.textContent = state.duration;
+        });
+      });
+
+      // 6. Job Description Input Live Listener
+      const jobDescInput = document.getElementById("job-desc-input");
+      const charCounter = document.getElementById("char-counter");
+
+      if (jobDescInput) {
+        jobDescInput.addEventListener("input", (e) => {
+          const len = e.target.value.trim().length;
+          charCounter.textContent = `${len} chars`;
+          if (len > 0) {
+            summaryJobDesc.textContent = `Provided (${len} chars)`;
+            summaryJobDesc.classList.remove("text-outline");
+            summaryJobDesc.classList.add("text-secondary", "font-semibold");
+          } else {
+            summaryJobDesc.textContent = "Not provided";
+            summaryJobDesc.classList.remove("text-secondary", "font-semibold");
+            summaryJobDesc.classList.add("text-outline");
+          }
+        });
+      }
+
+      // Modal open/close controls
+      function openModal() {
+        modalRoleName.textContent = state.role;
+        modalLevelName.textContent = state.level;
+        modalModeDetail.textContent = `${state.type} • ${state.difficulty} • ${state.duration}`;
+        
+        modal.classList.remove("hidden");
+        requestAnimationFrame(() => {
+          modal.classList.remove("opacity-0");
+          modalCard.classList.remove("scale-95");
+          modalCard.classList.add("scale-100");
+        });
+      }
+
+      function closeModal() {
+        modal.classList.add("opacity-0");
+        modalCard.classList.remove("scale-100");
+        modalCard.classList.add("scale-95");
+        setTimeout(() => {
+          modal.classList.add("hidden");
+        }, 200);
+      }
+
+      if (startBtn) startBtn.addEventListener("click", openModal);
+      if (closeModalBtn) closeModalBtn.addEventListener("click", closeModal);
+      if (backSetupBtn) backSetupBtn.addEventListener("click", closeModal);
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
+      });
+    })();
+  </script>
+</div></main></div></body></html>

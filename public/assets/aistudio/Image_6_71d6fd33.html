@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 20;font-size:18px;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "surface-container-low": "#f6f3f2",
+          "on-tertiary-fixed-variant": "#604100",
+          "error-container": "#ffdad6",
+          "on-secondary-fixed": "#002112",
+          "error": "#ba1a1a",
+          "on-tertiary": "#ffffff",
+          "on-tertiary-container": "#fff5eb",
+          "surface-variant": "#e5e2e1",
+          "outline-variant": "#c5c5d5",
+          "on-error": "#ffffff",
+          "background": "#fcf9f8",
+          "secondary-container": "#92f3be",
+          "on-secondary": "#ffffff",
+          "outline": "#757685",
+          "primary-container": "#5267d8",
+          "on-background": "#1c1b1b",
+          "secondary-fixed": "#95f6c0",
+          "on-primary-container": "#f7f5ff",
+          "secondary": "#006c45",
+          "on-error-container": "#93000a",
+          "surface-container-lowest": "#ffffff",
+          "inverse-surface": "#313030",
+          "surface-bright": "#fcf9f8",
+          "surface": "#fcf9f8",
+          "primary": "#374dbe",
+          "surface-container-highest": "#e5e2e1",
+          "on-primary-fixed": "#00105b",
+          "tertiary-fixed-dim": "#fcbb48",
+          "inverse-primary": "#bac3ff",
+          "tertiary": "#775100",
+          "on-surface-variant": "#444653",
+          "on-secondary-fixed-variant": "#005233",
+          "primary-fixed-dim": "#bac3ff",
+          "surface-tint": "#3e53c4",
+          "surface-dim": "#dcd9d9",
+          "surface-container-high": "#eae7e7",
+          "on-primary": "#ffffff",
+          "tertiary-container": "#976800",
+          "on-primary-fixed-variant": "#2239ab",
+          "secondary-fixed-dim": "#79d9a6",
+          "on-secondary-container": "#007148",
+          "tertiary-fixed": "#ffdead",
+          "on-tertiary-fixed": "#281900",
+          "inverse-on-surface": "#f3f0ef",
+          "primary-fixed": "#dee0ff",
+          "surface-container": "#f0eded",
+          "on-surface": "#1c1b1b"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "space-xs": "0.25rem",
+          "gutter-desktop": "1.25rem",
+          "margin": "1rem",
+          "space-lg": "1rem",
+          "space-xl": "1.5rem",
+          "gutter": "1rem",
+          "space-md": "0.75rem",
+          "space-sm": "0.5rem",
+          "margin-desktop": "1.5rem"
+        },
+        "fontFamily": {
+          "label-md": ["Geist"],
+          "headline-lg": ["Geist"],
+          "label-sm": ["Geist"],
+          "headline-xl": ["Geist"],
+          "headline-sm": ["Geist"],
+          "body-sm": ["Inter"],
+          "label-micro": ["Geist"],
+          "body-lg": ["Inter"],
+          "headline-xl-mobile": ["Geist"],
+          "body-md": ["Inter"],
+          "headline-lg-mobile": ["Geist"]
+        },
+        "fontSize": {
+          "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+          "headline-lg": ["20px", {"lineHeight": "26px", "letterSpacing": "-0.015em", "fontWeight": "600"}],
+          "label-sm": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+          "headline-xl": ["28px", {"lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+          "headline-sm": ["15px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+          "body-sm": ["12px", {"lineHeight": "17px", "fontWeight": "400"}],
+          "label-micro": ["10px", {"lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "600"}],
+          "body-lg": ["14px", {"lineHeight": "21px", "letterSpacing": "-0.005em", "fontWeight": "400"}],
+          "headline-xl-mobile": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600"}],
+          "body-md": ["13px", {"lineHeight": "19px", "fontWeight": "400"}],
+          "headline-lg-mobile": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+        }
+      }
+    }
+  }</script></head><body class="bg-surface-container font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-[230px] bg-surface-container-lowest z-50 flex flex-col justify-between border-r border-surface-variant"><div class="flex flex-col"><div class="h-[52px] px-space-md flex items-center gap-space-sm border-b border-surface-variant"><img alt="INTERVIEWIQ Monogram Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1W7bN-uWE4eBNeEzmIyQWD7Khfd1x6Fef-_WlxnkacRgLVf0GRPkzOdprOxVmjz61kWwKGf9Vjbpu2T6SDJkgUSCkSnXcOjFmsiVF2ZWt9f7Nhnwwso94xzh9M3sYJVFtYQvbytw8SG_RlfUe9UE_q_5w0WE0tCQ20tz08BVGSSaZx-bb8_PLJlBRDAAqAEHIe_tJR-KH1tTxarnOPa0Vm4L8mOLtfNEGCy_a5skbSzYUkzB5TorW61_dRR"/><div class="flex flex-col justify-center"><span class="font-headline-sm text-headline-sm font-semibold tracking-tight text-on-surface leading-none">INTERVIEWIQ</span><span class="font-label-micro text-label-micro text-outline tracking-wider uppercase mt-0.5">AI Interview Coach</span></div></div><div class="py-space-md px-space-xs flex flex-col gap-space-lg"><div class="flex flex-col gap-0.5"><div class="px-space-md py-1 font-label-micro text-label-micro text-outline uppercase tracking-wider">Workspace</div><nav class="flex flex-col gap-0.5" data-active-classes="bg-surface-container-low text-primary font-medium border-l-2 border-primary"><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="overview-dashboard" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span>Overview</span></a><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="mock-interview-setup" href="#"><span class="material-symbols-outlined text-[18px]">videocam</span><span>Mock Interviews</span></a><div class="ml-space-md pl-space-sm flex flex-col gap-0.5 border-l border-surface-variant my-0.5"><a aria-current="page" class="flex items-center gap-space-xs px-space-sm py-1.5 rounded transition-colors bg-surface-container-low text-primary font-medium border-l-2 border-primary" data-path="mock-interview-workspace" href="#"><span class="material-symbols-outlined text-[15px]">record_voice_over</span><span>Live Workspace</span></a><a class="flex items-center gap-space-xs px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="evaluation-report" href="#"><span class="material-symbols-outlined text-[15px]">analytics</span><span>Evaluation Report</span></a></div><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="question-library" href="#"><span class="material-symbols-outlined text-[18px]">library_books</span><span>Question Library</span></a></nav></div><div class="flex flex-col gap-0.5"><div class="px-space-md py-1 font-label-micro text-label-micro text-outline uppercase tracking-wider">Improvement</div><nav class="flex flex-col gap-0.5" data-active-classes="bg-surface-container-low text-primary font-medium border-l-2 border-primary"><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="my-progress" href="#"><span class="material-symbols-outlined text-[18px]">insights</span><span>My Progress</span></a><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="practice-plan" href="#"><span class="material-symbols-outlined text-[18px]">checklist</span><span>Practice Plan</span></a><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="learning-resources" href="#"><span class="material-symbols-outlined text-[18px]">school</span><span>Learning Resources</span></a></nav></div><div class="flex flex-col gap-0.5"><div class="px-space-md py-1 font-label-micro text-label-micro text-outline uppercase tracking-wider">Account</div><nav class="flex flex-col gap-0.5" data-active-classes="bg-surface-container-low text-primary font-medium border-l-2 border-primary"><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="profile" href="#"><span class="material-symbols-outlined text-[18px]">person</span><span>Profile</span></a><a class="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="settings" href="#"><span class="material-symbols-outlined text-[18px]">tune</span><span>Settings</span></a></nav></div></div></div><div class="p-space-sm border-t border-surface-variant bg-surface-container-lowest"><div class="flex items-center justify-between p-1.5 rounded hover:bg-surface-container-low transition-colors cursor-pointer"><div class="flex items-center gap-space-sm overflow-hidden"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-ufpXP7wA7dxSJprxCBStWlTEFsM2Vhn6daGcU_Lh5wkm8uDUj7O-xX-B-iZuk3vu1DbuEKpb0eaBe-JLvyCf8_eeXTJ9QYzgZBAFgA6KBwxHo7QYUG3FMVmiHYzLYAEDMkB_7uIefkS-VLZixwCd0xL2z65L8bygEjkK9MNkXC84BxPxEgAGC7JsgWuuSwtHHkOQftqWYSrKP75sZcmAWLJCNQ9_RCNc_xq9a3T9RtEQI4CzS2uomQ"/><div class="flex flex-col truncate"><span class="font-label-md text-label-md text-on-surface font-medium truncate">Alex Morgan</span><span class="font-label-micro text-label-micro text-outline truncate">Student Account</span></div></div><span class="material-symbols-outlined text-outline text-[16px]">unfold_more</span></div></div></aside><div class="pl-[230px]"><header class="fixed top-0 left-[230px] right-0 h-[52px] bg-surface-container-lowest/90 backdrop-blur-md border-b border-surface-variant z-40 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm text-outline font-label-md text-label-md"><span class="hover:text-on-surface cursor-pointer">Workspace</span><span class="material-symbols-outlined text-[14px] text-outline">chevron_right</span><span class="hover:text-on-surface cursor-pointer">Mock Interviews</span><span class="material-symbols-outlined text-[14px] text-outline">chevron_right</span><span class="text-on-surface font-medium">Session</span></div><div class="flex items-center gap-space-md"><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-2.5 text-outline pointer-events-none text-[16px]">search</span><input class="w-56 h-[34px] pl-8 pr-12 rounded bg-surface-container-low border border-surface-variant font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary" placeholder="Search questions, plans..." type="text"/><div class="absolute right-2 px-1 py-0.5 bg-surface-container border border-surface-variant rounded text-[10px] font-label-micro text-outline pointer-events-none">⌘K</div></div><div class="flex items-center gap-1 border-l border-surface-variant pl-space-md"><button class="relative p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded transition-colors"><span class="material-symbols-outlined text-[18px]">notifications</span><span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-error rounded-full"></span></button><button class="p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded transition-colors"><span class="material-symbols-outlined text-[18px]">help_outline</span></button></div></div></header><main class="relative pt-[52px] w-full min-h-screen p-space-lg"><div class="flex flex-col w-full">
+<!-- Top Simulation Notice Banner -->
+<div class="mb-space-md flex items-center justify-between px-space-md py-space-xs bg-surface-container-lowest rounded-lg shadow-sm">
+<div class="flex items-center gap-space-sm">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-label-micro text-label-micro uppercase tracking-wider">
+<span class="material-symbols-outlined text-[12px] text-tertiary">info</span>
+<span>Interactive Simulation Preview</span>
+</span>
+<span class="font-body-sm text-body-sm text-outline">Screen 3 of 3 • Mock Interview Workspace</span>
+</div>
+<div class="flex items-center gap-space-sm text-outline font-label-sm text-label-sm">
+<span class="inline-flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span>Low Latency AI Engine: Active (12ms)</span>
+</span>
+</div>
+</div>
+<!-- Session Metadata & Control Header Bar -->
+<div class="mb-space-lg p-space-md bg-surface-container-lowest rounded-xl shadow-sm flex flex-wrap items-center justify-between gap-space-md">
+<!-- Left: Role & Details -->
+<div class="flex items-center gap-space-md flex-wrap">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">code_blocks</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface leading-tight">Frontend Developer (React &amp; Architecture)</span>
+<div class="flex items-center gap-2 font-label-micro text-label-micro text-outline mt-0.5">
+<span class="px-1.5 py-0.5 rounded bg-surface-container-low text-on-surface-variant uppercase tracking-wider">Technical</span>
+<span>•</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-low text-on-surface-variant uppercase tracking-wider">Medium Difficulty</span>
+<span>•</span>
+<span>Est. 20 min</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right: Telemetry & Actions -->
+<div class="flex items-center gap-space-md ml-auto">
+<!-- Recording Status Indicator -->
+<div class="flex items-center gap-space-sm px-space-md py-1.5 rounded-full bg-surface-container-low">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-error"></span>
+</span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium tracking-tight">Mic Active</span>
+<span class="font-label-micro text-label-micro text-outline">|</span>
+<span class="font-label-md text-label-md text-on-surface font-mono font-medium tracking-tight">04:32</span>
+<span class="font-label-micro text-label-micro text-outline font-mono">/ 20:00</span>
+</div>
+<!-- Action Buttons -->
+<div class="flex items-center gap-space-xs">
+<button class="h-[34px] w-[34px] flex items-center justify-center rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface-variant transition-colors" id="pause-session-btn" title="Pause Session">
+<span class="material-symbols-outlined text-[18px]">pause</span>
+</button>
+<button class="h-[34px] px-space-md flex items-center gap-1.5 rounded-lg bg-surface-container-low hover:bg-error-container hover:text-on-error-container text-outline hover:font-medium transition-colors font-label-md text-label-md" id="end-interview-btn">
+<span class="material-symbols-outlined text-[16px]">call_end</span>
+<span>End Interview</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Main Workspace Grid: 2 Columns -->
+<div class="grid grid-cols-12 gap-space-lg">
+<!-- LEFT MAIN COLUMN: Question & Active Candidate Workspace (approx 68% = 8 cols) -->
+<div class="col-span-12 lg:col-span-8 flex flex-col gap-space-lg">
+<!-- Question Progress Bar Card -->
+<div class="p-space-lg bg-surface-container-lowest rounded-xl shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-micro text-label-micro px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed uppercase tracking-wider font-semibold">
+              Question 3 of 8
+            </span>
+<span class="font-label-micro text-label-micro text-outline uppercase tracking-wider">
+              System Design &amp; Frontend Architecture
+            </span>
+</div>
+<span class="font-label-micro text-label-micro text-secondary font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+            AI Evaluation Running
+          </span>
+</div>
+<!-- Segmented 8-part Progress Indicator -->
+<div class="grid grid-cols-8 gap-1.5 w-full">
+<div class="h-1.5 rounded-full bg-primary" title="Question 1 (Completed)"></div>
+<div class="h-1.5 rounded-full bg-primary" title="Question 2 (Completed)"></div>
+<div class="h-1.5 rounded-full bg-primary-container relative overflow-hidden" title="Question 3 (In Progress)">
+<div class="absolute inset-0 bg-primary w-2/3 animate-pulse"></div>
+</div>
+<div class="h-1.5 rounded-full bg-surface-container-high" title="Question 4 (Upcoming)"></div>
+<div class="h-1.5 rounded-full bg-surface-container-high" title="Question 5 (Upcoming)"></div>
+<div class="h-1.5 rounded-full bg-surface-container-high" title="Question 6 (Upcoming)"></div>
+<div class="h-1.5 rounded-full bg-surface-container-high" title="Question 7 (Upcoming)"></div>
+<div class="h-1.5 rounded-full bg-surface-container-high" title="Question 8 (Wrap-up)"></div>
+</div>
+<!-- Question Title & Prompt Specification -->
+<div class="pt-space-xs flex flex-col gap-space-sm">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">
+            How would you optimize re-renders and virtual DOM memory overhead in a large-scale real-time dashboard displaying streaming telemetry data?
+          </h1>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+            Focus on component decomposition, memoization strategies (<code class="px-1.5 py-0.5 rounded bg-surface-container-low text-primary font-mono text-[12px]">React.memo</code>, <code class="px-1.5 py-0.5 rounded bg-surface-container-low text-primary font-mono text-[12px]">useMemo</code>), windowing/virtualization techniques, and state colocation.
+          </p>
+</div>
+<!-- AI Coach Voice Playback & Audio Synthesis Strip -->
+<div class="p-space-sm bg-surface-container-low rounded-lg flex items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-sm">
+<button class="w-7 h-7 rounded-full bg-surface-container-lowest text-on-surface hover:text-primary flex items-center justify-center transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[16px]">replay</span>
+</button>
+<div class="flex flex-col">
+<span class="font-label-micro text-label-micro uppercase tracking-wider text-outline">Coach Synth Voice (Nova)</span>
+<span class="font-label-sm text-label-sm text-on-surface">Question audio playback complete</span>
+</div>
+</div>
+<!-- Micro Equalizer Animation Strip -->
+<div class="flex items-center gap-1 h-5 px-space-sm bg-surface-container-lowest rounded-md">
+<span class="w-1 bg-outline-variant h-2 rounded-full"></span>
+<span class="w-1 bg-outline-variant h-3 rounded-full"></span>
+<span class="w-1 bg-outline-variant h-4 rounded-full"></span>
+<span class="w-1 bg-outline-variant h-2.5 rounded-full"></span>
+<span class="w-1 bg-outline-variant h-1.5 rounded-full"></span>
+<span class="font-label-micro text-label-micro text-outline ml-1 font-mono">00:18</span>
+</div>
+</div>
+</div>
+<!-- Candidate Answer & Live Response Area -->
+<div class="p-space-lg bg-surface-container-lowest rounded-xl shadow-sm flex flex-col gap-space-md">
+<!-- Mode Switcher & Stream Status -->
+<div class="flex items-center justify-between border-b border-surface-variant pb-space-sm">
+<div class="flex items-center gap-space-xs bg-surface-container-low p-1 rounded-lg">
+<button class="px-space-md py-1 rounded bg-surface-container-lowest text-on-surface shadow-sm font-label-md text-label-md flex items-center gap-1.5 transition-all" id="tab-voice">
+<span class="material-symbols-outlined text-secondary text-[16px]">mic</span>
+<span>Voice Response</span>
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-ping"></span>
+</button>
+<button class="px-space-md py-1 rounded text-on-surface-variant hover:text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-all" id="tab-notes">
+<span class="material-symbols-outlined text-[16px]">edit_note</span>
+<span>Code &amp; Scratchpad</span>
+</button>
+</div>
+<!-- Live Transcribing Telemetry Badge -->
+<div class="flex items-center gap-space-xs">
+<span class="font-label-micro text-label-micro uppercase text-secondary font-medium tracking-wider flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+              Live Speech-to-Text
+            </span>
+</div>
+</div>
+<!-- Live Transcription Window -->
+<div class="relative p-space-lg bg-surface-container-low rounded-xl flex flex-col gap-space-sm min-h-[170px]">
+<div class="flex items-center justify-between text-outline font-label-micro text-label-micro uppercase tracking-wider">
+<span>Speech Recognition Stream (Candidate Audio)</span>
+<span class="font-mono text-outline">Confidence: 98.4%</span>
+</div>
+<div class="font-body-lg text-body-lg text-on-surface leading-relaxed" id="transcript-container">
+<span>First, I would decouple the high-frequency streaming telemetry updates from the parent view by isolating the data ingestion into a dedicated custom hook or observable subscription, preventing cascade re-renders across static navigation and sibling panels. Second, for the actual rendered feed of thousands of rows, I'd implement virtualized lists using <code class="px-1 py-0.5 rounded bg-surface-container text-primary font-mono text-[12px]">react-window</code> or <code class="px-1 py-0.5 rounded bg-surface-container text-primary font-mono text-[12px]">tanstack-virtual</code> so only the visible viewport items (around 20-30 DOM nodes) are mounted in the DOM tree...</span>
+<!-- Blinking insertion cursor -->
+<span class="inline-block w-1.5 h-4 ml-1 bg-primary align-middle animate-pulse"></span>
+</div>
+<div class="mt-auto pt-space-xs flex items-center justify-between text-outline font-label-micro text-label-micro">
+<span>Press Space or Speak clearly into microphone</span>
+<span class="font-mono">Word Count: 74 words</span>
+</div>
+</div>
+<!-- Live Speech Cadence & Fluency Metrics Bar -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm p-space-sm bg-surface-container rounded-lg">
+<div class="flex items-center gap-space-sm p-space-xs bg-surface-container-lowest rounded-md px-space-md">
+<div class="w-7 h-7 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">speed</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-micro text-label-micro text-outline uppercase">Pacing cadence</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold">135 wpm <span class="text-secondary font-normal text-label-sm">(Optimal)</span></span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm p-space-xs bg-surface-container-lowest rounded-md px-space-md">
+<div class="w-7 h-7 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">filter_list_off</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-micro text-label-micro text-outline uppercase">Filler word count</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold">0 detected <span class="text-secondary font-normal text-label-sm">(Clean)</span></span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm p-space-xs bg-surface-container-lowest rounded-md px-space-md">
+<div class="w-7 h-7 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">graphic_eq</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-micro text-label-micro text-outline uppercase">Acoustic clarity</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold">94% <span class="text-primary font-normal text-label-sm">(High)</span></span>
+</div>
+</div>
+</div>
+<!-- Bottom Action / Navigation Toolbar -->
+<div class="flex items-center justify-between pt-space-sm border-t border-surface-variant">
+<button class="h-[34px] px-space-md rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface-variant transition-colors font-label-md text-label-md flex items-center gap-1.5" id="prev-question-btn">
+<span class="material-symbols-outlined text-[16px]">arrow_back</span>
+<span>Previous Question</span>
+</button>
+<div class="flex items-center gap-space-sm">
+<button class="h-[34px] px-space-md rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface-variant transition-colors font-label-md text-label-md flex items-center gap-1.5" id="save-draft-btn">
+<span class="material-symbols-outlined text-[16px]">bookmark_border</span>
+<span>Save Notes</span>
+</button>
+<button class="h-[34px] px-space-lg rounded-lg bg-primary hover:bg-on-primary-fixed-variant text-on-primary transition-colors font-label-md text-label-md flex items-center gap-1.5 shadow-sm" id="next-question-btn">
+<span>Submit &amp; Next Question</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Live Interviewer Simulation Canvas Overlay / Quick Tip -->
+<div class="p-space-md bg-surface-container-lowest rounded-xl shadow-sm flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="Professional AI avatar interviewer in minimalist studio lighting wearing high collar blazer with soft gray gradient backdrop and focused calm expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWLQAyNdAL7pSCIj_tQGgwWbp5cFuHeRRZqHRnNQTCDSscLPi7kRWuhrHWP0XCw4IayELCXyPJExX1Js7aClJdKvJz76UxCqqaVrusydyBkni-2xnCLi8PjA5PdlezSIz32T7EMLXgR-shhrB7TAYp717RTngeEDwphpVvwohHQfJ3wpuPNZpudIvETBwXKWx5m-Jv52mS9DkQxr4mZiWnHC3jaO3F9zBYfhCR2aXfIpT1d6Ig1bGnSA"/>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-micro text-label-micro text-outline uppercase tracking-wider">Coach Real-time Guidance</span>
+<p class="font-body-sm text-body-sm text-on-surface truncate">
+            Remember to address how you would measure performance metrics in production (e.g., Interaction to Next Paint or Long Animation Frames).
+          </p>
+</div>
+<button class="ml-auto text-outline hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</div>
+<!-- RIGHT SIDEBAR COLUMN: Session Outline, Rubric & Quality (approx 32% = 4 cols) -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-space-lg">
+<!-- Session Question Outline Sticky Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+<div class="flex items-center justify-between border-b border-surface-variant pb-space-xs">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-outline">format_list_numbered</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Session Outline</span>
+</div>
+<span class="font-label-micro text-label-micro text-outline uppercase tracking-wider">8 Questions</span>
+</div>
+<!-- Question List Items -->
+<div class="flex flex-col gap-1">
+<!-- Q1: Completed -->
+<div class="flex items-start gap-space-sm p-space-xs rounded-lg hover:bg-surface-container-low transition-colors group cursor-pointer">
+<div class="w-5 h-5 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface font-medium truncate">1. React Architecture &amp; Foundations</span>
+<span class="font-label-micro text-label-micro text-outline">4:10</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Component modularity principles</span>
+</div>
+</div>
+<!-- Q2: Completed -->
+<div class="flex items-start gap-space-sm p-space-xs rounded-lg hover:bg-surface-container-low transition-colors group cursor-pointer">
+<div class="w-5 h-5 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface font-medium truncate">2. Lifecycle &amp; Server Hydration</span>
+<span class="font-label-micro text-label-micro text-outline">3:45</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">SSR reconciliation overhead</span>
+</div>
+</div>
+<!-- Q3: Active / In Progress -->
+<div class="flex items-start gap-space-sm p-space-xs rounded-lg bg-surface-container-low shadow-sm transition-colors border-l-2 border-primary">
+<div class="w-5 h-5 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[14px]">record_voice_over</span>
+</div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-primary font-semibold truncate">3. Virtual DOM &amp; Optimization</span>
+<span class="font-label-micro text-label-micro px-1.5 py-0.2 rounded bg-primary-fixed text-on-primary-fixed uppercase tracking-wider">Active</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-medium">Telemetry streaming feed</span>
+</div>
+</div>
+<!-- Q4: Upcoming -->
+<div class="flex items-start gap-space-sm p-space-xs rounded-lg text-outline opacity-80 hover:opacity-100 transition-opacity">
+<div class="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center shrink-0 mt-0.5 text-[11px] font-label-micro text-outline font-semibold">
+              4
+            </div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">State Management: Zustand vs Context</span>
+<span class="font-label-micro text-label-micro text-outline">~3m</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Atomic subscriptions</span>
+</div>
+</div>
+<!-- Q5: Upcoming -->
+<div class="flex items-start gap-space-sm p-space-xs rounded-lg text-outline opacity-80 hover:opacity-100 transition-opacity">
+<div class="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center shrink-0 mt-0.5 text-[11px] font-label-micro text-outline font-semibold">
+              5
+            </div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Web Workers &amp; Offscreen Compute</span>
+<span class="font-label-micro text-label-micro text-outline">~4m</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Heavy parsing isolation</span>
+</div>
+</div>
+<!-- Q6: Upcoming -->
+<div class="flex items-start gap-space-sm p-space-xs rounded-lg text-outline opacity-80 hover:opacity-100 transition-opacity">
+<div class="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center shrink-0 mt-0.5 text-[11px] font-label-micro text-outline font-semibold">
+              6
+            </div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Network Resilience &amp; Caching</span>
+<span class="font-label-micro text-label-micro text-outline">~3m</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Offline optimistic mutations</span>
+</div>
+</div>
+<!-- Q7: Upcoming -->
+<div class="flex items-start gap-space-sm p-space-xs rounded-lg text-outline opacity-80 hover:opacity-100 transition-opacity">
+<div class="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center shrink-0 mt-0.5 text-[11px] font-label-micro text-outline font-semibold">
+              7
+            </div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Core Web Vitals (INP &amp; LCP)</span>
+<span class="font-label-micro text-label-micro text-outline">~3m</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Production profiling</span>
+</div>
+</div>
+<!-- Q8: Upcoming -->
+<div class="flex items-start gap-space-sm p-space-xs rounded-lg text-outline opacity-80 hover:opacity-100 transition-opacity">
+<div class="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center shrink-0 mt-0.5 text-[11px] font-label-micro text-outline font-semibold">
+              8
+            </div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Candidate Q&amp;A &amp; Wrap-up</span>
+<span class="font-label-micro text-label-micro text-outline">~2m</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Reflections &amp; score overview</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Dynamic Evaluation Rubric Tracking Panel -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+<div class="flex items-center justify-between border-b border-surface-variant pb-space-xs">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-outline">analytics</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Target Competencies</span>
+</div>
+<span class="font-label-micro text-label-micro text-secondary font-medium">Live Scoring</span>
+</div>
+<div class="flex flex-col gap-space-sm">
+<!-- Competency 1 -->
+<div class="p-space-sm bg-surface-container-low rounded-lg flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Architecture Decisions</span>
+<span class="px-1.5 py-0.5 rounded bg-secondary-container text-on-secondary-container font-label-micro text-label-micro font-semibold uppercase">
+                Observed: Strong
+              </span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Separation of streaming ingestion from UI tree verified.</span>
+</div>
+<!-- Competency 2 -->
+<div class="p-space-sm bg-surface-container-low rounded-lg flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Performance Awareness</span>
+<span class="px-1.5 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-micro text-label-micro font-semibold uppercase">
+                Evaluating...
+              </span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Virtualization cited; waiting for memory profiling answer.</span>
+</div>
+<!-- Competency 3 -->
+<div class="p-space-sm bg-surface-container-low rounded-lg flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Structured Delivery</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-label-micro text-label-micro uppercase font-semibold">
+                STAR Baseline
+              </span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Clear sequential breakdown without filler hesitation.</span>
+</div>
+</div>
+</div>
+<!-- Quick Session Controls & Environmental Telemetry -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-space-sm">
+<div class="flex items-center justify-between font-label-micro text-label-micro text-outline uppercase tracking-wider">
+<span>Environment &amp; Hardware</span>
+<span class="text-secondary font-medium">All Checks Passing</span>
+</div>
+<div class="flex items-center justify-between p-space-xs rounded bg-surface-container-low">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[16px] text-outline">mic</span>
+<span class="font-body-sm text-body-sm text-on-surface">Default - MacBook Pro Mic</span>
+</div>
+<button class="h-6 px-2 rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-micro text-label-micro uppercase transition-colors" id="toggle-mic-btn">
+            Mute
+          </button>
+</div>
+<div class="flex items-center justify-between p-space-xs rounded bg-surface-container-low">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[16px] text-outline">network_wifi</span>
+<span class="font-body-sm text-body-sm text-on-surface">Stream Latency: 12ms</span>
+</div>
+<span class="font-label-micro text-label-micro text-secondary font-medium">Optimal</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Interactive micro-behaviors for Workspace Screen 3
+  (function() {
+    const tabVoice = document.getElementById('tab-voice');
+    const tabNotes = document.getElementById('tab-notes');
+    const transcriptContainer = document.getElementById('transcript-container');
+    const toggleMicBtn = document.getElementById('toggle-mic-btn');
+    const pauseSessionBtn = document.getElementById('pause-session-btn');
+    const saveDraftBtn = document.getElementById('save-draft-btn');
+
+    let isMuted = false;
+    let isPaused = false;
+
+    if (toggleMicBtn) {
+      toggleMicBtn.addEventListener('click', () => {
+        isMuted = !isMuted;
+        toggleMicBtn.textContent = isMuted ? 'Unmute' : 'Mute';
+        toggleMicBtn.classList.toggle('bg-error-container', isMuted);
+        toggleMicBtn.classList.toggle('text-on-error-container', isMuted);
+      });
+    }
+
+    if (pauseSessionBtn) {
+      pauseSessionBtn.addEventListener('click', () => {
+        isPaused = !isPaused;
+        pauseSessionBtn.innerHTML = isPaused 
+          ? '<span class="material-symbols-outlined text-[18px]">play_arrow</span>' 
+          : '<span class="material-symbols-outlined text-[18px]">pause</span>';
+      });
+    }
+
+    if (tabNotes && tabVoice && transcriptContainer) {
+      tabNotes.addEventListener('click', () => {
+        tabNotes.classList.add('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm');
+        tabVoice.classList.remove('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm');
+        tabVoice.classList.add('text-on-surface-variant');
+        transcriptContainer.innerHTML = '<textarea class="w-full h-32 bg-transparent resize-none border-none focus:outline-none font-mono text-[13px] text-on-surface placeholder:text-outline" placeholder="// Type scratch notes, code snippets, or architecture diagrams here..."></textarea>';
+      });
+
+      tabVoice.addEventListener('click', () => {
+        tabVoice.classList.add('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm');
+        tabVoice.classList.remove('text-on-surface-variant');
+        tabNotes.classList.remove('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm');
+        transcriptContainer.innerHTML = '<span>First, I would decouple the high-frequency streaming telemetry updates from the parent view by isolating the data ingestion into a dedicated custom hook or observable subscription, preventing cascade re-renders across static navigation and sibling panels. Second, for the actual rendered feed of thousands of rows, I\\\'d implement virtualized lists using <code class="px-1 py-0.5 rounded bg-surface-container text-primary font-mono text-[12px]">react-window</code> or <code class="px-1 py-0.5 rounded bg-surface-container text-primary font-mono text-[12px]">tanstack-virtual</code> so only the visible viewport items (around 20-30 DOM nodes) are mounted in the DOM tree...</span><span class="inline-block w-1.5 h-4 ml-1 bg-primary align-middle animate-pulse"></span>';
+      });
+    }
+
+    if (saveDraftBtn) {
+      saveDraftBtn.addEventListener('click', () => {
+        const originalText = saveDraftBtn.innerHTML;
+        saveDraftBtn.innerHTML = '<span class="material-symbols-outlined text-[16px] text-secondary">check</span><span>Notes Saved</span>';
+        setTimeout(() => {
+          saveDraftBtn.innerHTML = originalText;
+        }, 1800);
+      });
+    }
+  })();
+</script></main></div></body></html>

@@ -1,0 +1,6 @@
+{
+  "name": "InterviewIQ - AI Interview Coach",
+  "description": "Comprehensive AI interview practice platform with real-time audio analysis, tailored simulations, diagnostic telemetry, and rubric evaluation reports.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
