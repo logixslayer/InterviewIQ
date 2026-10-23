@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ViewMode, QuestionItem, UserProfile } from '../types';
 import { INITIAL_QUESTIONS } from '../data/mockData';
 
@@ -7,57 +7,208 @@ interface QuestionLibraryViewProps {
   onPracticeQuestion: (question: QuestionItem) => void;
   searchQuery: string;
   userProfile?: UserProfile | null;
+  onAddRole?: (role: string) => void;
 }
 
+const ALL_POSSIBLE_ROLES = [
+  'Frontend Developer',
+  'Backend Developer',
+  'Full Stack Developer',
+  'Java Developer',
+  'Data Analyst',
+  'Software Engineer',
+  'DevOps & Cloud Engineer',
+  'Mobile Developer (iOS/Android)',
+  'Machine Learning Engineer'
+];
+
 export const QuestionLibraryView: React.FC<QuestionLibraryViewProps> = ({
-  onNavigate,
+  onNavigate: _onNavigate,
   onPracticeQuestion,
   searchQuery: initialSearch,
   userProfile,
+  onAddRole,
 }) => {
   const [questions, setQuestions] = useState<QuestionItem[]>(INITIAL_QUESTIONS);
-  const [search, setSearch] = useState(initialSearch);
+  const [search, setSearch] = useState(initialSearch || '');
   const [selectedRole, setSelectedRole] = useState('All Roles');
-  const [selectedCategory, setSelectedCategory] = useState('All Types (482)');
+  const [selectedCategory, setSelectedCategory] = useState('All Topics');
   const [selectedDifficulty, setSelectedDifficulty] = useState('All Levels');
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState('Easiest to Hardest');
   const [showSavedOnly, setShowSavedOnly] = useState(false);
+  const [showOtherRolesDropdown, setShowOtherRolesDropdown] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
+
+  // Custom Prompt Modal State
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [customTitle, setCustomTitle] = useState('');
-  const [customRole, setCustomRole] = useState('Frontend Developer');
+  const [customRole, setCustomRole] = useState(userProfile?.targetRoles[0]?.title || 'Frontend Developer');
   const [customCategory, setCustomCategory] = useState('Technical Architecture');
 
-  // NVIDIA AI Generation State
+  // NVIDIA Nemotron Generation State
   const [showNvidiaModal, setShowNvidiaModal] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [genRole, setGenRole] = useState(userProfile?.targetRoles[0]?.title || 'Frontend Developer');
   const [genCategory, setGenCategory] = useState('Technical Architecture');
-  const [genDifficulty, setGenDifficulty] = useState('Medium');
-  const [genCount, setGenCount] = useState(3);
+  const [genDifficulty, setGenDifficulty] = useState('All Levels (Easy to Hard)');
+  const [genCount, setGenCount] = useState(5);
   const [genError, setGenError] = useState<string | null>(null);
   const [genSuccessNotice, setGenSuccessNotice] = useState<string | null>(null);
 
+  // Resume-derived roles: Extract from candidate resume if available
+  const resumeRoles = useMemo(() => {
+    if (userProfile?.targetRoles && userProfile.targetRoles.length > 0) {
+      return userProfile.targetRoles.map(r => r.title);
+    }
+    return ['Frontend Developer', 'Backend Developer', 'Full Stack Developer'];
+  }, [userProfile]);
+
+  // Combined roles list for the active filter buttons: show resume roles by default
+  const displayedRolePills = useMemo(() => {
+    const list = ['All Roles', ...resumeRoles];
+    if (selectedRole !== 'All Roles' && !list.includes(selectedRole)) {
+      list.push(selectedRole);
+    }
+    return list;
+  }, [resumeRoles, selectedRole]);
+
+  // Reset pagination to page 1 whenever filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedRole, selectedCategory, selectedDifficulty, selectedCompany, sortBy, showSavedOnly]);
+
+  // Toggle Bookmark
   const toggleBookmark = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setQuestions(prev => prev.map(q => q.id === id ? { ...q, isBookmarked: !q.isBookmarked } : q));
   };
 
-  const filteredQuestions = questions.filter(q => {
-    if (showSavedOnly && !q.isBookmarked) return false;
-    if (selectedRole !== 'All Roles' && !q.roleTarget.toLowerCase().includes(selectedRole.toLowerCase())) return false;
-    if (selectedCategory !== 'All Types (482)' && !q.category.toLowerCase().includes(selectedCategory.split(' ')[0].toLowerCase())) return false;
-    if (selectedDifficulty !== 'All Levels' && q.difficulty !== selectedDifficulty.split(' ')[0]) return false;
-    if (selectedCompany && !q.companies.includes(selectedCompany)) return false;
-    if (search.trim()) {
-      const query = search.toLowerCase();
-      const match = q.title.toLowerCase().includes(query) ||
-                    q.description.toLowerCase().includes(query) ||
-                    q.companies.some(c => c.toLowerCase().includes(query)) ||
-                    q.category.toLowerCase().includes(query);
-      if (!match) return false;
+  // Filtered & Sorted Questions
+  const filteredAndSortedQuestions = useMemo(() => {
+    let result = questions.filter(q => {
+      if (showSavedOnly && !q.isBookmarked) return false;
+
+      // Role Filter: Scoped to selected role or candidate's resume target tracks
+      if (selectedRole === 'All Roles') {
+        if (resumeRoles.length > 0) {
+          const matchesAnyResume = resumeRoles.some(rr => {
+            const normRR = rr.toLowerCase();
+            const normTarget = q.roleTarget.toLowerCase();
+            return normTarget.includes(normRR) ||
+                   normRR.includes(normTarget) ||
+                   normTarget.includes('all') ||
+                   normTarget.includes('engineering') ||
+                   (normRR.includes('full stack') && normTarget.includes('full stack')) ||
+                   (normRR.includes('frontend') && normTarget.includes('frontend')) ||
+                   (normRR.includes('backend') && normTarget.includes('backend')) ||
+                   (normRR.includes('java') && normTarget.includes('java')) ||
+                   (normRR.includes('data') && normTarget.includes('data')) ||
+                   (normRR.includes('software') && normTarget.includes('software'));
+          });
+          if (!matchesAnyResume) return false;
+        }
+      } else {
+        const normSelected = selectedRole.toLowerCase();
+        const normTarget = q.roleTarget.toLowerCase();
+        const match = normTarget.includes(normSelected) ||
+                      normSelected.includes(normTarget) ||
+                      normTarget.includes('all') ||
+                      normTarget.includes('engineering') ||
+                      (normSelected.includes('full stack') && normTarget.includes('full stack')) ||
+                      (normSelected.includes('frontend') && normTarget.includes('frontend')) ||
+                      (normSelected.includes('backend') && normTarget.includes('backend')) ||
+                      (normSelected.includes('java') && normTarget.includes('java')) ||
+                      (normSelected.includes('data') && normTarget.includes('data')) ||
+                      (normSelected.includes('software') && normTarget.includes('software'));
+        if (!match) return false;
+      }
+
+      if (selectedCategory !== 'All Topics' && selectedCategory !== 'All Types' && selectedCategory !== 'All Types (482)' && !q.category.toLowerCase().includes(selectedCategory.split(' ')[0].toLowerCase())) return false;
+      if (selectedDifficulty !== 'All Levels' && q.difficulty !== selectedDifficulty.split(' ')[0]) return false;
+      if (selectedCompany && !q.companies.includes(selectedCompany)) return false;
+      if (search.trim()) {
+        const query = search.toLowerCase();
+        const match = q.title.toLowerCase().includes(query) ||
+                      q.description.toLowerCase().includes(query) ||
+                      q.companies.some(c => c.toLowerCase().includes(query)) ||
+                      q.category.toLowerCase().includes(query);
+        if (!match) return false;
+      }
+      return true;
+    });
+
+    const diffRank: Record<string, number> = { 'Easy': 1, 'Medium': 2, 'Hard': 3 };
+
+    if (sortBy === 'Easiest to Hardest') {
+      result = [...result].sort((a, b) => (diffRank[a.difficulty] || 2) - (diffRank[b.difficulty] || 2));
+    } else if (sortBy === 'Hardest to Easiest') {
+      result = [...result].sort((a, b) => (diffRank[b.difficulty] || 2) - (diffRank[a.difficulty] || 2));
+    } else if (sortBy === 'Most Practiced') {
+      result = [...result].sort((a, b) => (b.status === 'passed' ? 1 : 0) - (a.status === 'passed' ? 1 : 0));
     }
-    return true;
-  });
+
+    return result;
+  }, [questions, showSavedOnly, selectedRole, selectedCategory, selectedDifficulty, selectedCompany, search, sortBy, resumeRoles]);
+
+  // Pagination Slice
+  const totalQuestions = filteredAndSortedQuestions.length;
+  const totalPages = Math.max(1, Math.ceil(totalQuestions / pageSize));
+  const validCurrentPage = Math.min(currentPage, totalPages);
+
+  const paginatedQuestions = useMemo(() => {
+    const startIndex = (validCurrentPage - 1) * pageSize;
+    return filteredAndSortedQuestions.slice(startIndex, startIndex + pageSize);
+  }, [filteredAndSortedQuestions, validCurrentPage, pageSize]);
+
+  // Generate Questions via NVIDIA Nemotron AI API
+  const handleGenerateNvidiaQuestions = async (e?: React.FormEvent, customTargetRole?: string) => {
+    if (e) e.preventDefault();
+    const roleToUse = customTargetRole || genRole;
+    setIsGenerating(true);
+    setGenError(null);
+
+    try {
+      const resumeContext = userProfile 
+        ? `Candidate: ${userProfile.fullName || 'Candidate'}. Target Roles: ${userProfile.targetRoles.map(r => r.title).join(', ')}. Skills: ${userProfile.topSkills.join(', ')}. Achievements: ${userProfile.keyAchievements?.join('; ') || 'Senior engineer'}`
+        : '';
+
+      const res = await fetch('/api/generate-questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          role: roleToUse,
+          category: genCategory,
+          difficulty: genDifficulty,
+          count: genCount,
+          resumeContext,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to generate questions');
+      }
+
+      const generated: QuestionItem[] = (data.questions || []).map((q: any) => ({
+        ...q,
+        statusLabel: q.statusLabel || 'NVIDIA Nemotron AI • Calibrated',
+        isBookmarked: true,
+      }));
+
+      setQuestions(prev => [...generated, ...prev]);
+      setShowNvidiaModal(false);
+      setIsGenerating(false);
+      setSelectedRole(roleToUse);
+      setGenSuccessNotice(`Generated ${generated.length} resume-calibrated questions for ${roleToUse} (ranked Easy → Hard)!`);
+      setTimeout(() => setGenSuccessNotice(null), 6000);
+    } catch (err: any) {
+      console.error('NVIDIA Question Generation error:', err);
+      setIsGenerating(false);
+      setGenError(err?.message || 'Failed to generate questions. Please try again.');
+    }
+  };
 
   const handleCreateCustom = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,345 +232,313 @@ export const QuestionLibraryView: React.FC<QuestionLibraryViewProps> = ({
     onPracticeQuestion(newQ);
   };
 
-  const handleGenerateNvidiaQuestions = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsGenerating(true);
-    setGenError(null);
-
-    try {
-      const resumeContext = userProfile 
-        ? `Target: ${userProfile.targetRoles.map(r => r.title).join(', ')}. Skills: ${userProfile.topSkills.join(', ')}. Achievements: ${userProfile.keyAchievements?.join('; ')}`
-        : '';
-
-      const res = await fetch('/api/generate-questions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          role: genRole,
-          category: genCategory,
-          difficulty: genDifficulty,
-          count: genCount,
-          resumeContext,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to generate questions');
-      }
-
-      const generated: QuestionItem[] = (data.questions || []).map((q: any) => ({
-        ...q,
-        statusLabel: q.statusLabel || 'Generated by NVIDIA AI',
-        isBookmarked: true,
-      }));
-
-      setQuestions(prev => [...generated, ...prev]);
-      setShowNvidiaModal(false);
-      setIsGenerating(false);
-      setGenSuccessNotice(`Generated ${generated.length} questions calibrated for ${genRole}!`);
-      setTimeout(() => setGenSuccessNotice(null), 5000);
-    } catch (err: any) {
-      console.error('NVIDIA Question Generation error:', err);
-      setIsGenerating(false);
-      setGenError(err?.message || 'Failed to generate questions. Please try again.');
-    }
-  };
-
   const savedCount = questions.filter(q => q.isBookmarked).length;
 
   return (
     <div className="flex flex-col w-full pb-16">
-      {/* Top Utility Context Bar / Mini Breadcrumb */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-space-md mb-space-sm gap-2">
-        <div className="flex items-center gap-space-sm text-outline font-label-md text-label-md flex-wrap">
-          <span className="text-on-surface-variant font-medium">Question Library</span>
-          <span className="text-outline">/</span>
-          <span className="text-outline">Vetted Practice Repositories</span>
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-secondary-container/30 text-secondary font-label-micro text-label-micro font-semibold">
-            <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span>
-            482 Active Questions
-          </span>
+      {/* Top Breadcrumb Navigation */}
+      <div className="flex items-center gap-1.5 font-label-micro text-label-micro text-outline uppercase tracking-wider mb-2">
+        <span className="hover:text-on-surface cursor-pointer" onClick={() => _onNavigate('overview')}>Workspace</span>
+        <span>/</span>
+        <span className="text-primary font-semibold">Question Library</span>
+      </div>
+
+      {/* Simplified, Clear Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-bold text-on-surface tracking-tight leading-tight">
+              Question Library
+            </h1>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
+              {questions.length} questions
+            </span>
+          </div>
+          <p className="text-sm sm:text-base text-on-surface-variant mt-1 font-normal">
+            Practice real interview questions tailored to your target role.
+          </p>
         </div>
 
-        <div className="flex items-center gap-space-sm flex-wrap">
-          <button
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button 
             type="button"
             onClick={() => setShowSavedOnly(!showSavedOnly)}
-            className={`h-[32px] px-3 rounded font-label-md text-label-md transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer ${
-              showSavedOnly ? 'bg-primary text-on-primary' : 'bg-surface-container-lowest text-on-surface hover:bg-surface-container-low'
+            className={`h-9 px-3.5 rounded-lg text-xs sm:text-sm font-medium transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer ${
+              showSavedOnly ? 'bg-primary text-on-primary' : 'bg-surface-container-lowest hover:bg-surface-container text-on-surface border border-outline-variant/60'
             }`}
           >
-            <span className={`material-symbols-outlined text-[15px] ${showSavedOnly ? 'text-on-primary' : 'text-tertiary'}`}>
+            <span className={`material-symbols-outlined text-[16px] ${showSavedOnly ? 'text-on-primary' : 'text-tertiary'}`}>
               bookmark
             </span>
-            <span>Saved Questions</span>
-            <span className={`ml-1 px-1.5 py-0.2 rounded-full font-label-micro text-label-micro ${
-              showSavedOnly ? 'bg-primary-container text-on-primary' : 'bg-surface-container text-on-surface-variant'
-            }`}>
-              {savedCount}
-            </span>
+            <span>Saved ({savedCount})</span>
           </button>
 
-          {/* NVIDIA AI Generate Button */}
-          <button
+          <button 
             type="button"
-            onClick={() => setShowNvidiaModal(true)}
-            className="h-[32px] px-3.5 rounded bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-all shadow-sm font-label-md text-label-md font-medium flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
+            onClick={() => {
+              setGenRole(selectedRole !== 'All Roles' ? selectedRole : (userProfile?.targetRoles[0]?.title || 'Frontend Developer'));
+              setShowNvidiaModal(true);
+            }}
+            className="h-9 px-3.5 rounded-lg bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-all shadow-sm font-medium text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
           >
             <span className="material-symbols-outlined text-[16px]">auto_awesome</span>
-            <span>Generate with NVIDIA AI</span>
+            <span>Generate with AI</span>
           </button>
 
-          <button
+          <button 
             type="button"
             onClick={() => setShowCustomModal(true)}
-            className="h-[32px] px-3.5 rounded bg-inverse-surface text-inverse-on-surface font-label-md text-label-md hover:bg-on-surface transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
+            className="h-9 px-3.5 rounded-lg bg-surface-container-lowest hover:bg-surface-container text-on-surface border border-outline-variant/60 transition-colors shadow-xs font-medium text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[15px] text-inverse-on-surface">add</span>
-            <span>Custom Prompt</span>
+            <span className="material-symbols-outlined text-[16px]">add</span>
+            <span>Add Custom</span>
           </button>
         </div>
       </div>
 
-      {/* Real-time Generation Success Toast */}
+      {/* Success Notification Alert */}
       {genSuccessNotice && (
-        <div className="mb-4 p-3 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-between text-body-sm shadow-sm animate-in fade-in">
+        <div className="mb-4 p-3 rounded-xl bg-secondary-container text-on-secondary-container text-body-sm flex items-center justify-between gap-2 shadow-xs animate-in fade-in">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[18px] text-secondary">verified</span>
+            <span className="material-symbols-outlined text-[20px] text-secondary">check_circle</span>
             <span className="font-medium">{genSuccessNotice}</span>
           </div>
-          <button
-            type="button"
+          <button 
+            type="button" 
             onClick={() => setGenSuccessNotice(null)}
-            className="text-on-secondary-container/70 hover:text-on-secondary-container"
+            className="text-on-secondary-container/70 hover:text-on-secondary-container p-1"
           >
             <span className="material-symbols-outlined text-[16px]">close</span>
           </button>
         </div>
       )}
 
-      {/* Header Banner Area */}
-      <div className="mb-space-lg">
-        <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-1">
-          <div>
-            <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight font-semibold">
-              Question Library
-            </h1>
-            <p className="font-body-md text-body-md text-on-surface-variant mt-1 max-w-2xl">
-              Explore vetted technical, system design, and behavioral questions calibrated to real-world interview loops across top tier tech organizations.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 mt-3 md:mt-0 shrink-0">
-            <div className="px-2.5 py-1 rounded bg-surface-container-lowest shadow-sm flex items-center gap-2">
-              <span className="font-label-micro text-label-micro text-outline uppercase tracking-wider font-semibold">
-                Attempted
-              </span>
-              <span className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                47/482
-              </span>
-            </div>
-            <div className="px-2.5 py-1 rounded bg-surface-container-lowest shadow-sm flex items-center gap-2">
-              <span className="font-label-micro text-label-micro text-outline uppercase tracking-wider font-semibold">
-                Avg Rubric Score
-              </span>
-              <span className="font-headline-sm text-headline-sm text-primary font-semibold">
-                78.4%
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Search & Filter Controls Matrix */}
-      <div className="bg-surface-container-lowest rounded-lg p-space-md shadow-sm mb-space-lg flex flex-col gap-space-sm">
-        {/* Search Bar Row */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-space-sm">
+      {/* Simple Search & Filter Controls */}
+      <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm mb-6 flex flex-col gap-3.5 border border-outline-variant/40">
+        {/* Search Bar & Sort Row */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div className="relative flex-1 flex items-center">
-            <span className="material-symbols-outlined absolute left-3 text-outline pointer-events-none text-[18px]">
-              search
-            </span>
-            <input
-              id="questionSearchInput"
+            <span className="material-symbols-outlined absolute left-3 text-outline pointer-events-none text-[18px]">search</span>
+            <input 
+              id="questionSearchInput" 
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search 450+ questions by title, keyword, company, rubric metric, or tech stack..."
-              className="w-full h-[38px] pl-9 pr-14 rounded bg-surface-container-low font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest transition-all"
+              placeholder="Search questions by title, keyword, or company..."
+              className="w-full h-10 pl-9 pr-9 rounded-lg bg-surface-container-low text-xs sm:text-sm text-on-surface placeholder:text-outline focus:outline-none focus:ring-1 focus:ring-primary focus:bg-surface-container-lowest transition-all"
             />
-            <div className="absolute right-2.5 px-1.5 py-0.5 bg-surface-container rounded text-[10px] font-label-micro text-outline pointer-events-none">
-              ⌘K
-            </div>
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="absolute right-2.5 text-outline hover:text-on-surface p-1 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">close</span>
+              </button>
+            )}
           </div>
 
-          <div className="flex items-center gap-space-xs shrink-0 overflow-x-auto pb-1 md:pb-0">
-            <div className="flex items-center gap-1.5 px-2.5 h-[38px] rounded bg-surface-container-low text-on-surface font-label-md text-label-md shrink-0">
-              <span className="font-label-micro text-label-micro text-outline uppercase font-semibold">Sort:</span>
-              <select className="bg-transparent font-label-md text-label-md text-on-surface focus:outline-none cursor-pointer">
-                <option>Recommended</option>
-                <option>Most Practiced</option>
-                <option>Highest Failure Rate</option>
-                <option>Recently Added</option>
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Sort Control */}
+            <div className="flex items-center gap-1.5 px-3 h-10 rounded-lg bg-surface-container-low text-on-surface text-xs font-medium shrink-0">
+              <span className="text-outline uppercase tracking-wider font-semibold">Sort:</span>
+              <select 
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-transparent text-xs text-on-surface focus:outline-none cursor-pointer font-medium"
+              >
+                <option value="Easiest to Hardest">Easiest to Hardest</option>
+                <option value="Hardest to Easiest">Hardest to Easiest</option>
+                <option value="Recommended">Recommended</option>
+                <option value="Most Practiced">Most Practiced</option>
               </select>
             </div>
 
-            <button 
-              type="button"
-              onClick={() => {
-                setSearch('');
-                setSelectedRole('All Roles');
-                setSelectedCategory('All Types (482)');
-                setSelectedDifficulty('All Levels');
-                setSelectedCompany(null);
-                setShowSavedOnly(false);
-              }}
-              className="h-[38px] px-3 rounded bg-surface-container-low hover:bg-surface-variant text-outline hover:text-on-surface font-label-md text-label-md transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
-              title="Reset Filters"
-            >
-              <span className="material-symbols-outlined text-[16px]">refresh</span>
-              <span>Reset</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Filter Pill Matrix */}
-        <div className="flex flex-col gap-2 pt-1">
-          {/* Target Roles */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
-            <span className="font-label-micro text-label-micro uppercase tracking-wider text-outline w-16 shrink-0 font-semibold">
-              Role
-            </span>
-            <div className="flex items-center gap-1.5 flex-wrap text-label-sm font-label-sm">
-              {['All Roles', 'Frontend Developer', 'Backend Developer', 'Full Stack', 'Distributed Systems', 'Engineering Lead'].map(role => (
-                <button
-                  key={role}
-                  type="button"
-                  onClick={() => setSelectedRole(role)}
-                  className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
-                    selectedRole === role
-                      ? 'bg-on-surface text-surface-container-lowest font-medium'
-                      : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-variant'
-                  }`}
-                >
-                  {role}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Category Modalities */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
-            <span className="font-label-micro text-label-micro uppercase tracking-wider text-outline w-16 shrink-0 font-semibold">
-              Category
-            </span>
-            <div className="flex items-center gap-1.5 flex-wrap text-label-sm font-label-sm">
-              {[
-                { label: 'All Types (482)' },
-                { label: 'Technical Architecture', dot: 'bg-primary-container' },
-                { label: 'STAR Behavioral', dot: 'bg-secondary' },
-                { label: 'System Design', dot: 'bg-tertiary' },
-                { label: 'HR & Culture Fit' }
-              ].map(cat => (
-                <button
-                  key={cat.label}
-                  type="button"
-                  onClick={() => setSelectedCategory(cat.label)}
-                  className={`px-2.5 py-1 rounded-full transition-all flex items-center gap-1 cursor-pointer ${
-                    selectedCategory === cat.label
-                      ? 'bg-surface-container-high text-on-surface font-semibold'
-                      : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-variant'
-                  }`}
-                >
-                  {cat.dot && <span className={`w-1.5 h-1.5 rounded-full ${cat.dot}`}></span>}
-                  {cat.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Difficulty & Company Tags */}
-          <div className="flex items-center justify-between flex-wrap gap-2 pt-0.5">
-            <div className="flex items-center gap-2 overflow-x-auto">
-              <span className="font-label-micro text-label-micro uppercase tracking-wider text-outline w-16 shrink-0 font-semibold">
-                Difficulty
-              </span>
-              <div className="flex items-center gap-1.5 text-label-sm font-label-sm">
-                {[
-                  { name: 'All Levels', style: 'bg-surface-container-low text-on-surface-variant hover:bg-surface-variant' },
-                  { name: 'Easy', style: 'bg-secondary-container/20 text-secondary hover:bg-secondary-container/40' },
-                  { name: 'Medium (260)', style: 'bg-tertiary-fixed/30 text-tertiary hover:bg-tertiary-fixed/50 font-medium' },
-                  { name: 'Hard (134)', style: 'bg-error-container/30 text-error hover:bg-error-container/50' }
-                ].map(d => (
-                  <button
-                    key={d.name}
-                    type="button"
-                    onClick={() => setSelectedDifficulty(d.name)}
-                    className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${d.style} ${selectedDifficulty === d.name ? 'ring-1 ring-on-surface' : ''}`}
-                  >
-                    {d.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Target Company Chips */}
-            <div className="flex items-center gap-1.5 text-label-micro font-label-micro text-outline">
-              <span className="font-semibold">Target Loop:</span>
-              {['Meta', 'Google', 'Stripe', 'Amazon', 'Startups'].map(co => (
-                <button
-                  key={co}
-                  type="button"
-                  onClick={() => setSelectedCompany(selectedCompany === co ? null : co)}
-                  className={`px-2 py-0.5 rounded transition-colors cursor-pointer ${
-                    selectedCompany === co
-                      ? 'bg-primary text-on-primary font-semibold'
-                      : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface'
-                  }`}
-                >
-                  {co}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Primary Operations Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
-        {/* LEFT MAIN STREAM: Question Repository Feed (8 Columns) */}
-        <div className="lg:col-span-8 flex flex-col gap-space-sm">
-          <div className="flex items-center justify-between px-1 mb-1 flex-wrap gap-2">
-            <span className="font-label-micro text-label-micro uppercase tracking-wider text-outline font-semibold">
-              Showing {filteredQuestions.length} Selected Prompts • Filtered by All Roles &amp; Modalities
-            </span>
-            <div className="flex items-center gap-3 text-label-micro font-label-micro text-outline">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-secondary"></span> 80%+ Passed</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-tertiary"></span> 60-79% Review</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-surface-variant"></span> Unattempted</span>
-            </div>
-          </div>
-
-          {filteredQuestions.length === 0 ? (
-            <div className="bg-surface-container-lowest rounded-lg p-8 text-center flex flex-col items-center justify-center gap-2">
-              <span className="material-symbols-outlined text-[32px] text-outline">search_off</span>
-              <p className="font-headline-sm text-headline-sm text-on-surface">No questions match your current filters</p>
-              <button
+            {(search || selectedRole !== 'All Roles' || (selectedCategory !== 'All Topics' && selectedCategory !== 'All Types (482)' && selectedCategory !== 'All Types') || selectedDifficulty !== 'All Levels' || selectedCompany || showSavedOnly) && (
+              <button 
                 type="button"
                 onClick={() => {
                   setSearch('');
                   setSelectedRole('All Roles');
-                  setSelectedCategory('All Types (482)');
+                  setSelectedCategory('All Topics');
                   setSelectedDifficulty('All Levels');
                   setSelectedCompany(null);
+                  setShowSavedOnly(false);
+                  setSortBy('Easiest to Hardest');
                 }}
-                className="mt-2 text-primary font-label-md text-label-md hover:underline"
+                className="h-10 px-3 rounded-lg bg-surface-container-low hover:bg-surface-variant text-outline hover:text-on-surface text-xs transition-colors flex items-center gap-1 shrink-0 cursor-pointer font-medium" 
+                title="Reset Filters"
               >
-                Reset search &amp; filters
+                <span className="material-symbols-outlined text-[15px]">refresh</span>
+                <span>Reset</span>
               </button>
+            )}
+          </div>
+        </div>
+
+        {/* Filter Rows */}
+        <div className="flex flex-col gap-2.5 pt-1">
+          {/* Roles Filter */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <span className="text-xs font-semibold text-outline uppercase tracking-wider w-16 shrink-0">Role</span>
+            <div className="flex items-center gap-1.5 flex-wrap text-xs">
+              {displayedRolePills.map(role => {
+                const isSelected = selectedRole === role;
+                return (
+                  <button 
+                    key={role}
+                    type="button"
+                    onClick={() => setSelectedRole(role)}
+                    className={`px-3 py-1 rounded-full transition-all cursor-pointer font-medium ${
+                      isSelected 
+                        ? 'bg-on-surface text-surface-container-lowest shadow-xs' 
+                        : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+                    }`}
+                  >
+                    {role}
+                  </button>
+                );
+              })}
+
+              {/* Other Roles Dropdown Selector */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowOtherRolesDropdown(!showOtherRolesDropdown)}
+                  className="px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-variant transition-all cursor-pointer flex items-center gap-1 text-xs"
+                >
+                  <span className="material-symbols-outlined text-[14px]">tune</span>
+                  <span>More Roles</span>
+                </button>
+
+                {showOtherRolesDropdown && (
+                  <div className="absolute left-0 mt-1.5 w-60 bg-surface-container-lowest rounded-xl shadow-xl border border-outline-variant p-2 z-30 flex flex-col gap-1 max-h-60 overflow-y-auto animate-in fade-in">
+                    <span className="font-label-micro text-label-micro text-outline uppercase px-2 py-1">
+                      Select Role:
+                    </span>
+                    {ALL_POSSIBLE_ROLES.map(r => (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => {
+                          setSelectedRole(r);
+                          setShowOtherRolesDropdown(false);
+                        }}
+                        className={`text-left px-2.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
+                          selectedRole === r ? 'bg-primary text-on-primary font-medium' : 'hover:bg-surface-container-low text-on-surface'
+                        }`}
+                      >
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Topics Filter */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <span className="text-xs font-semibold text-outline uppercase tracking-wider w-16 shrink-0">Topic</span>
+            <div className="flex items-center gap-1.5 flex-wrap text-xs">
+              {[
+                { label: 'All Topics' },
+                { label: 'Technical Architecture', dot: 'bg-primary' },
+                { label: 'STAR Behavioral', dot: 'bg-secondary' },
+                { label: 'System Design', dot: 'bg-tertiary' },
+                { label: 'HR & Culture Fit' }
+              ].map(cat => {
+                const isSelected = selectedCategory === cat.label || (cat.label === 'All Topics' && (selectedCategory === 'All Topics' || selectedCategory === 'All Types' || selectedCategory === 'All Types (482)'));
+                return (
+                  <button 
+                    key={cat.label}
+                    type="button"
+                    onClick={() => setSelectedCategory(cat.label)}
+                    className={`px-3 py-1 rounded-full transition-all flex items-center gap-1.5 cursor-pointer font-medium ${
+                      isSelected 
+                        ? 'bg-primary text-on-primary shadow-xs' 
+                        : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+                    }`}
+                  >
+                    {cat.dot && <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : cat.dot}`}></span>}
+                    <span>{cat.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Difficulty Filter */}
+          <div className="flex items-center gap-2 overflow-x-auto">
+            <span className="text-xs font-semibold text-outline uppercase tracking-wider w-16 shrink-0">Difficulty</span>
+            <div className="flex items-center gap-1.5 text-xs">
+              {[
+                { label: 'All Levels' },
+                { label: 'Easy' },
+                { label: 'Medium' },
+                { label: 'Hard' }
+              ].map(diff => {
+                const isSelected = selectedDifficulty === diff.label;
+                return (
+                  <button 
+                    key={diff.label}
+                    type="button"
+                    onClick={() => setSelectedDifficulty(diff.label)}
+                    className={`px-3 py-1 rounded-full transition-all cursor-pointer font-medium ${
+                      isSelected 
+                        ? 'bg-on-surface text-surface-container-lowest font-semibold shadow-xs' 
+                        : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+                    }`}
+                  >
+                    {diff.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Questions Stream (Full Width, Clean Layout) */}
+      <div className="w-full flex flex-col gap-3">
+        {/* Results Summary Header */}
+        <div className="flex items-center justify-between px-1 mb-1">
+          <span className="text-xs sm:text-sm text-on-surface-variant font-medium">
+            Showing <span className="text-on-surface font-semibold">{filteredAndSortedQuestions.length}</span> questions
+          </span>
+          <div className="flex items-center gap-3 text-xs text-on-surface-variant">
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-secondary"></span> Passed</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-tertiary"></span> Review</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-outline/40"></span> Unattempted</span>
+          </div>
+        </div>
+
+          {filteredAndSortedQuestions.length === 0 ? (
+            <div className="bg-surface-container-lowest rounded-lg p-10 text-center flex flex-col items-center justify-center gap-3 shadow-sm">
+              <span className="material-symbols-outlined text-[36px] text-outline">search_off</span>
+              <p className="font-headline-sm text-headline-sm text-on-surface font-semibold">No questions match your current filters</p>
+              <p className="font-body-sm text-body-sm text-on-surface-variant max-w-sm">
+                Clear your keyword search or filter selection to explore all vetted practice questions.
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearch('');
+                    setSelectedRole('All Roles');
+                    setSelectedCategory('All Types (482)');
+                    setSelectedDifficulty('All Levels');
+                    setSelectedCompany(null);
+                  }}
+                  className="px-4 py-2 rounded-lg bg-primary text-on-primary text-xs font-semibold hover:bg-on-primary-fixed-variant transition-colors cursor-pointer"
+                >
+                  Reset Filters &amp; View All
+                </button>
+              </div>
             </div>
           ) : (
-            filteredQuestions.map((q) => (
+            paginatedQuestions.map((q) => (
               <div 
                 key={q.id}
                 className="group bg-surface-container-lowest rounded-lg p-space-md shadow-sm hover:shadow-md transition-all"
@@ -448,7 +567,7 @@ export const QuestionLibraryView: React.FC<QuestionLibraryViewProps> = ({
                     {/* Title / Prompt */}
                     <h2 
                       onClick={() => onPracticeQuestion(q)}
-                      className="font-headline-sm text-headline-sm text-on-surface group-hover:text-primary transition-colors cursor-pointer font-semibold"
+                      className="font-headline-sm text-headline-sm text-on-surface group-hover:text-primary transition-colors cursor-pointer"
                     >
                       {q.title}
                     </h2>
@@ -456,57 +575,51 @@ export const QuestionLibraryView: React.FC<QuestionLibraryViewProps> = ({
                       {q.description}
                     </p>
 
-                    {/* Company benchmark & Status */}
+                    {/* Company benchmark & Personal Practice Status */}
                     <div className="flex items-center justify-between pt-2 mt-1 flex-wrap gap-2">
                       <div className="flex items-center gap-2">
                         <span className="material-symbols-outlined text-outline text-[15px]">apartment</span>
-                        <span className="font-label-micro text-label-micro text-outline font-semibold">Frequently asked at:</span>
-                        <span className="font-label-micro text-label-micro text-on-surface font-medium">
-                          {q.companies.join(', ')}
-                        </span>
+                        <span className="font-label-micro text-label-micro text-outline">Frequently asked at:</span>
+                        <span className="font-label-micro text-label-micro text-on-surface font-medium">{q.companies.join(', ')}</span>
                       </div>
 
-                      {q.statusLabel && (
-                        <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-micro text-label-micro font-medium ${
-                          q.status === 'passed' ? 'bg-secondary-container/20 text-secondary' :
-                          q.status === 'review' ? 'bg-error-container/20 text-error' : 'bg-surface-container text-on-surface-variant'
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${
-                            q.status === 'passed' ? 'bg-secondary' :
-                            q.status === 'review' ? 'bg-error' : 'bg-outline'
-                          }`}></span>
-                          {q.statusLabel}
-                        </div>
-                      )}
+                      {/* Status Tag */}
+                      <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-micro text-label-micro font-medium ${
+                        q.status === 'passed' ? 'bg-secondary-container/20 text-secondary' :
+                        q.status === 'review' ? 'bg-error-container/20 text-error' :
+                        'bg-surface-container text-on-surface-variant'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          q.status === 'passed' ? 'bg-secondary' :
+                          q.status === 'review' ? 'bg-error' : 'bg-outline'
+                        }`}></span>
+                        <span>{q.statusLabel || (q.status === 'unattempted' ? 'Not attempted yet' : q.status)}</span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Actions Column */}
                   <div className="flex flex-col items-end gap-2 shrink-0">
-                    <button
+                    <button 
                       type="button"
                       onClick={(e) => toggleBookmark(q.id, e)}
-                      className="p-1.5 rounded transition-colors cursor-pointer"
-                      title={q.isBookmarked ? "Remove Bookmark" : "Bookmark Question"}
+                      className="p-1.5 rounded hover:bg-surface-container-low transition-colors cursor-pointer" 
+                      title={q.isBookmarked ? "Remove Bookmark" : "Bookmark"}
                     >
-                      <span className={`material-symbols-outlined text-[18px] ${q.isBookmarked ? 'text-tertiary' : 'text-outline hover:text-on-surface'}`}>
-                        {q.isBookmarked ? 'bookmark' : 'bookmark_border'}
+                      <span 
+                        className={`material-symbols-outlined text-[18px] ${q.isBookmarked ? 'text-tertiary' : 'text-outline hover:text-on-surface'}`}
+                        style={q.isBookmarked ? { fontVariationSettings: "'FILL' 1" } : {}}
+                      >
+                        {q.isBookmarked ? 'star' : 'star'}
                       </span>
                     </button>
-
-                    <button
+                    <button 
                       type="button"
                       onClick={() => onPracticeQuestion(q)}
-                      className={`h-[30px] px-3 rounded font-label-md text-label-md transition-colors flex items-center gap-1 shadow-sm mt-3 cursor-pointer ${
-                        q.status === 'review'
-                          ? 'bg-surface-container-high hover:bg-inverse-surface hover:text-inverse-on-surface text-on-surface'
-                          : 'bg-primary text-on-primary hover:bg-primary-container'
-                      }`}
+                      className="h-[30px] px-3 rounded bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container transition-colors flex items-center gap-1 shadow-sm mt-3 cursor-pointer"
                     >
-                      <span>{q.status === 'review' ? 'Retry Session' : 'Practice'}</span>
-                      <span className="material-symbols-outlined text-[15px]">
-                        {q.status === 'review' ? 'replay' : 'arrow_forward'}
-                      </span>
+                      <span>Practice</span>
+                      <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
                     </button>
                   </div>
                 </div>
@@ -514,362 +627,50 @@ export const QuestionLibraryView: React.FC<QuestionLibraryViewProps> = ({
             ))
           )}
 
-          {/* Pagination */}
-          <div className="flex items-center justify-between p-space-md bg-surface-container-lowest rounded-lg shadow-sm mt-space-xs flex-wrap gap-2">
+          {/* Pagination / Summary Bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between p-space-md bg-surface-container-lowest rounded-lg shadow-sm mt-space-xs gap-3">
             <span className="font-body-sm text-body-sm text-outline">
-              Showing 1–{filteredQuestions.length} of 482 matching loop questions
+              Showing {totalQuestions === 0 ? 0 : (validCurrentPage - 1) * pageSize + 1}–{Math.min(validCurrentPage * pageSize, totalQuestions)} of {totalQuestions} matching loop questions
             </span>
             <div className="flex items-center gap-1 font-label-md text-label-md">
-              <button disabled className="px-2.5 py-1 rounded bg-surface-container-low text-on-surface-variant disabled:opacity-40">
+              <button 
+                type="button"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={validCurrentPage <= 1}
+                className="px-2.5 py-1 rounded bg-surface-container-low text-on-surface-variant hover:bg-surface-variant transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
                 Previous
               </button>
-              <span className="px-2.5 py-1 rounded bg-primary text-on-primary font-medium">1</span>
-              <button className="px-2.5 py-1 rounded hover:bg-surface-container-low text-on-surface transition-colors">2</button>
-              <button className="px-2.5 py-1 rounded hover:bg-surface-container-low text-on-surface transition-colors">3</button>
-              <span className="px-1 text-outline">...</span>
-              <button className="px-2.5 py-1 rounded hover:bg-surface-container-low text-on-surface transition-colors">69</button>
-              <button className="px-2.5 py-1 rounded bg-surface-container-low text-on-surface-variant hover:bg-surface-variant transition-colors">
+              
+              {/* Dynamic Page Buttons */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                <button
+                  key={pageNum}
+                  type="button"
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`px-2.5 py-1 rounded transition-colors cursor-pointer font-medium ${
+                    validCurrentPage === pageNum
+                      ? 'bg-primary text-on-primary shadow-xs'
+                      : 'hover:bg-surface-container-low text-on-surface'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+
+              <button 
+                type="button"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={validCurrentPage >= totalPages}
+                className="px-2.5 py-1 rounded bg-surface-container-low text-on-surface-variant hover:bg-surface-variant transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
                 Next
               </button>
             </div>
           </div>
         </div>
 
-        {/* RIGHT INTELLIGENCE SIDEBAR (4 Columns) */}
-        <div className="lg:col-span-4 flex flex-col gap-space-md">
-          {/* Module 1: Curated Collections & Mastery Roadmaps */}
-          <div className="bg-surface-container-lowest rounded-lg p-space-md shadow-sm">
-            <div className="flex items-center justify-between pb-space-sm mb-space-sm border-b border-surface-variant">
-              <div className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-primary text-[17px]">collections_bookmark</span>
-                <span className="font-label-micro text-label-micro uppercase tracking-wider text-outline font-semibold">
-                  Curated Roadmaps
-                </span>
-              </div>
-              <button type="button" onClick={() => onNavigate('practice-plan')} className="font-label-sm text-label-sm text-primary hover:underline">
-                View all (8)
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-space-md">
-              <div className="p-2.5 rounded bg-surface-container-low hover:bg-surface-variant/70 transition-colors cursor-pointer">
-                <div className="flex items-start justify-between gap-2">
-                  <span className="font-label-md text-label-md text-on-surface font-semibold">FAANG L5 Frontend Readiness Pack</span>
-                  <span className="font-label-micro text-label-micro text-primary font-medium shrink-0">50%</span>
-                </div>
-                <p className="font-body-sm text-body-sm text-outline mt-0.5">Core DOM, Virtual DOM, CSS layout algorithms &amp; web workers.</p>
-                <div className="w-full h-1.5 rounded-full bg-surface-container-high mt-2 overflow-hidden">
-                  <div className="h-full bg-primary rounded-full" style={{ width: '50%' }}></div>
-                </div>
-                <div className="flex items-center justify-between text-[11px] font-label-micro text-outline mt-1.5">
-                  <span>12 of 24 completed</span>
-                  <span className="text-secondary font-medium">Avg Score 81%</span>
-                </div>
-              </div>
-
-              <div className="p-2.5 rounded bg-surface-container-low hover:bg-surface-variant/70 transition-colors cursor-pointer">
-                <div className="flex items-start justify-between gap-2">
-                  <span className="font-label-md text-label-md text-on-surface font-semibold">STAR Behavioral: Leadership &amp; Conflict</span>
-                  <span className="font-label-micro text-label-micro text-secondary font-medium shrink-0">80%</span>
-                </div>
-                <p className="font-body-sm text-body-sm text-outline mt-0.5">Disagreements, cross-functional roadblocks, and ambiguity.</p>
-                <div className="w-full h-1.5 rounded-full bg-surface-container-high mt-2 overflow-hidden">
-                  <div className="h-full bg-secondary rounded-full" style={{ width: '80%' }}></div>
-                </div>
-                <div className="flex items-center justify-between text-[11px] font-label-micro text-outline mt-1.5">
-                  <span>8 of 10 completed</span>
-                  <span className="text-secondary font-medium">Avg Score 86%</span>
-                </div>
-              </div>
-
-              <div className="p-2.5 rounded bg-surface-container-low hover:bg-surface-variant/70 transition-colors cursor-pointer">
-                <div className="flex items-start justify-between gap-2">
-                  <span className="font-label-md text-label-md text-on-surface font-semibold">System Architecture Core Essentials</span>
-                  <span className="font-label-micro text-label-micro text-tertiary font-medium shrink-0">26%</span>
-                </div>
-                <p className="font-body-sm text-body-sm text-outline mt-0.5">CAP theorem, write buffers, distributed hashing &amp; raft consensus.</p>
-                <div className="w-full h-1.5 rounded-full bg-surface-container-high mt-2 overflow-hidden">
-                  <div className="h-full bg-tertiary rounded-full" style={{ width: '26%' }}></div>
-                </div>
-                <div className="flex items-center justify-between text-[11px] font-label-micro text-outline mt-1.5">
-                  <span>4 of 15 completed</span>
-                  <span className="text-tertiary font-medium">Avg Score 68%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Module 2: AI Daily Recommended Calibration */}
-          <div className="bg-surface-container-lowest rounded-lg p-space-md shadow-sm relative overflow-hidden">
-            <div className="flex items-center justify-between pb-2 mb-2">
-              <div className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-primary-container text-[17px]">auto_awesome</span>
-                <span className="font-label-micro text-label-micro uppercase tracking-wider text-outline font-semibold">
-                  Targeted Weak Spot Drill
-                </span>
-              </div>
-              <span className="px-1.5 py-0.5 rounded bg-primary-fixed/40 text-on-primary-fixed-variant font-label-micro text-label-micro font-medium">
-                AI Calibrated
-              </span>
-            </div>
-
-            <p className="font-body-sm text-body-sm text-on-surface-variant mb-space-sm">
-              Based on Alex's last 3 sessions, your rubric weakest links are <span className="text-on-surface font-medium underline decoration-error/50">Quantifiable Metrics</span> and <span className="text-on-surface font-medium underline decoration-tertiary/50">Trade-off Articulation</span>:
-            </p>
-
-            <div className="flex flex-col gap-2">
-              <div 
-                onClick={() => onPracticeQuestion({
-                  id: 'weak-1',
-                  title: 'JS Event Loop Microtasks vs Macrotasks',
-                  category: 'JavaScript Runtime',
-                  difficulty: 'Medium',
-                  roleTarget: 'Frontend Developer',
-                  estimatedTime: '3 mins response',
-                  description: 'Explain call stack execution, Promise microtask queues, process.nextTick vs setImmediate, and render phase boundaries.',
-                  companies: ['Google', 'Meta'],
-                  status: 'unattempted',
-                  isBookmarked: false
-                })}
-                className="p-2 rounded bg-surface-container-low hover:bg-surface-container transition-colors flex items-center justify-between gap-2 group cursor-pointer"
-              >
-                <div className="min-w-0">
-                  <div className="font-label-md text-label-md text-on-surface font-medium truncate group-hover:text-primary">
-                    JS Event Loop Microtasks vs Macrotasks
-                  </div>
-                  <div className="font-label-micro text-label-micro text-outline">Focus: Precise execution chronology</div>
-                </div>
-                <span className="material-symbols-outlined text-[16px] text-outline group-hover:text-primary group-hover:translate-x-0.5 transition-all">chevron_right</span>
-              </div>
-
-              <div 
-                onClick={() => onPracticeQuestion({
-                  id: 'weak-2',
-                  title: 'Handling Unrealistic Launch Deadlines (STAR)',
-                  category: 'STAR Behavioral',
-                  difficulty: 'Hard',
-                  roleTarget: 'Leadership',
-                  estimatedTime: '4 mins response',
-                  description: 'Cite concrete percentage deliverables, scope trade-offs, rollback SLAs, and executive alignment negotiations.',
-                  companies: ['Amazon', 'Apple'],
-                  status: 'unattempted',
-                  isBookmarked: false
-                })}
-                className="p-2 rounded bg-surface-container-low hover:bg-surface-container transition-colors flex items-center justify-between gap-2 group cursor-pointer"
-              >
-                <div className="min-w-0">
-                  <div className="font-label-md text-label-md text-on-surface font-medium truncate group-hover:text-primary">
-                    Handling Unrealistic Launch Deadlines (STAR)
-                  </div>
-                  <div className="font-label-micro text-label-micro text-outline">Focus: Cite concrete percentage deliverables</div>
-                </div>
-                <span className="material-symbols-outlined text-[16px] text-outline group-hover:text-primary group-hover:translate-x-0.5 transition-all">chevron_right</span>
-              </div>
-
-              <div 
-                onClick={() => onPracticeQuestion({
-                  id: 'weak-3',
-                  title: 'Designing Cache Invalidation with Redis & CDNs',
-                  category: 'System Architecture',
-                  difficulty: 'Medium',
-                  roleTarget: 'Full Stack',
-                  estimatedTime: '4 mins response',
-                  description: 'Thundering herd mitigation, stale-while-revalidate headers, Redis cluster keyspaces, and purge invalidations.',
-                  companies: ['Cloudflare', 'Fastly'],
-                  status: 'unattempted',
-                  isBookmarked: false
-                })}
-                className="p-2 rounded bg-surface-container-low hover:bg-surface-container transition-colors flex items-center justify-between gap-2 group cursor-pointer"
-              >
-                <div className="min-w-0">
-                  <div className="font-label-md text-label-md text-on-surface font-medium truncate group-hover:text-primary">
-                    Designing Cache Invalidation with Redis &amp; CDNs
-                  </div>
-                  <div className="font-label-micro text-label-micro text-outline">Focus: Thundering herd &amp; stale-while-revalidate</div>
-                </div>
-                <span className="material-symbols-outlined text-[16px] text-outline group-hover:text-primary group-hover:translate-x-0.5 transition-all">chevron_right</span>
-              </div>
-            </div>
-
-            <button 
-              type="button"
-              onClick={() => onNavigate('mock-interview-workspace')}
-              className="w-full h-[32px] mt-space-md rounded bg-surface-container-high hover:bg-inverse-surface hover:text-inverse-on-surface text-on-surface font-label-md text-label-md transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[15px]">play_circle</span>
-              <span>Start 15-Minute Weak Spot Sprint</span>
-            </button>
-          </div>
-
-          {/* Module 3: Community Benchmark Telemetry */}
-          <div className="bg-surface-container-lowest rounded-lg p-space-md shadow-sm">
-            <div className="flex items-center justify-between pb-2 mb-2">
-              <div className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-outline text-[17px]">query_stats</span>
-                <span className="font-label-micro text-label-micro uppercase tracking-wider text-outline font-semibold">
-                  Community Benchmark Telemetry
-                </span>
-              </div>
-              <span className="text-outline text-label-micro font-label-micro">Past 7 days</span>
-            </div>
-            <p className="font-body-sm text-body-sm text-outline mb-space-sm">
-              Questions with highest failure rates (&lt;65% score) across 1,840 simulated loops:
-            </p>
-
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between p-2 rounded bg-surface-container-low text-body-sm">
-                <div className="flex flex-col min-w-0 pr-2">
-                  <span className="font-label-md text-label-md text-on-surface font-medium truncate">
-                    TCP Head-of-line Blocking vs QUIC/HTTP3
-                  </span>
-                  <span className="font-label-micro text-label-micro text-outline">Systems • 412 attempts</span>
-                </div>
-                <div className="flex flex-col items-end shrink-0">
-                  <span className="font-headline-sm text-headline-sm text-error font-semibold">32%</span>
-                  <span className="font-label-micro text-label-micro text-error font-medium">Pass rate</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-2 rounded bg-surface-container-low text-body-sm">
-                <div className="flex flex-col min-w-0 pr-2">
-                  <span className="font-label-md text-label-md text-on-surface font-medium truncate">
-                    Raft Leader Election under Split-Brain
-                  </span>
-                  <span className="font-label-micro text-label-micro text-outline">Distributed • 620 attempts</span>
-                </div>
-                <div className="flex flex-col items-end shrink-0">
-                  <span className="font-headline-sm text-headline-sm text-error font-semibold">38%</span>
-                  <span className="font-label-micro text-label-micro text-error font-medium">Pass rate</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-2 rounded bg-surface-container-low text-body-sm">
-                <div className="flex flex-col min-w-0 pr-2">
-                  <span className="font-label-md text-label-md text-on-surface font-medium truncate">
-                    Memory Retainers in React 18 Concurrency
-                  </span>
-                  <span className="font-label-micro text-label-micro text-outline">Frontend • 890 attempts</span>
-                </div>
-                <div className="flex flex-col items-end shrink-0">
-                  <span className="font-headline-sm text-headline-sm text-tertiary font-semibold">44%</span>
-                  <span className="font-label-micro text-label-micro text-tertiary font-medium">Pass rate</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Micro Heatmap Grid */}
-            <div className="mt-space-md pt-space-sm bg-surface-container-low rounded p-2.5">
-              <div className="flex items-center justify-between text-label-micro font-label-micro text-outline mb-1.5 font-medium">
-                <span>Overall Catalog Readiness</span>
-                <span className="text-on-surface font-semibold">Alex: 47 / 482 covered</span>
-              </div>
-              <div className="grid grid-cols-12 gap-1 py-1">
-                {[...Array(16)].map((_, i) => (
-                  <span key={i} className={`h-2 rounded-sm ${i === 6 ? 'bg-error' : i % 3 === 0 ? 'bg-tertiary' : 'bg-secondary'}`} />
-                ))}
-                {[...Array(8)].map((_, i) => (
-                  <span key={`empty-${i}`} className="h-2 rounded-sm bg-surface-container-high" />
-                ))}
-              </div>
-              <div className="flex items-center justify-between text-[10px] font-label-micro text-outline mt-1">
-                <span>Progress: 9.7% of core syllabus</span>
-                <button type="button" onClick={() => onNavigate('my-progress')} className="text-primary font-medium hover:underline cursor-pointer">
-                  Full Analytics →
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Custom Prompt Modal */}
-      {showCustomModal && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-sm animate-in fade-in duration-150"
-          onClick={(e) => { if (e.target === e.currentTarget) setShowCustomModal(false); }}
-        >
-          <div className="bg-surface-container-lowest rounded-2xl shadow-xl max-w-lg w-full p-space-lg flex flex-col gap-space-md">
-            <div className="flex items-center justify-between border-b border-surface-variant pb-2">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-[20px]">add_task</span>
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                  Create Custom Interview Prompt
-                </h3>
-              </div>
-              <button 
-                type="button"
-                onClick={() => setShowCustomModal(false)}
-                className="text-outline hover:text-on-surface transition-colors cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[18px]">close</span>
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateCustom} className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
-                <label className="font-label-sm text-label-sm text-on-surface font-medium">Question or Technical Scenario</label>
-                <textarea
-                  rows={3}
-                  required
-                  value={customTitle}
-                  onChange={(e) => setCustomTitle(e.target.value)}
-                  placeholder="e.g., How would you implement distributed tracing across microservices with OpenTelemetry?"
-                  className="w-full p-2.5 rounded-lg bg-surface-container-low font-body-sm text-body-sm text-on-surface border border-surface-variant focus:outline-none focus:border-primary resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div className="flex flex-col gap-1">
-                  <label className="font-label-sm text-label-sm text-on-surface font-medium">Target Role</label>
-                  <select
-                    value={customRole}
-                    onChange={(e) => setCustomRole(e.target.value)}
-                    className="h-9 px-2 rounded-lg bg-surface-container-low font-body-sm text-body-sm text-on-surface border border-surface-variant focus:outline-none"
-                  >
-                    <option>Frontend Developer</option>
-                    <option>Backend Developer</option>
-                    <option>Full Stack Developer</option>
-                    <option>Distributed Systems</option>
-                    <option>Engineering Manager</option>
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <label className="font-label-sm text-label-sm text-on-surface font-medium">Category</label>
-                  <select
-                    value={customCategory}
-                    onChange={(e) => setCustomCategory(e.target.value)}
-                    className="h-9 px-2 rounded-lg bg-surface-container-low font-body-sm text-body-sm text-on-surface border border-surface-variant focus:outline-none"
-                  >
-                    <option>Technical Architecture</option>
-                    <option>STAR Behavioral</option>
-                    <option>System Design</option>
-                    <option>Coding Algorithms</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-surface-variant">
-                <button
-                  type="button"
-                  onClick={() => setShowCustomModal(false)}
-                  className="px-3.5 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md font-semibold transition-colors shadow-sm"
-                >
-                  Add &amp; Practice
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* NVIDIA AI Question Generation Modal */}
+      {/* NVIDIA AI Generation Modal */}
       {showNvidiaModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
           <div className="bg-surface-container-lowest rounded-2xl max-w-lg w-full p-6 shadow-xl border border-outline-variant flex flex-col gap-4 text-on-surface">
@@ -880,10 +681,10 @@ export const QuestionLibraryView: React.FC<QuestionLibraryViewProps> = ({
                 </div>
                 <div>
                   <h3 className="font-headline-sm text-headline-sm font-semibold text-on-surface">
-                    Generate Interview Questions
+                    Synthesize AI Interview Questions
                   </h3>
                   <span className="font-label-micro text-label-micro text-secondary font-medium">
-                    Powered by NVIDIA Nemotron 3.5 AI Engine
+                    Powered by NVIDIA Nemotron 3.5 AI Engine • Ranked Easy to Hard
                   </span>
                 </div>
               </div>
@@ -904,18 +705,25 @@ export const QuestionLibraryView: React.FC<QuestionLibraryViewProps> = ({
               </div>
             )}
 
-            <form onSubmit={handleGenerateNvidiaQuestions} className="flex flex-col gap-4">
+            <form onSubmit={(e) => handleGenerateNvidiaQuestions(e)} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="font-label-sm text-label-sm font-medium text-on-surface">Target Track / Role</label>
+                <label className="font-label-sm text-label-sm font-medium text-on-surface">
+                  Target Role / Track (From your resume)
+                </label>
                 <div className="flex flex-wrap gap-1.5 mb-1">
                   {userProfile?.targetRoles?.map(tr => (
                     <button
                       key={tr.title}
                       type="button"
                       onClick={() => setGenRole(tr.title)}
-                      className={`px-2 py-0.5 rounded text-xs transition-colors cursor-pointer ${genRole === tr.title ? 'bg-primary text-on-primary font-medium' : 'bg-surface-container text-on-surface-variant'}`}
+                      className={`px-2.5 py-1 rounded-full text-xs transition-colors cursor-pointer flex items-center gap-1 ${
+                        genRole === tr.title 
+                          ? 'bg-primary text-on-primary font-medium shadow-xs' 
+                          : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
+                      }`}
                     >
-                      {tr.title} ({tr.match}%)
+                      <span>{tr.title}</span>
+                      <span className="text-[10px] opacity-80">({tr.match}%)</span>
                     </button>
                   ))}
                 </div>
@@ -923,14 +731,14 @@ export const QuestionLibraryView: React.FC<QuestionLibraryViewProps> = ({
                   type="text"
                   value={genRole}
                   onChange={(e) => setGenRole(e.target.value)}
-                  placeholder="e.g., Frontend Lead or Distributed Backend"
+                  placeholder="e.g., Frontend Lead or Backend Developer"
                   className="w-full p-2.5 rounded-lg bg-surface-container-low font-body-sm text-body-sm text-on-surface border border-outline-variant focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
-                  <label className="font-label-sm text-label-sm font-medium text-on-surface">Question Category</label>
+                  <label className="font-label-sm text-label-sm font-medium text-on-surface">Category</label>
                   <select
                     value={genCategory}
                     onChange={(e) => setGenCategory(e.target.value)}
@@ -941,20 +749,20 @@ export const QuestionLibraryView: React.FC<QuestionLibraryViewProps> = ({
                     <option>System Design</option>
                     <option>React Internals</option>
                     <option>Database Internals</option>
-                    <option>Algorithms &amp; Data Structures</option>
                   </select>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="font-label-sm text-label-sm font-medium text-on-surface">Difficulty</label>
+                  <label className="font-label-sm text-label-sm font-medium text-on-surface">Progression</label>
                   <select
                     value={genDifficulty}
                     onChange={(e) => setGenDifficulty(e.target.value)}
                     className="h-10 px-2.5 rounded-lg bg-surface-container-low font-body-sm text-body-sm text-on-surface border border-outline-variant focus:outline-none"
                   >
-                    <option>Easy</option>
-                    <option>Medium</option>
-                    <option>Hard</option>
+                    <option value="All Levels (Easy to Hard)">Easy → Hard Progression</option>
+                    <option value="Easy">Easy Only</option>
+                    <option value="Medium">Medium Only</option>
+                    <option value="Hard">Hard Only</option>
                   </select>
                 </div>
               </div>
@@ -965,7 +773,7 @@ export const QuestionLibraryView: React.FC<QuestionLibraryViewProps> = ({
                   <span className="font-bold text-primary">{genCount} questions</span>
                 </label>
                 <div className="grid grid-cols-4 gap-2">
-                  {[1, 2, 3, 5].map((cnt) => (
+                  {[3, 4, 5, 6].map((cnt) => (
                     <button
                       key={cnt}
                       type="button"
@@ -976,16 +784,18 @@ export const QuestionLibraryView: React.FC<QuestionLibraryViewProps> = ({
                           : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
                       }`}
                     >
-                      {cnt} {cnt === 1 ? 'Prompt' : 'Prompts'}
+                      {cnt} Prompts
                     </button>
                   ))}
                 </div>
               </div>
 
               {userProfile && (
-                <div className="p-3 rounded-lg bg-surface-container-low/70 border border-surface-container flex items-start gap-2 text-xs text-on-surface-variant">
+                <div className="p-3 rounded-lg bg-surface-container-low border border-surface-container flex items-start gap-2 text-xs text-on-surface-variant">
                   <span className="material-symbols-outlined text-[16px] text-primary shrink-0 mt-0.5">verified_user</span>
-                  <span>Questions will automatically calibrate against your resume skills ({userProfile.topSkills.slice(0, 4).join(', ')}).</span>
+                  <span>
+                    Questions will be synthesized against candidate skills: <strong>{userProfile.topSkills.slice(0, 5).join(', ')}</strong>.
+                  </span>
                 </div>
               )}
 
@@ -993,8 +803,8 @@ export const QuestionLibraryView: React.FC<QuestionLibraryViewProps> = ({
                 <div className="p-3 rounded-xl bg-primary-fixed/20 border border-primary/20 flex items-center gap-3">
                   <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin shrink-0"></div>
                   <div className="flex flex-col text-xs">
-                    <span className="font-semibold text-primary">Synthesizing realistic FAANG rubric questions...</span>
-                    <span className="text-on-surface-variant">Using NVIDIA Nemotron 3.5 AI model</span>
+                    <span className="font-semibold text-primary">Synthesizing realistic FAANG interview questions...</span>
+                    <span className="text-on-surface-variant">NVIDIA Nemotron 3.5 AI is ranking progression from Easy to Hard</span>
                   </div>
                 </div>
               )}
@@ -1016,14 +826,89 @@ export const QuestionLibraryView: React.FC<QuestionLibraryViewProps> = ({
                   {isGenerating ? (
                     <>
                       <span className="w-4 h-4 border-2 border-on-primary border-t-transparent rounded-full animate-spin"></span>
-                      <span>Generating...</span>
+                      <span>Generating Progression...</span>
                     </>
                   ) : (
                     <>
                       <span className="material-symbols-outlined text-[16px]">auto_awesome</span>
-                      <span>Generate &amp; Add to Library</span>
+                      <span>Generate Easy → Hard Progression</span>
                     </>
                   )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Prompt Modal */}
+      {showCustomModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-surface-container-lowest rounded-2xl max-w-lg w-full p-6 shadow-xl border border-outline-variant flex flex-col gap-4 text-on-surface">
+            <div className="flex items-center justify-between pb-3 border-b border-surface-container">
+              <h3 className="font-headline-sm text-headline-sm font-semibold text-on-surface">
+                Create Custom Interview Prompt
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowCustomModal(false)}
+                className="text-outline hover:text-on-surface p-1 rounded-lg hover:bg-surface-container transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCustom} className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="font-label-sm text-label-sm font-medium text-on-surface">Question Prompt</label>
+                <textarea
+                  value={customTitle}
+                  onChange={(e) => setCustomTitle(e.target.value)}
+                  placeholder="e.g. How do you design an optimistic offline mutation sync queue in React with IndexedDB?"
+                  rows={3}
+                  className="w-full p-2.5 rounded-lg bg-surface-container-low font-body-sm text-body-sm text-on-surface border border-outline-variant focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-label-sm text-label-sm font-medium text-on-surface">Role</label>
+                  <input
+                    type="text"
+                    value={customRole}
+                    onChange={(e) => setCustomRole(e.target.value)}
+                    className="w-full p-2 rounded-lg bg-surface-container-low font-body-sm text-body-sm text-on-surface border border-outline-variant focus:outline-none"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-label-sm text-label-sm font-medium text-on-surface">Category</label>
+                  <select
+                    value={customCategory}
+                    onChange={(e) => setCustomCategory(e.target.value)}
+                    className="h-10 px-2 rounded-lg bg-surface-container-low font-body-sm text-body-sm text-on-surface border border-outline-variant focus:outline-none"
+                  >
+                    <option>Technical Architecture</option>
+                    <option>STAR Behavioral</option>
+                    <option>System Design</option>
+                    <option>React Internals</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-surface-container">
+                <button
+                  type="button"
+                  onClick={() => setShowCustomModal(false)}
+                  className="px-3.5 py-1.5 rounded-lg bg-surface-container text-on-surface text-sm font-medium hover:bg-surface-container-high transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!customTitle.trim()}
+                  className="px-4 py-1.5 rounded-lg bg-primary text-on-primary text-sm font-semibold hover:bg-on-primary-fixed-variant transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                >
+                  Add &amp; Practice
                 </button>
               </div>
             </form>

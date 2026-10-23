@@ -13,16 +13,23 @@ export const MyProgressView: React.FC<MyProgressViewProps> = ({ onNavigate }) =>
       {/* Page Context Sub-Header Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 mb-4 gap-3">
         <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <h1 className="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">
+          <div className="flex items-center gap-1.5 font-label-micro text-label-micro text-outline uppercase tracking-wider mb-1.5">
+            <span className="hover:text-on-surface cursor-pointer" onClick={() => onNavigate('overview')}>Workspace</span>
+            <span>/</span>
+            <span className="text-outline">Improvement</span>
+            <span>/</span>
+            <span className="text-primary font-semibold">My Progress</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-bold text-on-surface tracking-tight leading-tight">
               My Progress
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-secondary-container/30 text-secondary font-label-micro text-label-micro font-semibold">
-              <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-container/30 text-secondary font-label-sm text-label-sm font-semibold">
+              <span className="w-2 h-2 rounded-full bg-secondary"></span>
               Trajectory On Track
             </span>
           </div>
-          <p className="font-body-md text-body-md text-on-surface-variant mt-0.5">
+          <p className="text-sm sm:text-base text-on-surface-variant mt-1.5 font-normal max-w-3xl">
             Track your interview readiness trajectory, competence progression, and practice consistency across roles.
           </p>
         </div>

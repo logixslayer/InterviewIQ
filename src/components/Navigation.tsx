@@ -34,16 +34,14 @@ export const Navigation: React.FC<NavigationProps> = ({
             className="h-[52px] px-space-md flex items-center gap-space-sm border-b border-surface-variant cursor-pointer hover:bg-surface-container-low/50 transition-colors"
             onClick={() => onNavigate('overview')}
           >
-            <img 
-              alt="INTERVIEWIQ Monogram Logo" 
-              className="h-8 w-auto object-contain shrink-0" 
-              src={LOGO_URL} 
-            />
-            <div className="flex flex-col justify-center">
-              <span className="font-headline-sm text-headline-sm font-semibold tracking-tight text-on-surface leading-none">
+            <div className="w-8 h-8 rounded-lg bg-[#1c1b1b] text-white flex items-center justify-center font-bold text-sm tracking-tight shrink-0 shadow-xs">
+              <span>IQ</span>
+            </div>
+            <div className="flex flex-col justify-center min-w-0">
+              <span className="font-headline-sm text-[13px] font-bold tracking-tight text-on-surface leading-none whitespace-nowrap">
                 INTERVIEWIQ
               </span>
-              <span className="font-label-micro text-label-micro text-outline tracking-wider uppercase mt-0.5">
+              <span className="font-label-micro text-[9px] text-outline tracking-wider uppercase mt-0.5 whitespace-nowrap">
                 AI Interview Coach
               </span>
             </div>
@@ -215,18 +213,26 @@ export const Navigation: React.FC<NavigationProps> = ({
             title="Click to view/update candidate profile"
           >
             <div className="flex items-center gap-space-sm overflow-hidden">
-              <img 
-                alt="Profile" 
-                className="w-8 h-8 rounded-full object-cover shrink-0" 
-                src={AVATAR_URL} 
-              />
+              <div className="w-8 h-8 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden relative">
+                <img 
+                  alt="Profile" 
+                  className="w-full h-full object-cover" 
+                  src={AVATAR_URL} 
+                  onError={(e) => {
+                    (e.currentTarget as HTMLElement).style.display = 'none';
+                  }}
+                />
+                <span className="text-primary font-bold text-xs">
+                  {userProfile?.fullName ? userProfile.fullName.slice(0, 2).toUpperCase() : 'AH'}
+                </span>
+              </div>
               <div className="flex flex-col truncate">
-                <span className="font-label-md text-label-md text-on-surface font-medium truncate group-hover:text-primary transition-colors">
-                  {userProfile?.fullName || 'Alex Morgan'}
+                <span className="font-label-md text-label-md text-on-surface font-semibold tracking-tight truncate group-hover:text-primary transition-colors">
+                  {userProfile?.fullName ? userProfile.fullName.toUpperCase() : 'ABIGAIL HALL'}
                 </span>
                 <span className="font-label-micro text-label-micro text-outline truncate flex items-center gap-1">
-                  {userProfile ? 'Resume Analyzed' : 'Student Account'}
-                  {userProfile && <span className="w-1.5 h-1.5 rounded-full bg-secondary inline-block"></span>}
+                  Resume Analyzed
+                  <span className="w-1.5 h-1.5 rounded-full bg-secondary inline-block"></span>
                 </span>
               </div>
             </div>

@@ -7,6 +7,7 @@ interface MockSetupViewProps {
   onStartSession: () => void;
   userProfile?: UserProfile | null;
   onOpenResumeModal?: () => void;
+  onAddRole?: (role: string) => void;
 }
 
 export const MockSetupView: React.FC<MockSetupViewProps> = ({
@@ -15,8 +16,11 @@ export const MockSetupView: React.FC<MockSetupViewProps> = ({
   onStartSession,
   userProfile,
   onOpenResumeModal,
+  onAddRole,
 }) => {
   const [showModal, setShowModal] = useState(false);
+  const [showAddRoleModal, setShowAddRoleModal] = useState(false);
+  const [newRoleInput, setNewRoleInput] = useState('');
 
   // Standard fallback roles if profile is not present
   const defaultRoles = [
@@ -52,21 +56,21 @@ export const MockSetupView: React.FC<MockSetupViewProps> = ({
     }
   ];
 
-  // If user profile has target roles from resume, use them and merge
+  // ONLY show roles that are in candidate's resume (or configured tracks). Do NOT mix unwanted default roles.
   const analyzedRoles = userProfile?.targetRoles || [];
+  const primaryRoleTitle = userProfile?.primaryRole || analyzedRoles[0]?.title || config.role;
+
   const roles = analyzedRoles.length > 0 
-    ? [
-        ...analyzedRoles.map(ar => ({
-          title: ar.title,
-          desc: ar.desc,
-          icon: 'stars',
-          isAnalyzed: true,
-          match: ar.match,
-          reason: ar.reason
-        })),
-        ...defaultRoles.filter(dr => !analyzedRoles.some(ar => ar.title.toLowerCase() === dr.title.toLowerCase()))
-      ]
-    : defaultRoles;
+    ? analyzedRoles.map((ar, idx) => ({
+        title: ar.title,
+        desc: ar.desc || `${ar.title} Systems & Practice`,
+        icon: 'stars',
+        isAnalyzed: true,
+        isPrimary: ar.title === primaryRoleTitle || idx === 0,
+        match: ar.match || 92,
+        reason: ar.reason
+      }))
+    : defaultRoles.map((dr, idx) => ({ ...dr, isPrimary: idx === 0, isAnalyzed: false }));
 
   const levels = ['Beginner', 'Entry Level', 'Intermediate', 'Experienced'];
 
@@ -109,7 +113,7 @@ export const MockSetupView: React.FC<MockSetupViewProps> = ({
   return (
     <div className="flex flex-col w-full pb-16">
       {/* Top Context Header Area */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-space-md mb-space-xl">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-space-md mb-space-md">
         <div className="flex flex-col">
           <div className="flex items-center gap-1.5 font-label-micro text-label-micro text-outline uppercase tracking-wider mb-1">
             <span>Workspace</span>
@@ -118,11 +122,11 @@ export const MockSetupView: React.FC<MockSetupViewProps> = ({
             <span>/</span>
             <span className="text-primary font-semibold">Setup</span>
           </div>
-          <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight font-semibold">
+          <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-bold text-on-surface tracking-tight leading-tight">
             Prepare for an interview
           </h1>
-          <p className="font-body-md text-body-md text-on-surface-variant mt-0.5">
-            Configure a tailored AI practice simulation for your target role and goals.
+          <p className="text-sm sm:text-base text-on-surface-variant mt-1.5 font-normal">
+            Configure a tailored AI practice simulation calibrated to your resume and career track.
           </p>
         </div>
 
@@ -132,12 +136,63 @@ export const MockSetupView: React.FC<MockSetupViewProps> = ({
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
           </span>
-          <span className="font-label-sm text-label-sm text-on-surface font-medium">Engine v3.4 Active</span>
+          <span className="font-label-sm text-label-sm text-on-surface font-medium">NVIDIA Nemotron 3.5 Active</span>
           <span className="font-label-micro text-label-micro text-outline px-1.5 py-0.5 rounded bg-surface-container">
-            Zero Latency
+            Live AI
           </span>
         </div>
       </div>
+
+      {/* Prominent Resume-Calibrated Major Role Banner */}
+      {userProfile && (
+        <div className="mb-space-lg bg-surface-container-lowest border-2 border-primary/30 rounded-xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-primary text-on-primary flex items-center justify-center shrink-0 shadow-sm">
+              <span className="material-symbols-outlined text-[24px]">assignment_turned_in</span>
+            </div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-label-md text-label-md font-bold text-on-surface">
+                  Resume Calibrated Track:
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-primary text-on-primary font-bold text-xs tracking-wide shadow-xs flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[13px]">stars</span>
+                  {primaryRoleTitle}
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[11px] font-semibold">
+                  {userProfile.experienceLevel || config.level} Level
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant text-[11px] font-semibold">
+                  {userProfile.targetRoles?.[0]?.match || 96}% Alignment
+                </span>
+              </div>
+              <p className="text-body-sm text-on-surface-variant mt-1">
+                Candidate resume was analyzed: mock questions, interview rubrics, and bar-raiser evaluations are dynamically calibrated for <strong className="text-on-surface">{primaryRoleTitle}</strong>.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {onOpenResumeModal && (
+              <button
+                type="button"
+                onClick={onOpenResumeModal}
+                className="font-label-sm text-label-sm text-primary hover:text-on-primary-fixed-variant flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors font-semibold cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[15px]">refresh</span>
+                <span>Update Resume</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onStartSession}
+              className="px-4 py-1.5 bg-primary hover:bg-on-primary-fixed-variant text-on-primary rounded-lg font-label-md text-label-md font-semibold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+            >
+              <span>Launch Mock Interview</span>
+              <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main 2-Column Workstation Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter-desktop items-start">
@@ -161,6 +216,15 @@ export const MockSetupView: React.FC<MockSetupViewProps> = ({
                 )}
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddRoleModal(true)}
+                  className="font-label-micro text-label-micro text-primary hover:text-on-primary-fixed-variant flex items-center gap-1 font-semibold px-2 py-1 rounded bg-primary-fixed/20 hover:bg-primary-fixed/30 cursor-pointer transition-colors shadow-xs"
+                  title="Add target role to practice"
+                >
+                  <span className="material-symbols-outlined text-[15px]">add</span>
+                  <span>Add Role</span>
+                </button>
                 {onOpenResumeModal && (
                   <button
                     type="button"
@@ -187,7 +251,7 @@ export const MockSetupView: React.FC<MockSetupViewProps> = ({
                     onClick={() => onConfigChange({ ...config, role: r.title })}
                     className={`text-left p-space-md rounded-lg transition-all duration-150 flex items-start justify-between cursor-pointer group shadow-sm ${
                       isSelected
-                        ? 'bg-primary-fixed/25 ring-1 ring-primary'
+                        ? 'bg-primary-fixed/25 ring-2 ring-primary'
                         : 'bg-surface-container-low hover:bg-surface-container'
                     }`}
                   >
@@ -196,6 +260,11 @@ export const MockSetupView: React.FC<MockSetupViewProps> = ({
                         <span className={`font-label-md text-label-md font-semibold transition-colors ${isSelected ? 'text-primary' : 'text-on-surface group-hover:text-primary'}`}>
                           {r.title}
                         </span>
+                        {r.isPrimary && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-primary text-on-primary text-[10px] font-bold">
+                            ⭐ Primary Role
+                          </span>
+                        )}
                         {r.isAnalyzed && r.match && (
                           <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-semibold">
                             <span className="w-1 h-1 rounded-full bg-secondary"></span>
@@ -213,6 +282,16 @@ export const MockSetupView: React.FC<MockSetupViewProps> = ({
                   </button>
                 );
               })}
+
+              {/* Add Custom / Extra Role Card */}
+              <button
+                type="button"
+                onClick={() => setShowAddRoleModal(true)}
+                className="p-space-md rounded-lg border-2 border-dashed border-outline-variant/60 hover:border-primary hover:bg-primary-fixed/10 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer group text-on-surface-variant hover:text-primary min-h-[72px]"
+              >
+                <span className="material-symbols-outlined text-[20px] text-primary group-hover:scale-110 transition-transform">add_circle</span>
+                <span className="font-label-md text-label-md font-semibold">Add Target Role to Practice</span>
+              </button>
             </div>
           </section>
 
@@ -579,6 +658,122 @@ export const MockSetupView: React.FC<MockSetupViewProps> = ({
                 Edit Setup
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Custom/Target Role Modal */}
+      {showAddRoleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-scrim/40 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-surface-container-lowest rounded-2xl shadow-xl max-w-md w-full p-6 border border-outline-variant flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[22px]">add_task</span>
+                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
+                  Add Target Practice Role
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddRoleModal(false);
+                  setNewRoleInput('');
+                }}
+                className="text-outline hover:text-on-surface p-1 rounded-lg"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+
+            <p className="font-body-sm text-body-sm text-on-surface-variant">
+              Want to practice interviews outside your primary resume roles? Select a standard track or enter a custom role title below.
+            </p>
+
+            {/* Quick Pick Chips */}
+            <div className="flex flex-col gap-1.5">
+              <span className="font-label-micro text-label-micro uppercase tracking-wider text-outline font-semibold">
+                Quick Select Tracks
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  'Frontend Developer',
+                  'Backend Developer',
+                  'Full Stack Developer',
+                  'Java Developer',
+                  'Data Analyst',
+                  'Software Engineer',
+                  'DevOps Engineer',
+                  'Machine Learning Engineer'
+                ].map(r => {
+                  const alreadyAdded = roles.some((ex: any) => ex.title.toLowerCase() === r.toLowerCase());
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => {
+                        if (onAddRole) onAddRole(r);
+                        onConfigChange({ ...config, role: r });
+                        setShowAddRoleModal(false);
+                        setNewRoleInput('');
+                      }}
+                      className={`px-2.5 py-1 rounded-full text-xs transition-colors cursor-pointer ${
+                        alreadyAdded
+                          ? 'bg-surface-container text-outline opacity-60 cursor-default'
+                          : 'bg-surface-container-low hover:bg-primary-fixed hover:text-primary text-on-surface'
+                      }`}
+                      disabled={alreadyAdded}
+                    >
+                      {alreadyAdded ? '✓ ' : '+ '} {r}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Custom Input */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (newRoleInput.trim()) {
+                  const title = newRoleInput.trim();
+                  if (onAddRole) onAddRole(title);
+                  onConfigChange({ ...config, role: title });
+                  setShowAddRoleModal(false);
+                  setNewRoleInput('');
+                }
+              }}
+              className="flex flex-col gap-3 pt-2 border-t border-outline-variant"
+            >
+              <label className="font-label-sm text-label-sm text-on-surface font-medium">
+                Or Enter Custom Role Title:
+              </label>
+              <input
+                type="text"
+                value={newRoleInput}
+                onChange={(e) => setNewRoleInput(e.target.value)}
+                placeholder="e.g. Distributed Systems Architect"
+                className="w-full px-3 py-2 rounded-lg bg-surface-container-low border border-outline-variant text-on-surface font-body-sm focus:outline-none focus:border-primary"
+              />
+              <div className="flex items-center justify-end gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddRoleModal(false);
+                    setNewRoleInput('');
+                  }}
+                  className="px-3 py-2 rounded-lg bg-surface-container text-on-surface text-xs font-medium hover:bg-surface-container-high transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!newRoleInput.trim()}
+                  className="px-4 py-2 rounded-lg bg-primary text-on-primary text-xs font-semibold hover:bg-on-primary-fixed-variant transition-colors disabled:opacity-40 cursor-pointer"
+                >
+                  Add &amp; Configure Track
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

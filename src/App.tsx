@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ViewMode, InterviewConfig, QuestionItem, UserProfile, RecentInterviewItem } from './types';
+import { ViewMode, InterviewConfig, QuestionItem, UserProfile, RecentInterviewItem, SessionEvaluationReport } from './types';
 import { RECENT_INTERVIEWS_DATA } from './data/mockData';
 import { Navigation } from './components/Navigation';
 import { OverviewView } from './components/OverviewView';
@@ -92,6 +92,17 @@ export default function App() {
     jobDescription: ''
   });
 
+  // Latest session report state (persisted)
+  const [activeSessionReport, setActiveSessionReport] = useState<SessionEvaluationReport | null>(() => {
+    try {
+      const saved = localStorage.getItem('interviewiq_latest_report');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn('Error reading stored report:', e);
+    }
+    return null;
+  });
+
   const handleProfileAnalyzed = (profile: UserProfile) => {
     setUserProfile(profile);
     try {
@@ -100,12 +111,60 @@ export default function App() {
       console.warn('Failed to save profile to localStorage:', e);
     }
 
-    if (profile.targetRoles && profile.targetRoles.length > 0) {
-      setConfig(prev => ({
+    // Automatically calibrate interview config to the candidate's primary analyzed major role
+    const detectedRole = profile.primaryRole || profile.targetRoles?.[0]?.title || 'Frontend Developer';
+    const detectedLevel = profile.experienceLevel || (profile.experienceYears >= 5 ? 'Experienced' : profile.experienceYears >= 2 ? 'Intermediate' : 'Entry Level');
+    const calibratedDifficulty = detectedLevel === 'Experienced' ? 'Hard' : detectedLevel === 'Intermediate' ? 'Medium' : 'Easy';
+
+    setConfig(prev => ({
+      ...prev,
+      role: detectedRole,
+      level: detectedLevel,
+      difficulty: calibratedDifficulty,
+    }));
+  };
+
+  const handleAddTargetRole = (newRoleTitle: string) => {
+    if (!newRoleTitle || !newRoleTitle.trim()) return;
+    const title = newRoleTitle.trim();
+
+    setUserProfile(prev => {
+      const existing = prev?.targetRoles || [];
+      if (existing.some(r => r.title.toLowerCase() === title.toLowerCase())) {
+        return prev;
+      }
+      const newRoleObj = {
+        title,
+        desc: `${title} Architecture, Systems & Implementation`,
+        match: 92,
+        reason: 'Added as priority candidate track.'
+      };
+      const updated = prev ? {
         ...prev,
-        role: profile.targetRoles[0].title
-      }));
-    }
+        targetRoles: [...prev.targetRoles, newRoleObj]
+      } : {
+        fullName: 'Alex Morgan',
+        email: 'alex.morgan@example.com',
+        currentStage: 'Active Job Hunter',
+        experienceYears: 4,
+        targetRoles: [newRoleObj],
+        topSkills: ['Full Stack', 'System Design', 'React', 'Node.js'],
+        targetInterviewDate: 'November 28, 2026',
+        readinessTier: 'Tier B+',
+        keyAchievements: ['Engineered scalable web applications'],
+        suggestedFocus: 'System Architecture & Behavioral Delivery',
+        summary: 'Target candidate profile'
+      };
+
+      try {
+        localStorage.setItem('interviewiq_user_profile', JSON.stringify(updated));
+      } catch (e) {
+        console.warn('Failed to save profile:', e);
+      }
+      return updated;
+    });
+
+    setConfig(prev => ({ ...prev, role: title }));
   };
 
   const handleStartInterview = () => {
@@ -116,23 +175,40 @@ export default function App() {
     setCurrentView('mock-interview-workspace');
   };
 
-  const handleCompleteSession = (sessionData?: { role: string; type: string; score: number; duration: string }) => {
-    const score = sessionData?.score ?? 84;
+  const handleCompleteSession = (sessionData?: {
+    role: string;
+    type: string;
+    score: number;
+    duration: string;
+    report?: SessionEvaluationReport;
+  }) => {
+    const score = sessionData?.report?.overallScore ?? sessionData?.score ?? 84;
     const isPassed = score >= 80;
+    const sessionRole = sessionData?.role || config.role || 'Frontend Developer';
+    const duration = sessionData?.duration || '20 min';
+
+    if (sessionData?.report) {
+      setActiveSessionReport(sessionData.report);
+      try {
+        localStorage.setItem('interviewiq_latest_report', JSON.stringify(sessionData.report));
+      } catch (e) {
+        console.warn('Failed to save report to localStorage:', e);
+      }
+    }
 
     const newSession: RecentInterviewItem = {
       id: `iv-${Date.now()}`,
-      role: sessionData?.role || config.role || 'Frontend Developer',
-      roleShort: (sessionData?.role || config.role || 'FE').slice(0, 2).toUpperCase(),
+      role: sessionRole,
+      roleShort: sessionRole.slice(0, 2).toUpperCase(),
       roleBadgeColor: 'bg-primary-fixed text-primary',
       track: 'Live Mock Simulation',
-      scope: sessionData?.type || `${config.type || 'Technical'} (${config.role || 'Frontend'} & System)`,
+      scope: sessionData?.type || `${config.type || 'Technical'} (${sessionRole} & System)`,
       completed: 'Just now',
       score,
       status: isPassed ? 'Passed' : 'Needs Practice',
       statusClass: isPassed ? 'bg-secondary-container text-on-secondary-container' : 'bg-tertiary-fixed text-on-tertiary-fixed-variant',
       scoreClass: isPassed ? 'text-secondary' : 'text-tertiary',
-      duration: sessionData?.duration || '20 min'
+      duration,
     };
 
     const updated = [newSession, ...recentInterviews];
@@ -184,6 +260,7 @@ export default function App() {
               userProfile={userProfile}
               recentInterviews={recentInterviews}
               onOpenResumeModal={() => setIsResumeModalOpen(true)}
+              onAddRole={handleAddTargetRole}
             />
           )}
 
@@ -194,12 +271,14 @@ export default function App() {
               onStartSession={handleLaunchSession}
               userProfile={userProfile}
               onOpenResumeModal={() => setIsResumeModalOpen(true)}
+              onAddRole={handleAddTargetRole}
             />
           )}
 
           {currentView === 'mock-interview-workspace' && (
             <LiveWorkspaceView
               config={config}
+              userProfile={userProfile}
               onNavigate={setCurrentView}
               onCompleteSession={handleCompleteSession}
             />
@@ -207,6 +286,9 @@ export default function App() {
 
           {currentView === 'evaluation-report' && (
             <EvaluationReportView
+              report={activeSessionReport}
+              config={config}
+              userProfile={userProfile}
               onNavigate={setCurrentView}
               onRetry={handleStartInterview}
             />
@@ -218,6 +300,7 @@ export default function App() {
               onPracticeQuestion={handlePracticeQuestion}
               searchQuery={searchQuery}
               userProfile={userProfile}
+              onAddRole={handleAddTargetRole}
             />
           )}
 

@@ -68,7 +68,28 @@ Associate Analyst | RetailPulse (2020 - 2022)
 
 SKILLS:
 Analysis & Modeling: SQL, Python (Pandas, Scikit-Learn), R, dbt, Snowflake, BigQuery, Statistics & Hypothesis Testing
-BI & Viz: Tableau, Looker, PowerBI, Amplitude, Google Analytics 4`
+BI & Viz: Tableau, Looker, PowerBI, Amplitude, Google Analytics 4`,
+
+  blockchainEngineer: `Alex Rivera
+alex.rivera@example.com | San Francisco, CA | github.com/alexrivera-web3 | linkedin.com/in/alexrivera-web3
+
+SUMMARY:
+Lead Blockchain & Smart Contract Engineer with 5+ years building EVM protocols, Solidity smart contracts, DeFi liquidity vaults, and high-security dApps. Handled $140M+ Total Value Locked (TVL) with zero critical exploit incidents.
+
+WORK EXPERIENCE:
+Senior Blockchain Engineer | Nexus DeFi Protocol (2022 - Present)
+- Architected automated market maker (AMM) liquidity pools and flash loan-resistant TWAP oracle feeds in Solidity & Foundry.
+- Engineered upgradeable smart contracts using UUPS proxy pattern with ERC-7201 namespaced storage, slashing deployment gas costs by 28%.
+- Implemented state machine security guards and Checks-Effects-Interactions pattern across 15+ smart contracts, passing audits by OpenZeppelin and Trail of Bits.
+
+Smart Contract Developer | BlockWave Labs (2020 - 2022)
+- Built ERC-20 staking and ERC-721 dynamic metadata minting contracts with gas golf assembly optimizations.
+- Integrated Web3.js and Ethers.js client hooks with React/Next.js frontend for MetaMask wallet signing and event subscriptions.
+
+SKILLS:
+Smart Contracts & Web3: Solidity, EVM, Hardhat, Foundry, Ethers.js, Web3.js, OpenZeppelin, DeFi, Layer 2 (Arbitrum, Optimism)
+Languages & Frameworks: TypeScript, JavaScript, Go, Python, React, Next.js, Node.js
+Security & Testing: Slither, Echidna, Mythril, Gas Optimization, Reentrancy Protection, Formal Verification`
 };
 
 const isRawPdfContent = (text: string): boolean => {
@@ -309,6 +330,15 @@ export const ResumeOnboardingModal: React.FC<ResumeOnboardingModalProps> = ({
               >
                 <span className="material-symbols-outlined text-[14px]">database</span>
                 Jordan (Backend / Distributed)
+              </button>
+              <button
+                type="button"
+                disabled={isAnalyzing}
+                onClick={() => handleApplyPreset('blockchainEngineer', 'October 30, 2026')}
+                className="px-2.5 py-1.5 rounded-md text-xs font-medium bg-surface-container hover:bg-primary-fixed/30 text-on-surface hover:text-primary transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[14px]">token</span>
+                Alex (Blockchain Engineer)
               </button>
               <button
                 type="button"

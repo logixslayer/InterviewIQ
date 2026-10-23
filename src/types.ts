@@ -51,6 +51,8 @@ export interface AnalyzedRole {
 export interface UserProfile {
   fullName: string;
   email: string;
+  primaryRole?: string;
+  experienceLevel?: string;
   currentStage: string;
   experienceYears: number;
   targetRoles: AnalyzedRole[];
@@ -73,8 +75,43 @@ export interface RecentInterviewItem {
   scope: string;
   completed: string;
   score: number;
-  status: 'Passed' | 'Strong' | 'Needs Practice' | 'Needs Review';
+  status: 'Passed' | 'Strong' | 'Needs Practice' | 'Needs Review' | 'Pass' | 'Solid' | 'Review' | string;
   statusClass: string;
   scoreClass: string;
   duration?: string;
 }
+
+export interface AnswerEvaluationResult {
+  score: number;
+  summary: string;
+  strengths: string[];
+  gaps: string[];
+  rubricScores: {
+    communicationDelivery: number;
+    technicalKnowledge: number;
+    problemSolving: number;
+    systemArchitecture: number;
+  };
+  sampleIdealAnswer?: string;
+  followUpQuestion: string;
+  coachingTip: string;
+}
+
+export interface SessionEvaluationReport {
+  overallScore: number;
+  grade: string;
+  hireRecommendation: 'Strong Hire' | 'Hire' | 'Lean Hire' | 'Needs Practice' | 'Needs Work' | string;
+  summary: string;
+  competencyBreakdown?: {
+    communication: { score: number; feedback: string };
+    technicalKnowledge: { score: number; feedback: string };
+    problemSolving: { score: number; feedback: string };
+  };
+  keyStrengths: string[];
+  growthAreas: string[];
+  actionItems: string[];
+  role?: string;
+  duration?: string;
+  completedAt?: string;
+}
+

@@ -37,18 +37,18 @@ export const PracticePlanView: React.FC<PracticePlanViewProps> = ({
               <span className="text-on-surface font-semibold">Practice Plan</span>
             </div>
             <div className="flex flex-wrap items-center gap-space-sm pt-0.5">
-              <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight font-semibold">
+              <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-bold text-on-surface tracking-tight leading-tight">
                 Practice Plan
               </h1>
-              <div className="flex items-center gap-1.5 px-2.5 py-0.5 bg-surface-container rounded-full text-on-surface-variant font-label-sm text-label-sm">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-surface-container rounded-full text-on-surface-variant font-label-sm text-label-sm font-medium">
+                <span className="w-2 h-2 rounded-full bg-primary-container"></span>
                 Targeting: Meta / Google L5 Frontend Loop (Oct 28)
               </div>
-              <span className="px-2 py-0.5 bg-secondary/10 text-secondary font-label-micro text-label-micro uppercase tracking-wider rounded-md font-semibold">
+              <span className="px-2.5 py-1 bg-secondary/10 text-secondary font-label-sm text-label-sm uppercase tracking-wider rounded-md font-bold">
                 Week 3 of 4
               </span>
             </div>
-            <p className="font-body-md text-body-md text-outline">
+            <p className="text-sm sm:text-base text-on-surface-variant mt-1 font-normal max-w-3xl">
               Structured weekly preparation curriculum tailored to your upcoming interviews and diagnostic gaps.
             </p>
           </div>

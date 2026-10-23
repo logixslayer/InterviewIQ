@@ -38,14 +38,14 @@ export const SettingsView: React.FC = () => {
       {/* Content Header Area */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-space-md mb-space-lg">
         <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <span className="font-headline-xl text-headline-xl text-on-surface font-semibold">Settings</span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-secondary/10 text-secondary font-label-micro text-label-micro font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-secondary mr-1.5 animate-pulse"></span>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-bold text-on-surface tracking-tight leading-tight">Settings</h1>
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-secondary/10 text-secondary font-label-sm text-label-sm font-medium">
+              <span className="w-2 h-2 rounded-full bg-secondary mr-1.5 animate-pulse"></span>
               Auto-sync active
             </span>
           </div>
-          <p className="font-body-sm text-body-sm text-on-surface-variant max-w-2xl">
+          <p className="text-sm sm:text-base text-on-surface-variant mt-1 font-normal max-w-2xl">
             Configure your interview simulation parameters, AI evaluation feedback rigor, hardware telemetry, and profile credentials.
           </p>
         </div>
