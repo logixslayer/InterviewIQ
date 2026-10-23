@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ViewMode, InterviewConfig, QuestionItem, UserProfile, RecentInterviewItem, SessionEvaluationReport } from './types';
 import { RECENT_INTERVIEWS_DATA } from './data/mockData';
 import { Navigation } from './components/Navigation';
@@ -11,11 +11,141 @@ import { QuestionLibraryView } from './components/QuestionLibraryView';
 import { PracticePlanView } from './components/PracticePlanView';
 import { SettingsView } from './components/SettingsView';
 import { ResumeOnboardingModal } from './components/ResumeOnboardingModal';
+import { WelcomeView } from './components/WelcomeView';
+import { LoginView } from './components/LoginView';
+import { SignUpView } from './components/SignUpView';
+import { 
+  AuthUser, 
+  checkAuthSession, 
+  getCurrentAuthUser, 
+  subscribeToAuthChanges,
+  signOut as authSignOut 
+} from './services/authService';
+import { Loader2 } from 'lucide-react';
+
+const PUBLIC_ROUTES = new Set(['/', '/login', '/signup']);
+
+const PATH_TO_VIEW_MAP: Record<string, ViewMode> = {
+  '/': 'welcome',
+  '/login': 'login',
+  '/signup': 'signup',
+  '/overview': 'overview',
+  '/app': 'overview',
+  '/dashboard': 'overview',
+  '/mock-interviews': 'mock-interviews',
+  '/mock-interview-workspace': 'mock-interview-workspace',
+  '/workspace': 'mock-interview-workspace',
+  '/evaluation-report': 'evaluation-report',
+  '/report': 'evaluation-report',
+  '/question-library': 'question-library',
+  '/questions': 'question-library',
+  '/my-progress': 'my-progress',
+  '/progress': 'my-progress',
+  '/practice-plan': 'practice-plan',
+  '/plan': 'practice-plan',
+  '/settings': 'settings',
+  '/profile': 'profile',
+};
+
+const VIEW_TO_PATH_MAP: Record<ViewMode, string> = {
+  'welcome': '/',
+  'login': '/login',
+  'signup': '/signup',
+  'overview': '/overview',
+  'mock-interviews': '/mock-interviews',
+  'mock-interview-workspace': '/mock-interview-workspace',
+  'evaluation-report': '/evaluation-report',
+  'question-library': '/question-library',
+  'my-progress': '/my-progress',
+  'practice-plan': '/practice-plan',
+  'settings': '/settings',
+  'profile': '/profile',
+};
+
+function resolveViewFromLocation(): ViewMode {
+  if (typeof window === 'undefined') return 'welcome';
+  const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+  return PATH_TO_VIEW_MAP[pathname] || 'welcome';
+}
+
+function isPublicView(view: ViewMode): boolean {
+  return view === 'welcome' || view === 'login' || view === 'signup';
+}
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<ViewMode>('overview');
+  const [currentView, setCurrentView] = useState<ViewMode>(() => resolveViewFromLocation());
   const [searchQuery, setSearchQuery] = useState('');
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
+
+  // Authentication session state verified with backend / provider
+  const [authUser, setAuthUser] = useState<AuthUser | null>(() => getCurrentAuthUser());
+  const [isVerifyingSession, setIsVerifyingSession] = useState<boolean>(true);
+
+  // Session verification and real-time auth subscription
+  useEffect(() => {
+    let isMounted = true;
+    const unsubscribe = subscribeToAuthChanges((user) => {
+      if (isMounted) {
+        setAuthUser(user);
+        setIsVerifyingSession(false);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, []);
+
+  // Sync route changes with browser History API
+  const handleNavigate = useCallback((target: string | ViewMode) => {
+    let targetView: ViewMode;
+    let targetPath: string;
+
+    if (typeof target === 'string' && target.startsWith('/')) {
+      const clean = target.split('?')[0].replace(/\/+$/, '') || '/';
+      targetView = PATH_TO_VIEW_MAP[clean] || 'welcome';
+      targetPath = target; // preserve full target including query parameters
+    } else {
+      targetView = target as ViewMode;
+      targetPath = VIEW_TO_PATH_MAP[targetView] || '/';
+    }
+
+    if (typeof window !== 'undefined' && (window.location.pathname + window.location.search) !== targetPath) {
+      window.history.pushState({}, '', targetPath);
+    }
+    setCurrentView(targetView);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, []);
+
+  // Listen to browser popstate (back/forward button)
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentView(resolveViewFromLocation());
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // ROUTE GUARD: Intercept unauthorized attempts to access protected routes
+  useEffect(() => {
+    if (isVerifyingSession) return; // Wait for initial session check
+
+    if (!isPublicView(currentView) && !authUser) {
+      // User is not authenticated; redirect to /login preserving intended destination
+      const requestedPath = VIEW_TO_PATH_MAP[currentView] || '/mock-interview-workspace';
+      const redirectUrl = `/login?redirect=${encodeURIComponent(requestedPath)}`;
+      handleNavigate(redirectUrl);
+    }
+  }, [currentView, authUser, isVerifyingSession, handleNavigate]);
+
+  const handleSignOut = async () => {
+    await authSignOut();
+    setAuthUser(null);
+    handleNavigate('/');
+  };
 
   // User Profile State (persisted with fallback default)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
@@ -74,14 +204,16 @@ export default function App() {
     return RECENT_INTERVIEWS_DATA as RecentInterviewItem[];
   });
 
-  // Prompt onboarding on first visit if user hasn't analyzed resume yet
+  // Prompt onboarding on first visit to authenticated workspace only
   useEffect(() => {
+    if (isPublicView(currentView) || !authUser) return;
+
     const hasSeenModal = localStorage.getItem('interviewiq_has_seen_onboarding');
     if (!hasSeenModal) {
       setIsResumeModalOpen(true);
       localStorage.setItem('interviewiq_has_seen_onboarding', 'true');
     }
-  }, []);
+  }, [currentView, authUser]);
 
   const [config, setConfig] = useState<InterviewConfig>({
     role: userProfile?.targetRoles[0]?.title || 'Frontend Developer',
@@ -111,7 +243,6 @@ export default function App() {
       console.warn('Failed to save profile to localStorage:', e);
     }
 
-    // Automatically calibrate interview config to the candidate's primary analyzed major role
     const detectedRole = profile.primaryRole || profile.targetRoles?.[0]?.title || 'Frontend Developer';
     const detectedLevel = profile.experienceLevel || (profile.experienceYears >= 5 ? 'Experienced' : profile.experienceYears >= 2 ? 'Intermediate' : 'Entry Level');
     const calibratedDifficulty = detectedLevel === 'Experienced' ? 'Hard' : detectedLevel === 'Intermediate' ? 'Medium' : 'Easy';
@@ -168,11 +299,11 @@ export default function App() {
   };
 
   const handleStartInterview = () => {
-    setCurrentView('mock-interviews');
+    handleNavigate('mock-interviews');
   };
 
   const handleLaunchSession = () => {
-    setCurrentView('mock-interview-workspace');
+    handleNavigate('mock-interview-workspace');
   };
 
   const handleCompleteSession = (sessionData?: {
@@ -219,7 +350,7 @@ export default function App() {
       console.warn('Failed to save recent interviews:', e);
     }
 
-    setCurrentView('evaluation-report');
+    handleNavigate('evaluation-report');
   };
 
   const handlePracticeQuestion = (question: QuestionItem) => {
@@ -229,24 +360,69 @@ export default function App() {
       difficulty: question.difficulty,
       type: question.category.includes('Behavioral') ? 'Behavioral' : 'Technical'
     }));
-    setCurrentView('mock-interview-workspace');
+    handleNavigate('mock-interview-workspace');
   };
 
   const handleOpenCuratedQuestion = (title: string) => {
     setSearchQuery(title);
-    setCurrentView('question-library');
+    handleNavigate('question-library');
   };
 
+  // =========================================================================
+  // PUBLIC ROUTE RENDERING (Welcome, Login, Sign Up)
+  // =========================================================================
+  if (currentView === 'welcome') {
+    return <WelcomeView onNavigate={handleNavigate} isAuthenticated={!!authUser} />;
+  }
+
+  if (currentView === 'login') {
+    return <LoginView onNavigate={handleNavigate} />;
+  }
+
+  if (currentView === 'signup') {
+    return <SignUpView onNavigate={handleNavigate} />;
+  }
+
+  // =========================================================================
+  // PROTECTED ROUTE SESSION VERIFICATION SPINNER
+  // (Prevents unauthorized flashing of private workspace content)
+  // =========================================================================
+  if (isVerifyingSession) {
+    return (
+      <div className="min-h-screen bg-[#F6F8FC] flex flex-col items-center justify-center text-[#182230]">
+        <div className="w-10 h-10 rounded-xl bg-[#101828] text-[#FFFFFF] flex items-center justify-center font-bold text-lg mb-4 shadow-sm">
+          <span className="text-[#3867F5]">I</span>Q
+        </div>
+        <Loader2 className="w-5 h-5 text-[#3867F5] animate-spin mb-2" />
+        <span className="text-xs font-medium text-[#667085]">Verifying InterviewIQ session...</span>
+      </div>
+    );
+  }
+
+  // If user is unauthenticated on a protected route, do NOT render private content
+  if (!authUser) {
+    return (
+      <div className="min-h-screen bg-[#F6F8FC] flex flex-col items-center justify-center text-[#182230]">
+        <Loader2 className="w-5 h-5 text-[#3867F5] animate-spin mb-2" />
+        <span className="text-xs font-medium text-[#667085]">Redirecting to sign in...</span>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // AUTHENTICATED APPLICATION WORKSPACE (Preserved Dashboard & Interview Suite)
+  // =========================================================================
   return (
     <div className="bg-surface-container font-body-md text-body-md text-on-surface antialiased min-h-screen">
       {/* Navigation Bars (Desktop Sidebar + Desktop Header + Mobile Header + Mobile Bottom Nav) */}
       <Navigation
         currentView={currentView}
-        onNavigate={(view) => setCurrentView(view)}
+        onNavigate={handleNavigate}
         searchQuery={searchQuery}
         onSearchChange={(q) => setSearchQuery(q)}
         userProfile={userProfile}
         onOpenResumeModal={() => setIsResumeModalOpen(true)}
+        onSignOut={handleSignOut}
       />
 
       {/* Main Content Area: Responsive Padding */}
@@ -254,7 +430,7 @@ export default function App() {
         <main className="relative pt-[56px] lg:pt-[52px] pb-[72px] lg:pb-0 w-full min-h-screen p-space-md sm:p-space-lg">
           {currentView === 'overview' && (
             <OverviewView
-              onNavigate={setCurrentView}
+              onNavigate={handleNavigate}
               onStartInterview={handleStartInterview}
               onOpenQuestion={handleOpenCuratedQuestion}
               userProfile={userProfile}
@@ -279,7 +455,7 @@ export default function App() {
             <LiveWorkspaceView
               config={config}
               userProfile={userProfile}
-              onNavigate={setCurrentView}
+              onNavigate={handleNavigate}
               onCompleteSession={handleCompleteSession}
             />
           )}
@@ -289,14 +465,14 @@ export default function App() {
               report={activeSessionReport}
               config={config}
               userProfile={userProfile}
-              onNavigate={setCurrentView}
+              onNavigate={handleNavigate}
               onRetry={handleStartInterview}
             />
           )}
 
           {currentView === 'question-library' && (
             <QuestionLibraryView
-              onNavigate={setCurrentView}
+              onNavigate={handleNavigate}
               onPracticeQuestion={handlePracticeQuestion}
               searchQuery={searchQuery}
               userProfile={userProfile}
@@ -306,13 +482,13 @@ export default function App() {
 
           {currentView === 'my-progress' && (
             <MyProgressView
-              onNavigate={setCurrentView}
+              onNavigate={handleNavigate}
             />
           )}
 
           {currentView === 'practice-plan' && (
             <PracticePlanView
-              onNavigate={setCurrentView}
+              onNavigate={handleNavigate}
               onStartDrill={handleLaunchSession}
             />
           )}

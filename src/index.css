@@ -49,6 +49,18 @@
   --color-surface-container-highest: #e5e2e1;
   --color-on-surface-variant: #444653;
 
+  /* Fixed InterviewIQ Design System Palette */
+  --color-brand-navy: #101828;
+  --color-brand-blue: #3867F5;
+  --color-brand-bg: #F6F8FC;
+  --color-brand-white: #FFFFFF;
+  --color-brand-text-primary: #182230;
+  --color-brand-text-secondary: #667085;
+  --color-brand-border: #D0D5DD;
+  --color-brand-success: #16845B;
+  --color-brand-error: #D92D20;
+  --color-brand-subtle: #EFF4FF;
+
   --spacing-space-xs: 0.25rem;
   --spacing-space-sm: 0.5rem;
   --spacing-space-md: 0.75rem;
@@ -116,4 +128,61 @@
 ::-webkit-scrollbar-thumb {
   background: var(--color-outline-variant, #c5c5d5);
   border-radius: 9999px;
+}
+
+/* Restrained entrance animations (150-300ms) */
+@keyframes enter-up {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes enter-fade {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-enter-up {
+  animation: enter-up 280ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-enter-fade {
+  animation: enter-fade 200ms ease-out forwards;
+}
+
+.animation-delay-100 {
+  animation-delay: 80ms;
+}
+
+.animation-delay-200 {
+  animation-delay: 160ms;
+}
+
+.animation-delay-300 {
+  animation-delay: 240ms;
+}
+
+/* Reduced Motion Safety */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-enter-up,
+  .animate-enter-fade {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
