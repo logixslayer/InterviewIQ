@@ -28,7 +28,9 @@ import {
   saveUserProfile,
   loadUserSettings,
   saveUserSettings,
-  createDefaultSettings
+  createDefaultSettings,
+  loadUserInterviews,
+  saveUserInterview
 } from './services/userService';
 import { Loader2 } from 'lucide-react';
 
@@ -150,27 +152,37 @@ export default function App() {
     let isMounted = true;
     async function loadUserData() {
       try {
-        const [loadedProfile, loadedSettings] = await Promise.all([
+        const [loadedProfile, loadedSettings, loadedInterviews] = await Promise.all([
           loadUserProfile(uid!, authUser!.email || undefined, authUser!.fullName || undefined),
-          loadUserSettings(uid!)
+          loadUserSettings(uid!),
+          loadUserInterviews(uid!)
         ]);
         if (isMounted) {
           setUserProfile(loadedProfile);
           setUserSettings(loadedSettings);
+          setRecentInterviews(loadedInterviews);
 
-          // Calibrate active interview config with user defaults
-          if (loadedSettings.interviewDefaults) {
-            setConfig(prev => ({
-              ...prev,
-              role: loadedSettings.interviewDefaults.preferredRole || loadedSettings.interviewDefaults.defaultRole || loadedProfile.primaryRole || loadedProfile.targetRoles?.[0]?.title || prev.role,
-              difficulty: loadedSettings.interviewDefaults.defaultDifficulty || prev.difficulty,
-              type: loadedSettings.interviewDefaults.preferredType || loadedSettings.interviewDefaults.defaultType || prev.type,
-              duration: loadedSettings.interviewDefaults.duration || (loadedSettings.interviewDefaults.durationMinutes ? `${loadedSettings.interviewDefaults.durationMinutes} min (${loadedSettings.interviewDefaults.questionsPerSession} questions)` : prev.duration),
-            }));
-          }
+          // Calibrate active interview config with user defaults or primary role
+          const defaultRole = loadedSettings.interviewDefaults?.preferredRole ||
+                              loadedSettings.interviewDefaults?.defaultRole ||
+                              loadedProfile.primaryRole ||
+                              loadedProfile.targetRoles?.[0]?.title ||
+                              'Software Engineer';
+          const defaultLevel = loadedSettings.interviewDefaults?.defaultLevel ||
+                               (loadedProfile.experienceLevel as any) ||
+                               'Intermediate';
+
+          setConfig(prev => ({
+            ...prev,
+            role: defaultRole,
+            level: defaultLevel,
+            difficulty: loadedSettings.interviewDefaults?.defaultDifficulty || prev.difficulty,
+            type: loadedSettings.interviewDefaults?.preferredType || loadedSettings.interviewDefaults?.defaultType || prev.type,
+            duration: loadedSettings.interviewDefaults?.duration || (loadedSettings.interviewDefaults?.durationMinutes ? `${loadedSettings.interviewDefaults.durationMinutes} min (${loadedSettings.interviewDefaults.questionsPerSession} questions)` : prev.duration),
+          }));
         }
       } catch (err) {
-        console.error('Failed to load user profile and settings:', err);
+        console.error('Failed to load user profile, settings, and interviews:', err);
       }
     }
 
@@ -229,6 +241,7 @@ export default function App() {
     setAuthUser(null);
     setUserProfile(null);
     setUserSettings(createDefaultSettings('guest'));
+    setRecentInterviews([]);
     handleNavigate('/');
   };
 
@@ -239,6 +252,13 @@ export default function App() {
       saveUserProfile(uid, updated).catch(err => {
         console.error('Failed to persist profile:', err);
       });
+    }
+    // Reflect primary target role in new interview configurations
+    if (updated.primaryRole) {
+      setConfig(prev => ({
+        ...prev,
+        role: updated.primaryRole || updated.targetRoles?.[0]?.title || prev.role
+      }));
     }
   };
 
@@ -262,16 +282,8 @@ export default function App() {
     }
   };
 
-  // Real-time Recent Interviews State (persisted with fallback)
-  const [recentInterviews, setRecentInterviews] = useState<RecentInterviewItem[]>(() => {
-    try {
-      const saved = localStorage.getItem('interviewiq_recent_interviews');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {
-      console.warn('Error reading stored interviews:', e);
-    }
-    return RECENT_INTERVIEWS_DATA as RecentInterviewItem[];
-  });
+  // User-scoped interviews state (starts empty; populated from user-scoped storage when authenticated)
+  const [recentInterviews, setRecentInterviews] = useState<RecentInterviewItem[]>([]);
 
   // Prompt onboarding on first visit to authenticated workspace only
   useEffect(() => {
@@ -385,13 +397,17 @@ export default function App() {
   }) => {
     const score = sessionData?.report?.overallScore ?? sessionData?.score ?? 84;
     const isPassed = score >= 80;
-    const sessionRole = sessionData?.role || config.role || 'Frontend Developer';
-    const duration = sessionData?.duration || '20 min';
+    const sessionRole = sessionData?.role || config.role || userProfile?.primaryRole || 'Software Engineer';
+    const duration = sessionData?.duration || config.duration || '20 min';
+    const durationMinutes = sessionData?.duration ? (parseInt(sessionData.duration, 10) || 20) : 20;
+
+    const uid = authUser ? (authUser.uid || authUser.id) : null;
 
     if (sessionData?.report) {
       setActiveSessionReport(sessionData.report);
       try {
-        localStorage.setItem('interviewiq_latest_report', JSON.stringify(sessionData.report));
+        const reportKey = uid ? `interviewiq_latest_report_${uid}` : 'interviewiq_latest_report';
+        localStorage.setItem(reportKey, JSON.stringify(sessionData.report));
       } catch (e) {
         console.warn('Failed to save report to localStorage:', e);
       }
@@ -405,19 +421,25 @@ export default function App() {
       track: 'Live Mock Simulation',
       scope: sessionData?.type || `${config.type || 'Technical'} (${sessionRole} & System)`,
       completed: 'Just now',
+      completedAt: new Date().toISOString(),
+      durationMinutes,
       score,
       status: isPassed ? 'Passed' : 'Needs Practice',
       statusClass: isPassed ? 'bg-secondary-container text-on-secondary-container' : 'bg-tertiary-fixed text-on-tertiary-fixed-variant',
       scoreClass: isPassed ? 'text-secondary' : 'text-tertiary',
       duration,
+      report: sessionData?.report,
     };
 
-    const updated = [newSession, ...recentInterviews];
-    setRecentInterviews(updated);
-    try {
-      localStorage.setItem('interviewiq_recent_interviews', JSON.stringify(updated));
-    } catch (e) {
-      console.warn('Failed to save recent interviews:', e);
+    if (uid) {
+      saveUserInterview(uid, newSession).then(updated => {
+        setRecentInterviews(updated);
+      }).catch(err => {
+        console.warn('Could not persist interview via API, updating state:', err);
+        setRecentInterviews(prev => [newSession, ...prev]);
+      });
+    } else {
+      setRecentInterviews(prev => [newSession, ...prev]);
     }
 
     handleNavigate('evaluation-report');

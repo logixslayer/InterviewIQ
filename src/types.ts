@@ -178,11 +178,14 @@ export interface RecentInterviewItem {
   track: string;
   scope: string;
   completed: string;
+  completedAt?: string;
   score: number;
   status: 'Passed' | 'Strong' | 'Needs Practice' | 'Needs Review' | 'Pass' | 'Solid' | 'Review' | string;
   statusClass: string;
   scoreClass: string;
   duration?: string;
+  durationMinutes?: number;
+  report?: SessionEvaluationReport;
 }
 
 export interface AnswerEvaluationResult {

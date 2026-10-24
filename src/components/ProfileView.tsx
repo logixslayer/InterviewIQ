@@ -137,6 +137,19 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     const uid = authUser?.id || auth?.currentUser?.uid || userProfile?.uid || 'anonymous';
     const email = authUser?.email || auth?.currentUser?.email || userProfile?.email || '';
 
+    // Ensure primaryRole is synchronized to the head of targetRoles
+    const existingRoles = userProfile?.targetRoles || [];
+    const otherRoles = existingRoles.filter(r => r.title.toLowerCase() !== primaryRole.toLowerCase());
+    const synchronizedTargetRoles = [
+      {
+        title: primaryRole,
+        desc: `${primaryRole} Architecture, Problem Solving & Systems`,
+        match: 95,
+        reason: 'Primary target track selected by candidate.'
+      },
+      ...otherRoles
+    ];
+
     const updatedProfile: UserProfile = {
       ...(userProfile || {}),
       uid,
@@ -146,14 +159,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       experienceLevel,
       currentStage,
       experienceYears: Number(experienceYears) || 0,
-      targetRoles: userProfile?.targetRoles?.length ? userProfile.targetRoles : [
-        {
-          title: primaryRole,
-          desc: `${primaryRole} Architecture & Problem Solving`,
-          match: 92,
-          reason: 'Primary selected target track.'
-        }
-      ],
+      targetRoles: synchronizedTargetRoles,
       topSkills: skills,
       targetCompanies: companies,
       careerGoals: careerGoals.trim(),
@@ -161,7 +167,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       targetInterviewDate,
       readinessTier: userProfile?.readinessTier || 'Tier B+',
       keyAchievements: userProfile?.keyAchievements || ['Completed InterviewIQ practice calibration'],
-      suggestedFocus: userProfile?.suggestedFocus || 'Focus on system design trade-offs and behavioral STAR delivery.',
+      suggestedFocus: userProfile?.suggestedFocus || (primaryRole === 'AI / ML Engineer' ? 'Master LLM architectures, evaluation benchmarks, and scalable inference serving.' : 'Focus on system design trade-offs and behavioral STAR delivery.'),
       summary: summary.trim(),
     };
 

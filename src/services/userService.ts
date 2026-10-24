@@ -5,7 +5,7 @@
  * Connects with server REST API, Firebase Auth profile updates, and local caches.
  */
 
-import { UserProfile, UserSettings } from '../types';
+import { UserProfile, UserSettings, RecentInterviewItem } from '../types';
 import { auth } from './firebase';
 import { updateProfile, deleteUser } from 'firebase/auth';
 
@@ -15,6 +15,10 @@ function getProfileStorageKey(uid: string): string {
 
 function getSettingsStorageKey(uid: string): string {
   return `interviewiq_settings_${uid}`;
+}
+
+export function getInterviewsStorageKey(uid: string): string {
+  return `interviewiq_interviews_${uid}`;
 }
 
 export function createDefaultProfile(uid: string, email: string, displayName?: string): UserProfile {
@@ -256,9 +260,92 @@ export async function saveUserSettings(uid: string, settings: UserSettings): Pro
 }
 
 /**
+ * Loads the interview history for a given UID.
+ * Queries server backend first, falls back to user-scoped local storage, and returns [] if none found.
+ */
+export async function loadUserInterviews(uid: string): Promise<RecentInterviewItem[]> {
+  if (!uid) return [];
+
+  // Try server backend
+  try {
+    const res = await fetch(`/api/user/interviews/${encodeURIComponent(uid)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data?.interviews)) {
+        try {
+          localStorage.setItem(getInterviewsStorageKey(uid), JSON.stringify(data.interviews));
+        } catch (_e) {}
+        return data.interviews;
+      }
+    }
+  } catch (err) {
+    console.warn('Network request for interviews failed, checking local cache:', err);
+  }
+
+  // Fallback to user-scoped local cache
+  try {
+    const local = localStorage.getItem(getInterviewsStorageKey(uid));
+    if (local) {
+      const parsed = JSON.parse(local);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to parse local interviews:', e);
+  }
+
+  return [];
+}
+
+/**
+ * Saves a completed interview session to server backend and user-scoped local cache.
+ */
+export async function saveUserInterview(uid: string, session: RecentInterviewItem): Promise<RecentInterviewItem[]> {
+  if (!uid) throw new Error('User UID required to persist interview session');
+
+  // Load existing
+  const current = await loadUserInterviews(uid);
+  const existsIndex = current.findIndex(s => s.id === session.id);
+  let updated: RecentInterviewItem[];
+  if (existsIndex >= 0) {
+    updated = [...current];
+    updated[existsIndex] = session;
+  } else {
+    updated = [session, ...current];
+  }
+
+  // Cache locally in user-scoped storage
+  try {
+    localStorage.setItem(getInterviewsStorageKey(uid), JSON.stringify(updated));
+  } catch (e) {
+    console.warn('Failed to save interviews to localStorage:', e);
+  }
+
+  // Persist to server backend
+  try {
+    const res = await fetch(`/api/user/interviews/${encodeURIComponent(uid)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data?.interviews)) {
+        return data.interviews;
+      }
+    }
+  } catch (err) {
+    console.warn('Could not persist interview session to server backend:', err);
+  }
+
+  return updated;
+}
+
+/**
  * Exports user profile, settings, and interview statistics into a JSON download.
  */
-export function exportUserData(profile: UserProfile, settings: UserSettings): void {
+export function exportUserData(profile: UserProfile, settings: UserSettings, interviews?: RecentInterviewItem[]): void {
   const data = {
     exportedAt: new Date().toISOString(),
     account: {
@@ -282,6 +369,7 @@ export function exportUserData(profile: UserProfile, settings: UserSettings): vo
       summary: profile.summary,
     },
     preferences: settings,
+    interviews: interviews || [],
   };
 
   const jsonStr = JSON.stringify(data, null, 2);
@@ -313,6 +401,7 @@ export async function deleteUserAccount(uid: string): Promise<void> {
   try {
     localStorage.removeItem(getProfileStorageKey(uid));
     localStorage.removeItem(getSettingsStorageKey(uid));
+    localStorage.removeItem(getInterviewsStorageKey(uid));
   } catch (_e) {}
 
   // Delete Firebase user

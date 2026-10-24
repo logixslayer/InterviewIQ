@@ -54,12 +54,29 @@ export const MockSetupView: React.FC<MockSetupViewProps> = ({
       title: 'Software Engineer',
       desc: 'Algorithms, Data Structures, Complexity Analysis',
       icon: 'terminal'
+    },
+    {
+      title: 'AI / ML Engineer',
+      desc: 'LLMs, Transformers, Fine-Tuning, RAG & MLOps Pipelines',
+      icon: 'psychology'
     }
   ];
 
   // ONLY show roles that are in candidate's resume (or configured tracks). Do NOT mix unwanted default roles.
-  const analyzedRoles = userProfile?.targetRoles || [];
-  const primaryRoleTitle = userProfile?.primaryRole || analyzedRoles[0]?.title || config.role;
+  const rawTargetRoles = userProfile?.targetRoles || [];
+  const primaryRoleTitle = userProfile?.primaryRole || rawTargetRoles[0]?.title || config.role;
+  const analyzedRoles = [...rawTargetRoles];
+  if (userProfile?.primaryRole) {
+    const pRole = userProfile.primaryRole;
+    if (!analyzedRoles.some(r => r.title.toLowerCase() === pRole.toLowerCase())) {
+      analyzedRoles.unshift({
+        title: pRole,
+        desc: `${pRole} Architecture, Models, and Systems`,
+        match: 95,
+        reason: 'Primary target role configured in profile'
+      });
+    }
+  }
 
   const roles = analyzedRoles.length > 0 
     ? analyzedRoles.map((ar, idx) => ({
