@@ -1146,5 +1146,594 @@
     "totalQuestions": 5,
     "createdAt": "2026-10-24T08:52:31.100Z",
     "updatedAt": "2026-10-24T09:04:17.610Z"
+  },
+  {
+    "sessionId": "8f17552c-7219-4efc-a236-f9fa7335256f",
+    "userId": "NnG4Ew2um0UBvCJmyzAwO7ZIkZi1",
+    "role": "Frontend Developer",
+    "level": "Intermediate",
+    "type": "Technical",
+    "difficulty": "Easy",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "generating_follow_up",
+    "turns": [
+      {
+        "turnId": "1bd007cc-4c33-4ee8-936d-6b70be1edfb9",
+        "question": {
+          "questionId": "b1bffdbb-b657-445e-9c94-6b2977162603",
+          "userId": "NnG4Ew2um0UBvCJmyzAwO7ZIkZi1",
+          "sessionId": "8f17552c-7219-4efc-a236-f9fa7335256f",
+          "roleTarget": "Frontend Developer",
+          "questionText": "How do you structure an optimistic UI mutation pipeline with automatic rollback and local offline queueing?",
+          "normalizedQuestionText": "how do you structure an optimistic ui mutation pipeline with automatic rollback and local offline queueing",
+          "contentFingerprint": "726341398ba4be950ed21bb4dbf00317f104ab23b4e7622afc194f60fa9e94cc",
+          "category": "Interview Turn",
+          "difficulty": "Easy",
+          "experienceLevel": "Intermediate",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T09:34:28.435Z"
+        },
+        "candidateAnswer": "so shut the fuck up",
+        "codeSnippet": "// Frontend Developer Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n",
+        "evaluation": {
+          "score": 70,
+          "summary": "Strong technical grounding for Frontend Developer. Response demonstrated clear domain intuition with actionable implementation steps.",
+          "strengths": [
+            "Backed up verbal reasoning with structured implementation details."
+          ],
+          "gaps": [
+            "Discuss alternative trade-offs and edge failure modes more explicitly.",
+            "Expand response depth with concrete production metrics and real-world scale examples.",
+            "Mention observability, SLAs, and error logging strategies."
+          ],
+          "rubricScores": {
+            "technicalAccuracy": 72,
+            "architectureDepth": 72,
+            "communicationDelivery": 74,
+            "performanceOptimization": 68
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 46,
+        "metrics": {
+          "wordCount": 5,
+          "durationSeconds": 7,
+          "wpm": 43,
+          "pacingStatus": "optimal",
+          "pacingLabel": "Optimal Pacing (120–160 WPM)",
+          "fillerCount": 0,
+          "fillersPerMinute": 0,
+          "fillerBreakdown": {},
+          "identifiedFillers": []
+        },
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T09:34:28.435Z"
+      }
+    ],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T09:33:34.449Z",
+    "updatedAt": "2026-10-24T09:34:28.436Z"
+  },
+  {
+    "sessionId": "528006ba-ca86-4e4f-9fc8-907e65829e01",
+    "userId": "candidate_main",
+    "role": "Frontend Developer",
+    "level": "Entry Level",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "generating_follow_up",
+    "turns": [
+      {
+        "turnId": "adb761e9-f9c6-4618-9c87-2d010d924956",
+        "question": {
+          "questionId": "01d3a91f-1566-443b-82be-7a9ac3ceb330",
+          "userId": "candidate_main",
+          "sessionId": "528006ba-ca86-4e4f-9fc8-907e65829e01",
+          "roleTarget": "Frontend Developer",
+          "questionText": "Walk through how the CSS box model, layout recalculation, and composite layers impact browser rendering performance.",
+          "normalizedQuestionText": "walk through how the css box model layout recalculation and composite layers impact browser rendering performance",
+          "contentFingerprint": "0e9c9c844f8da3e0d6dfcfda1cacb3f3c8017476c7881abc2725e104b6a927b1",
+          "category": "Interview Turn",
+          "difficulty": "Medium",
+          "experienceLevel": "Entry Level",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T09:36:53.304Z"
+        },
+        "candidateAnswer": "used for styling of basically out basic layout",
+        "codeSnippet": "// Frontend Developer Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n",
+        "evaluation": {
+          "score": 70,
+          "summary": "Strong technical grounding for Frontend Developer. Response demonstrated clear domain intuition with actionable implementation steps.",
+          "strengths": [
+            "Backed up verbal reasoning with structured implementation details."
+          ],
+          "gaps": [
+            "Discuss alternative trade-offs and edge failure modes more explicitly.",
+            "Expand response depth with concrete production metrics and real-world scale examples.",
+            "Mention observability, SLAs, and error logging strategies."
+          ],
+          "rubricScores": {
+            "technicalAccuracy": 72,
+            "architectureDepth": 72,
+            "communicationDelivery": 74,
+            "performanceOptimization": 68
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 63,
+        "metrics": {
+          "wordCount": 8,
+          "durationSeconds": 15,
+          "wpm": 32,
+          "pacingStatus": "optimal",
+          "pacingLabel": "Optimal Pacing (120–160 WPM)",
+          "fillerCount": 0,
+          "fillersPerMinute": 0,
+          "fillerBreakdown": {},
+          "identifiedFillers": []
+        },
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T09:36:53.304Z"
+      },
+      {
+        "turnId": "c77098d0-2062-46eb-8c63-16df5c3f17f2",
+        "question": {
+          "questionId": "01d3a91f-1566-443b-82be-7a9ac3ceb330",
+          "userId": "candidate_main",
+          "sessionId": "528006ba-ca86-4e4f-9fc8-907e65829e01",
+          "roleTarget": "Frontend Developer",
+          "questionText": "Walk through how the CSS box model, layout recalculation, and composite layers impact browser rendering performance.",
+          "normalizedQuestionText": "walk through how the css box model layout recalculation and composite layers impact browser rendering performance",
+          "contentFingerprint": "0e9c9c844f8da3e0d6dfcfda1cacb3f3c8017476c7881abc2725e104b6a927b1",
+          "category": "Interview Turn",
+          "difficulty": "Medium",
+          "experienceLevel": "Entry Level",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T09:37:39.794Z"
+        },
+        "candidateAnswer": "so I don't know about this right now",
+        "codeSnippet": "// Frontend Developer Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n",
+        "evaluation": {
+          "score": 70,
+          "summary": "Strong technical grounding for Frontend Developer. Response demonstrated clear domain intuition with actionable implementation steps.",
+          "strengths": [
+            "Backed up verbal reasoning with structured implementation details."
+          ],
+          "gaps": [
+            "Discuss alternative trade-offs and edge failure modes more explicitly.",
+            "Expand response depth with concrete production metrics and real-world scale examples.",
+            "Mention observability, SLAs, and error logging strategies."
+          ],
+          "rubricScores": {
+            "technicalAccuracy": 72,
+            "architectureDepth": 72,
+            "communicationDelivery": 74,
+            "performanceOptimization": 68
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 109,
+        "metrics": {
+          "wordCount": 8,
+          "durationSeconds": 29,
+          "wpm": 17,
+          "pacingStatus": "optimal",
+          "pacingLabel": "Optimal Pacing (120–160 WPM)",
+          "fillerCount": 0,
+          "fillersPerMinute": 0,
+          "fillerBreakdown": {},
+          "identifiedFillers": []
+        },
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T09:37:39.794Z"
+      }
+    ],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T09:35:37.774Z",
+    "updatedAt": "2026-10-24T09:37:39.800Z"
+  },
+  {
+    "sessionId": "75ae2c39-6caf-4bb8-8af1-a1b7c8fbc429",
+    "userId": "NnG4Ew2um0UBvCJmyzAwO7ZIkZi1",
+    "role": "Frontend Developer",
+    "level": "Intermediate",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "interviewer_speaking",
+    "turns": [],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T09:52:33.436Z",
+    "updatedAt": "2026-10-24T09:52:59.751Z"
+  },
+  {
+    "sessionId": "d25bd972-1d9a-424f-8f3d-49f63956cf4d",
+    "userId": "NnG4Ew2um0UBvCJmyzAwO7ZIkZi1",
+    "role": "Frontend Developer",
+    "level": "Intermediate",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "interviewer_speaking",
+    "turns": [],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T09:55:35.812Z",
+    "updatedAt": "2026-10-24T09:56:00.285Z"
+  },
+  {
+    "sessionId": "ed926136-5546-4947-bb81-75f71e5af18d",
+    "userId": "candidate_main",
+    "role": "Frontend Developer",
+    "level": "Entry Level",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "generating_follow_up",
+    "turns": [
+      {
+        "turnId": "6fc85544-dd05-47ac-999e-37b4d8d290c9",
+        "question": {
+          "questionId": "14200f71-672c-43fc-b8e3-fd854fc43c80",
+          "userId": "candidate_main",
+          "sessionId": "ed926136-5546-4947-bb81-75f71e5af18d",
+          "roleTarget": "Frontend Developer",
+          "questionText": "Explain the difference between useEffect, useLayoutEffect, and useInsertionEffect with practical use cases.",
+          "normalizedQuestionText": "explain the difference between useeffect uselayouteffect and useinsertioneffect with practical use cases",
+          "contentFingerprint": "235724e80ea27e7493d0d454a917098b08723431e70583f141f2325f98be884e",
+          "category": "Interview Turn",
+          "difficulty": "Medium",
+          "experienceLevel": "Entry Level",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T09:58:20.684Z"
+        },
+        "candidateAnswer": "so hello hello okay to integrated desperate Legacy applications with maximum isolation and robust communication use hybrid orchestra using module Federation for modern shade apps and web components for Legacy app and capsuletion",
+        "codeSnippet": "// Frontend Developer Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n",
+        "evaluation": {
+          "score": 70,
+          "summary": "Strong technical grounding for Frontend Developer. Response demonstrated clear domain intuition with actionable implementation steps.",
+          "strengths": [
+            "Backed up verbal reasoning with structured implementation details."
+          ],
+          "gaps": [
+            "Discuss alternative trade-offs and edge failure modes more explicitly.",
+            "Expand response depth with concrete production metrics and real-world scale examples.",
+            "Mention observability, SLAs, and error logging strategies."
+          ],
+          "rubricScores": {
+            "technicalAccuracy": 72,
+            "architectureDepth": 72,
+            "communicationDelivery": 74,
+            "performanceOptimization": 68
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 62,
+        "metrics": {
+          "wordCount": 33,
+          "durationSeconds": 24,
+          "wpm": 83,
+          "pacingStatus": "slow",
+          "pacingLabel": "Deliberate / Slow Pace (<110 WPM)",
+          "fillerCount": 0,
+          "fillersPerMinute": 0,
+          "fillerBreakdown": {},
+          "identifiedFillers": []
+        },
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T09:58:20.684Z"
+      }
+    ],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T09:57:10.970Z",
+    "updatedAt": "2026-10-24T09:58:20.686Z"
+  },
+  {
+    "sessionId": "c0d4e998-0a7b-4179-8955-7259b0535f05",
+    "userId": "NnG4Ew2um0UBvCJmyzAwO7ZIkZi1",
+    "role": "Frontend Developer",
+    "level": "Intermediate",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "generating_follow_up",
+    "turns": [
+      {
+        "turnId": "0e686251-b05f-4d55-be9a-a013ea3d87b8",
+        "question": {
+          "questionId": "525acd95-3b44-4ff2-9ef7-799fc4f2b5e0",
+          "userId": "NnG4Ew2um0UBvCJmyzAwO7ZIkZi1",
+          "sessionId": "c0d4e998-0a7b-4179-8955-7259b0535f05",
+          "roleTarget": "Frontend Developer",
+          "questionText": "Walk through how the CSS box model, layout recalculation, and composite layers impact browser rendering performance.",
+          "normalizedQuestionText": "walk through how the css box model layout recalculation and composite layers impact browser rendering performance",
+          "contentFingerprint": "0e9c9c844f8da3e0d6dfcfda1cacb3f3c8017476c7881abc2725e104b6a927b1",
+          "category": "Interview Turn",
+          "difficulty": "Medium",
+          "experienceLevel": "Intermediate",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T10:06:50.438Z"
+        },
+        "candidateAnswer": "you need the browser Converse code into pixels using these major sequential steps down + CSS oem equals to render tree and layout paint composite layers and second is reflow accessories paint",
+        "codeSnippet": "// Frontend Developer Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n",
+        "evaluation": {
+          "score": 75,
+          "summary": "Strong technical grounding for Frontend Developer. Response demonstrated clear domain intuition with actionable implementation steps.",
+          "strengths": [
+            "Clear separation of concerns and architectural boundaries.",
+            "Backed up verbal reasoning with structured implementation details."
+          ],
+          "gaps": [
+            "Discuss alternative trade-offs and edge failure modes more explicitly.",
+            "Expand response depth with concrete production metrics and real-world scale examples.",
+            "Mention observability, SLAs, and error logging strategies."
+          ],
+          "rubricScores": {
+            "technicalAccuracy": 77,
+            "architectureDepth": 88,
+            "communicationDelivery": 86,
+            "performanceOptimization": 68
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 82,
+        "metrics": {
+          "wordCount": 32,
+          "durationSeconds": 33,
+          "wpm": 58,
+          "pacingStatus": "slow",
+          "pacingLabel": "Deliberate / Slow Pace (<110 WPM)",
+          "fillerCount": 0,
+          "fillersPerMinute": 0,
+          "fillerBreakdown": {},
+          "identifiedFillers": []
+        },
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T10:06:50.438Z"
+      }
+    ],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T10:05:19.993Z",
+    "updatedAt": "2026-10-24T10:06:50.440Z"
+  },
+  {
+    "sessionId": "ed264b32-e5c7-4433-b785-dca398891753",
+    "userId": "NnG4Ew2um0UBvCJmyzAwO7ZIkZi1",
+    "role": "Frontend Developer",
+    "level": "Intermediate",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "generating_follow_up",
+    "turns": [
+      {
+        "turnId": "79dd7aa7-2ffd-4d4f-99ff-6dfcfb7efbd1",
+        "question": {
+          "questionId": "b91498ef-bcbc-4063-9ca5-6f64934662ea",
+          "userId": "NnG4Ew2um0UBvCJmyzAwO7ZIkZi1",
+          "sessionId": "ed264b32-e5c7-4433-b785-dca398891753",
+          "roleTarget": "Frontend Developer",
+          "questionText": "Explain the architectural trade-offs between CSR, SSR, and SSG in high-traffic consumer web applications.",
+          "normalizedQuestionText": "explain the architectural tradeoffs between csr ssr and ssg in hightraffic consumer web applications",
+          "contentFingerprint": "a297a18ea0ffe3afd0c7ffdef1a533137e9b4d23a47f77de29be17192602162f",
+          "category": "Interview Turn",
+          "difficulty": "Medium",
+          "experienceLevel": "Intermediate",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T10:24:36.829Z"
+        },
+        "candidateAnswer": "architectural",
+        "codeSnippet": "// Frontend Developer Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n",
+        "evaluation": {
+          "score": 70,
+          "summary": "Strong technical grounding for Frontend Developer. Response demonstrated clear domain intuition with actionable implementation steps.",
+          "strengths": [
+            "Backed up verbal reasoning with structured implementation details."
+          ],
+          "gaps": [
+            "Discuss alternative trade-offs and edge failure modes more explicitly.",
+            "Expand response depth with concrete production metrics and real-world scale examples.",
+            "Mention observability, SLAs, and error logging strategies."
+          ],
+          "rubricScores": {
+            "technicalAccuracy": 72,
+            "architectureDepth": 72,
+            "communicationDelivery": 74,
+            "performanceOptimization": 68
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 158,
+        "metrics": {
+          "wordCount": 1,
+          "durationSeconds": 126,
+          "wpm": 0,
+          "pacingStatus": "optimal",
+          "pacingLabel": "Optimal Pacing (120–160 WPM)",
+          "fillerCount": 0,
+          "fillersPerMinute": 0,
+          "fillerBreakdown": {},
+          "identifiedFillers": []
+        },
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T10:24:36.829Z"
+      }
+    ],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T10:21:51.090Z",
+    "updatedAt": "2026-10-24T10:24:36.836Z"
+  },
+  {
+    "sessionId": "b895c132-a54b-4c4b-847a-e77818c726bc",
+    "userId": "candidate_main",
+    "role": "Frontend Developer",
+    "level": "Entry Level",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "generating_follow_up",
+    "turns": [
+      {
+        "turnId": "fecc77a8-3525-4164-abdc-dce16a7a53d2",
+        "question": {
+          "questionId": "908d9eab-a7d1-4cd5-9e93-f328d26fdc60",
+          "userId": "candidate_main",
+          "sessionId": "b895c132-a54b-4c4b-847a-e77818c726bc",
+          "roleTarget": "Frontend Developer",
+          "questionText": "How does React 18 Concurrent Mode schedule priority using startTransition and useDeferredValue?",
+          "normalizedQuestionText": "how does react 18 concurrent mode schedule priority using starttransition and usedeferredvalue",
+          "contentFingerprint": "a8b4451df44d38857bb1ed587f391d8b1c26f8af873914aa3954b1d9cc5e17dd",
+          "category": "Interview Turn",
+          "difficulty": "Medium",
+          "experienceLevel": "Entry Level",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T10:27:03.267Z"
+        },
+        "candidateAnswer": "reactivity in concurrent mobile managers priority scheduling by separating state updates into urgent and non urgent transition lens allowing react to pause interrupt or discard heavy background rendering to keep the main thread responsive",
+        "codeSnippet": "// Frontend Developer Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n",
+        "evaluation": {
+          "score": 80,
+          "summary": "Candidate demonstrated solid domain reasoning for Frontend Developer (80/100). Pacing was hesitant (52 WPM). Practice continuous vocal flow to avoid prolonged thinking pauses.",
+          "strengths": [
+            "Addressed core concepts in the question with role-appropriate terminology.",
+            "Reinforced verbal explanation with structured scratchpad code."
+          ],
+          "gaps": [
+            "Discuss edge cases, failure states, or alternative architecture trade-offs more explicitly.",
+            "Elaborate on production scale: mention data volumes, SLAs, or concrete business impact.",
+            "Pick up verbal cadence from 52 WPM towards 125-140 WPM to project authoritative confidence.",
+            "Cite observability metrics, P99 latency thresholds, or automated test strategies."
+          ],
+          "rubricScores": {
+            "technicalKnowledge": 94,
+            "problemSolving": 70,
+            "communicationDelivery": 63,
+            "systemArchitecture": 84,
+            "technicalAccuracy": 94,
+            "architectureDepth": 84
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 87,
+        "metrics": {
+          "wordCount": 34,
+          "durationSeconds": 39,
+          "wpm": 52,
+          "pacingStatus": "slow",
+          "pacingLabel": "Deliberate / Slow Pace (<110 WPM)",
+          "fillerCount": 0,
+          "fillersPerMinute": 0,
+          "fillerBreakdown": {},
+          "identifiedFillers": []
+        },
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T10:27:03.267Z"
+      }
+    ],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T10:25:14.625Z",
+    "updatedAt": "2026-10-24T10:27:03.270Z"
+  },
+  {
+    "sessionId": "14011861-4fee-455a-b2ab-ed9ec5cc1ea8",
+    "userId": "candidate_main",
+    "role": "Frontend Developer",
+    "level": "Entry Level",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "preparing",
+    "turns": [],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T10:27:32.603Z",
+    "updatedAt": "2026-10-24T10:27:32.603Z"
+  },
+  {
+    "sessionId": "ac0536a3-e4a0-4bc3-a0df-f4cfed59c4bd",
+    "userId": "candidate_main",
+    "role": "Frontend Developer",
+    "level": "Entry Level",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "interviewer_speaking",
+    "turns": [],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T10:28:47.369Z",
+    "updatedAt": "2026-10-24T10:29:10.777Z"
   }
 ]

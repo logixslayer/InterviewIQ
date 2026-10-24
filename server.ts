@@ -87,12 +87,14 @@ const getAiClientConfig = (): AiClientConfig | null => {
         },
       }),
       models: [
+        'openrouter/free',
         'nvidia/nemotron-3.5-lightning:free',
-        'google/gemini-2.0-flash-exp:free',
-        'google/gemini-2.0-flash-thinking-exp:free',
-        'qwen/qwen-2.5-coder-32b-instruct:free',
-        'meta-llama/llama-3.2-3b-instruct:free',
         'nvidia/nemotron-3.5-super-vl:free',
+        'liquid/lfm-2.5-2.6b:free',
+        'nvidia/nemotron-3-super-120b-a12b:free',
+        'cohere/north-mini-code:free',
+        'recursive/flint-v1.0:free',
+        'meta-llama/llama-3.3-70b-instruct',
       ],
       provider: 'openrouter',
     };
@@ -164,7 +166,7 @@ function extractJsonFromModelOutput(text: string): any {
 }
 
 // Resilient AI caller with model fallback
-async function callAiWithFallback(systemPrompt: string, userPrompt: string, maxTokens = 2500, temperature = 0.2, timeoutMs = 4500): Promise<string> {
+async function callAiWithFallback(systemPrompt: string, userPrompt: string, maxTokens = 2500, temperature = 0.2, timeoutMs = 2500): Promise<string> {
   const config = getAiClientConfig();
   if (!config) throw new Error('API key not configured');
 
@@ -198,6 +200,15 @@ async function callAiWithFallback(systemPrompt: string, userPrompt: string, maxT
     } catch (err: any) {
       console.warn(`Model ${model} encountered an issue:`, err?.message);
       lastError = err;
+      if (
+        err?.message?.includes('free-models-per-day') ||
+        err?.status === 402 ||
+        err?.message?.includes('requires more credits') ||
+        (err?.status === 429 && err?.message?.includes('credits'))
+      ) {
+        // Account credits/quota exhausted; break immediately to provide instant dynamic fallback
+        break;
+      }
     }
   }
   throw lastError || new Error('All candidate AI models failed');
@@ -1809,11 +1820,16 @@ function analyzeResumeHeuristically(text: string, targetDate?: string) {
   };
 }
 
-// Fallback question generator ranked strictly Easy -> Medium -> Hard
-function generateDynamicQuestions(role: string, category: string, _difficulty: string, count: number) {
-  const isBackend = role.toLowerCase().includes('backend') || role.toLowerCase().includes('data') || role.toLowerCase().includes('distributed') || role.toLowerCase().includes('java');
+// Dynamic question generator with extensive question bank and non-repeating shuffle
+function generateDynamicQuestions(role: string, category: string, difficulty: string, count: number) {
+  const lowerRole = (role || '').toLowerCase();
+  const isBackend = lowerRole.includes('backend') || lowerRole.includes('data') || lowerRole.includes('distributed') || lowerRole.includes('java') || lowerRole.includes('golang') || lowerRole.includes('python');
+  const isAiMl = lowerRole.includes('ai') || lowerRole.includes('ml') || lowerRole.includes('machine learning') || lowerRole.includes('data science') || lowerRole.includes('deep learning');
+  const isBlockchain = lowerRole.includes('blockchain') || lowerRole.includes('solidity') || lowerRole.includes('web3') || lowerRole.includes('smart contract') || lowerRole.includes('ethereum');
+  const isDevops = lowerRole.includes('devops') || lowerRole.includes('sre') || lowerRole.includes('cloud') || lowerRole.includes('infrastructure') || lowerRole.includes('platform');
+  const isFullstack = lowerRole.includes('fullstack') || lowerRole.includes('full stack') || lowerRole.includes('software engineer');
 
-  const frontendProgression = [
+  const frontendPool = [
     {
       title: 'Explain the difference between useEffect, useLayoutEffect, and useInsertionEffect with practical use cases.',
       category: 'React Internals',
@@ -1824,10 +1840,18 @@ function generateDynamicQuestions(role: string, category: string, _difficulty: s
     },
     {
       title: 'Walk through how the CSS box model, layout recalculation, and composite layers impact browser rendering performance.',
-      category: 'Technical Architecture',
+      category: 'Browser Performance',
       difficulty: 'Easy' as const,
       desc: 'Explain triggers for reflow vs repaint, GPU acceleration with transform/opacity, and will-change trade-offs.',
       companies: ['Google', 'Apple', 'Canva'],
+      time: '3 mins response'
+    },
+    {
+      title: 'How does React 18 Concurrent Mode schedule priority using startTransition and useDeferredValue?',
+      category: 'React Architecture',
+      difficulty: 'Easy' as const,
+      desc: 'Discuss cooperative multitasking, fiber tree interrupting, starvation avoidance, and urgent vs non-urgent state updates.',
+      companies: ['Meta', 'Discord', 'Airbnb'],
       time: '3 mins response'
     },
     {
@@ -1840,10 +1864,26 @@ function generateDynamicQuestions(role: string, category: string, _difficulty: s
     },
     {
       title: 'How do you structure an optimistic UI mutation pipeline with automatic rollback and local offline queueing?',
-      category: 'System Architecture',
+      category: 'State Management',
       difficulty: 'Medium' as const,
       desc: 'Cover cache mutation patterns, IndexedDB persistence, temporary rollback snapshots, and network reconnect reconciliation.',
       companies: ['Linear', 'Figma', 'Stripe'],
+      time: '4 mins response'
+    },
+    {
+      title: 'Explain how React Server Components (RSC) differ from Server-Side Rendering (SSR) in data flow and bundle size.',
+      category: 'Modern Web Architecture',
+      difficulty: 'Medium' as const,
+      desc: 'Cover zero-bundle-size server dependencies, RSC wire format streaming, server actions, and client boundaries.',
+      companies: ['Vercel', 'Netflix', 'Shopify'],
+      time: '3–4 mins response'
+    },
+    {
+      title: 'How would you architect a client-side virtualized infinite list supporting variable row heights and bidirectional scrolling?',
+      category: 'Frontend Engineering',
+      difficulty: 'Medium' as const,
+      desc: 'Detail windowing algorithms, dynamic height measurement with ResizeObserver, scroll anchoring, and DOM element pooling.',
+      companies: ['Twitter / X', 'LinkedIn', 'Reddit'],
       time: '4 mins response'
     },
     {
@@ -1861,10 +1901,26 @@ function generateDynamicQuestions(role: string, category: string, _difficulty: s
       desc: 'Discuss Module Federation vs Web Components, single-spa orchestrator, shared dependency isolation, and auth token propagation.',
       companies: ['Amazon', 'Spotify', 'Salesforce'],
       time: '5–6 mins response'
+    },
+    {
+      title: 'How do you diagnose and optimize Core Web Vitals (LCP, INP, CLS) on an asset-heavy e-commerce platform?',
+      category: 'Web Performance',
+      difficulty: 'Hard' as const,
+      desc: 'Break down interaction to next paint (INP) long tasks, main thread yield techniques (scheduler.yield), image preloading, and font face swap layout shifts.',
+      companies: ['Amazon', 'Target', 'Etsy'],
+      time: '4–5 mins response'
+    },
+    {
+      title: 'Architect a collaborative rich-text canvas editor supporting multi-user simultaneous editing with conflict resolution.',
+      category: 'Advanced Frontend',
+      difficulty: 'Hard' as const,
+      desc: 'Compare Operational Transformation (OT) vs Conflict-free Replicated Data Types (CRDTs / Yjs), cursor awareness, and WebSocket transport.',
+      companies: ['Figma', 'Notion', 'Google Docs'],
+      time: '5–6 mins response'
     }
   ];
 
-  const backendProgression = [
+  const backendPool = [
     {
       title: 'What are the key trade-offs between relational database transactions (ACID) and eventual consistency in NoSQL stores?',
       category: 'Database Internals',
@@ -1898,6 +1954,22 @@ function generateDynamicQuestions(role: string, category: string, _difficulty: s
       time: '4 mins response'
     },
     {
+      title: 'Explain how Kafka consumer groups manage partition rebalancing and strategies to prevent stop-the-world rebalance storms.',
+      category: 'Distributed Systems',
+      difficulty: 'Medium' as const,
+      desc: 'Cover cooperative sticky assignor, max.poll.interval.ms tuning, heartbeat thread isolation, and offset commit semantics.',
+      companies: ['Uber', 'LinkedIn', 'Netflix'],
+      time: '4 mins response'
+    },
+    {
+      title: 'How do you prevent cache penetration, cache breakdown, and cache avalanches in a distributed Redis deployment?',
+      category: 'Caching & Architecture',
+      difficulty: 'Medium' as const,
+      desc: 'Explain Bloom filters for non-existent keys, mutex locks for hot key expiry, and jittered TTL expiration spreads.',
+      companies: ['Meta', 'ByteDance', 'Twitter / X'],
+      time: '3–4 mins response'
+    },
+    {
       title: 'Design an exactly-once message processing scheme for incoming payment webhooks under network partition and timeout retries.',
       category: 'System Architecture',
       difficulty: 'Hard' as const,
@@ -1912,61 +1984,18 @@ function generateDynamicQuestions(role: string, category: string, _difficulty: s
       desc: 'Detail message broker choice (Kafka vs Kinesis), stream processing (Flink vs Spark), ClickHouse storage, and partition keys.',
       companies: ['Segment', 'Amplitude', 'ByteDance'],
       time: '5–6 mins response'
-    }
-  ];
-
-  const blockchainProgression = [
-    {
-      title: 'Explain the difference between storage, memory, and calldata in the Ethereum Virtual Machine (EVM) and their gas implications.',
-      category: 'EVM Architecture',
-      difficulty: 'Easy' as const,
-      desc: 'Focus on persistence, 32-byte slot allocation costs (SSTORE vs MSTORE), non-modifiable calldata slices, and gas golf optimizations.',
-      companies: ['Coinbase', 'Uniswap Labs', 'Paradigm'],
-      time: '3 mins response'
     },
     {
-      title: 'How does an ERC-20 transferFrom differ from a transfer, and why is approve followed by transferFrom vulnerable to front-running race conditions?',
-      category: 'Smart Contract Standards',
-      difficulty: 'Easy' as const,
-      desc: 'Explain allowance mechanics, sandwich/front-running vectors on allowance changes, and how ERC-20 increaseAllowance or Permit (EIP-2612) fixes it.',
-      companies: ['OpenZeppelin', 'Aave', 'Consensys'],
-      time: '3 mins response'
-    },
-    {
-      title: 'Explain the Mechanics of a Reentrancy attack in Solidity and contrast the Checks-Effects-Interactions pattern with ReentrancyGuard.',
-      category: 'Smart Contract Security',
-      difficulty: 'Medium' as const,
-      desc: 'Discuss fallback/receive execution hijacking, state variable mutation timing, gas stipends in call vs transfer, and transient storage (EIP-1153) mutexes.',
-      companies: ['Chainalysis', 'Trail of Bits', 'Polygon'],
-      time: '4 mins response'
-    },
-    {
-      title: 'Compare the Transparent Upgradeable Proxy pattern versus UUPS (Universal Upgradeable Proxy Standard) in terms of gas efficiency and selector clashes.',
-      category: 'Smart Contract Architecture',
-      difficulty: 'Medium' as const,
-      desc: 'Explain DELEGATECALL storage context, proxy admin function selector clash prevention, fallback routing, and upgrade logic location.',
-      companies: ['Arbitrum', 'Optimism', 'Starkware'],
-      time: '4 mins response'
-    },
-    {
-      title: 'How do you design a flash loan-resistant decentralized oracle system, and why is relying on a single spot AMM pool reserve vulnerable to oracle manipulation?',
-      category: 'DeFi Architecture',
+      title: 'How does the Raft consensus algorithm handle leader election splits and log divergence under asymmetric network partitions?',
+      category: 'Distributed Systems',
       difficulty: 'Hard' as const,
-      desc: 'Detail flash swap atomic capital borrowing, Time-Weighted Average Price (TWAP) calculation, Chainlink decentralized feeds, and multi-block liquidity sampling.',
-      companies: ['Chainlink', 'MakerDAO', 'Curve Finance'],
+      desc: 'Examine term increments, vote quorum arithmetic, uncommitted log rollbacks, and joint consensus cluster membership changes.',
+      companies: ['CockroachDB', 'HashiCorp', 'Google'],
       time: '5 mins response'
-    },
-    {
-      title: 'Walk through EVM storage layout packing and how you would audit an upgradeable protocol for storage collision across proxy implementations.',
-      category: 'EVM Internals',
-      difficulty: 'Hard' as const,
-      desc: 'Explain 32-byte slot assignment for primitive types, mappings, dynamic arrays, ERC-7201 namespaced storage, and catastrophic collision vectors.',
-      companies: ['Paradigm', 'Coinbase', 'Binance'],
-      time: '5–6 mins response'
     }
   ];
 
-  const aiMlProgression = [
+  const aiMlPool = [
     {
       title: 'Explain the fundamental architectural trade-offs between dense semantic retrieval (bi-encoders) and sparse lexical retrieval (BM25) in production RAG systems.',
       category: 'RAG & Retrieval Architecture',
@@ -2000,6 +2029,14 @@ function generateDynamicQuestions(role: string, category: string, _difficulty: s
       time: '4 mins response'
     },
     {
+      title: 'How do you protect production LLM applications against prompt injection, jailbreaks, and sensitive data leakage?',
+      category: 'AI Security & Alignment',
+      difficulty: 'Medium' as const,
+      desc: 'Detail dual-LLM supervisor wrappers, input sanitization, semantic boundary tokens, canary tokens, and output guardrails.',
+      companies: ['Anthropic', 'OpenAI', 'Palantir'],
+      time: '4 mins response'
+    },
+    {
       title: 'Design a high-throughput, low-latency LLM inference engine supporting continuous dynamic batching, PagedAttention, and speculative decoding.',
       category: 'AI Systems & Serving',
       difficulty: 'Hard' as const,
@@ -2017,11 +2054,140 @@ function generateDynamicQuestions(role: string, category: string, _difficulty: s
     }
   ];
 
-  const lowerRole = role.toLowerCase();
-  const isAiMl = lowerRole.includes('ai') || lowerRole.includes('ml') || lowerRole.includes('machine learning') || lowerRole.includes('data science') || lowerRole.includes('deep learning');
-  const isBlockchain = lowerRole.includes('blockchain') || lowerRole.includes('solidity') || lowerRole.includes('web3') || lowerRole.includes('smart contract');
-  const pool = isAiMl ? aiMlProgression : isBlockchain ? blockchainProgression : isBackend ? backendProgression : frontendProgression;
-  const selected = pool.slice(0, Math.min(count, pool.length));
+  const blockchainPool = [
+    {
+      title: 'Explain the difference between storage, memory, and calldata in the Ethereum Virtual Machine (EVM) and their gas implications.',
+      category: 'EVM Architecture',
+      difficulty: 'Easy' as const,
+      desc: 'Focus on persistence, 32-byte slot allocation costs (SSTORE vs MSTORE), non-modifiable calldata slices, and gas golf optimizations.',
+      companies: ['Coinbase', 'Uniswap Labs', 'Paradigm'],
+      time: '3 mins response'
+    },
+    {
+      title: 'How does an ERC-20 transferFrom differ from a transfer, and why is approve followed by transferFrom vulnerable to front-running race conditions?',
+      category: 'Smart Contract Standards',
+      difficulty: 'Easy' as const,
+      desc: 'Explain allowance mechanics, sandwich/front-running vectors on allowance changes, and how ERC-20 increaseAllowance or Permit (EIP-2612) fixes it.',
+      companies: ['OpenZeppelin', 'Aave', 'Consensys'],
+      time: '3 mins response'
+    },
+    {
+      title: 'Explain the Mechanics of a Reentrancy attack in Solidity and contrast the Checks-Effects-Interactions pattern with ReentrancyGuard.',
+      category: 'Smart Contract Security',
+      difficulty: 'Medium' as const,
+      desc: 'Discuss fallback/receive execution hijacking, state variable mutation timing, gas stipends in call vs transfer, and transient storage (EIP-1153) mutexes.',
+      companies: ['Chainalysis', 'Trail of Bits', 'Polygon'],
+      time: '4 mins response'
+    },
+    {
+      title: 'Compare the Transparent Upgradeable Proxy pattern versus UUPS (Universal Upgradeable Proxy Standard) in terms of gas efficiency and selector clashes.',
+      category: 'Smart Contract Architecture',
+      difficulty: 'Medium' as const,
+      desc: 'Explain DELEGATECALL storage context, proxy admin function selector clash prevention, fallback routing, and upgrade logic location.',
+      companies: ['Arbitrum', 'Optimism', 'Starkware'],
+      time: '4 mins response'
+    },
+    {
+      title: 'How does Account Abstraction (ERC-4337) eliminate the need for EOA private key management in decentralized onboarding?',
+      category: 'Web3 Architecture',
+      difficulty: 'Medium' as const,
+      desc: 'Break down EntryPoint contract, UserOperations, Paymasters for gas sponsorship, and Bundler mempools.',
+      companies: ['Visa', 'Starknet', 'Circle'],
+      time: '4 mins response'
+    },
+    {
+      title: 'How do you design a flash loan-resistant decentralized oracle system, and why is relying on a single spot AMM pool reserve vulnerable to oracle manipulation?',
+      category: 'DeFi Architecture',
+      difficulty: 'Hard' as const,
+      desc: 'Detail flash swap atomic capital borrowing, Time-Weighted Average Price (TWAP) calculation, Chainlink decentralized feeds, and multi-block liquidity sampling.',
+      companies: ['Chainlink', 'MakerDAO', 'Curve Finance'],
+      time: '5 mins response'
+    },
+    {
+      title: 'Walk through EVM storage layout packing and how you would audit an upgradeable protocol for storage collision across proxy implementations.',
+      category: 'EVM Internals',
+      difficulty: 'Hard' as const,
+      desc: 'Explain 32-byte slot assignment for primitive types, mappings, dynamic arrays, ERC-7201 namespaced storage, and catastrophic collision vectors.',
+      companies: ['Paradigm', 'Coinbase', 'Binance'],
+      time: '5–6 mins response'
+    }
+  ];
+
+  const devopsPool = [
+    {
+      title: 'How does Kubernetes Horizontal Pod Autoscaler (HPA) handle metric aggregation and prevent flapping during rapid traffic spikes?',
+      category: 'Cloud & Infrastructure',
+      difficulty: 'Easy' as const,
+      desc: 'Cover stabilization windows, metrics-server sync interval, tolerance ratios, and custom Prometheus metrics integration.',
+      companies: ['Google Cloud', 'Spotify', 'Datadog'],
+      time: '3 mins response'
+    },
+    {
+      title: 'Design a zero-downtime blue-green and canary deployment pipeline across multiple Kubernetes clusters.',
+      category: 'CI/CD & Reliability',
+      difficulty: 'Medium' as const,
+      desc: 'Explain ingress weight shifting, service mesh (Istio/Envoy) traffic mirroring, automated metric health verification, and instant rollback triggers.',
+      companies: ['Netflix', 'AWS', 'HashiCorp'],
+      time: '4 mins response'
+    },
+    {
+      title: 'Explain how distributed tracing propagates context across asynchronous event queues and RPC boundaries using W3C Trace Context.',
+      category: 'Observability & SRE',
+      difficulty: 'Medium' as const,
+      desc: 'Detail traceparent and tracestate headers, baggage API, OpenTelemetry collector pipeline, and sampling strategies.',
+      companies: ['Datadog', 'Dynatrace', 'Uber'],
+      time: '4 mins response'
+    },
+    {
+      title: 'How do you secure containerized workloads against kernel privilege escalations and container breakout attacks?',
+      category: 'Cloud Security',
+      difficulty: 'Hard' as const,
+      desc: 'Examine rootless containers, Linux capabilities dropping, seccomp profiles, AppArmor, eBPF runtime detection (Tetragon/Falco), and read-only root filesystems.',
+      companies: ['Cloudflare', 'Palantir', 'CrowdStrike'],
+      time: '5 mins response'
+    }
+  ];
+
+  // Select primary pool based on role
+  let pool = frontendPool;
+  if (isAiMl) {
+    pool = aiMlPool;
+  } else if (isBlockchain) {
+    pool = blockchainPool;
+  } else if (isDevops) {
+    pool = devopsPool;
+  } else if (isBackend) {
+    pool = backendPool;
+  } else if (isFullstack) {
+    // Interleave frontend and backend for fullstack
+    pool = [...frontendPool, ...backendPool];
+  }
+
+  // Shuffle array using Fisher-Yates
+  const shuffled = [...pool];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  // If specific difficulty requested, prioritize matching items
+  const normalizedDifficulty = (difficulty || '').toLowerCase();
+  let ranked: typeof pool = [];
+  if (normalizedDifficulty.includes('easy')) {
+    ranked = [...shuffled.filter(q => q.difficulty === 'Easy'), ...shuffled.filter(q => q.difficulty === 'Medium'), ...shuffled.filter(q => q.difficulty === 'Hard')];
+  } else if (normalizedDifficulty.includes('hard')) {
+    ranked = [...shuffled.filter(q => q.difficulty === 'Hard'), ...shuffled.filter(q => q.difficulty === 'Medium'), ...shuffled.filter(q => q.difficulty === 'Easy')];
+  } else {
+    // Balanced distribution (Easy -> Medium -> Hard)
+    const easy = shuffled.filter(q => q.difficulty === 'Easy');
+    const med = shuffled.filter(q => q.difficulty === 'Medium');
+    const hard = shuffled.filter(q => q.difficulty === 'Hard');
+    ranked = [...easy.slice(0, 2), ...med.slice(0, 2), ...hard.slice(0, 2), ...shuffled];
+    // Remove duplicates
+    ranked = ranked.filter((v, idx, arr) => arr.findIndex(t => t.title === v.title) === idx);
+  }
+
+  const selected = ranked.slice(0, Math.min(count, ranked.length));
 
   return selected.map((item, i) => {
     const questionId = crypto.randomUUID();

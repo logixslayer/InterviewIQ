@@ -77,13 +77,12 @@ export interface CodeExample {
 }
 
 export interface QuestionItem {
-<<<<<<< HEAD
   id: string; // Persistent UUID
-=======
-  id: string;
   slug?: string;
   title: string;
   questionText?: string;
+  normalizedQuestionText?: string;
+  contentFingerprint?: string;
   category: string;
   categoryId?: string;
   topicId?: string;
@@ -114,6 +113,9 @@ export interface QuestionItem {
   statusLabel?: string;
   isBookmarked?: boolean;
   isCustom?: boolean;
+  source?: 'curated' | 'generated' | 'follow-up';
+  parentQuestionId?: string;
+  evaluationCriteria?: string[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -154,21 +156,25 @@ export interface TopicCategory {
 
 export interface LearningPathTopic {
   id: string;
->>>>>>> origin/feature/question-library
   title: string;
-  normalizedQuestionText?: string;
   category: string;
   description: string;
-<<<<<<< HEAD
-  companies: string[];
-  status: 'passed' | 'review' | 'unattempted';
-  statusLabel?: string;
-  isBookmarked: boolean;
-  source?: 'curated' | 'generated' | 'follow-up';
-  parentQuestionId?: string;
-  contentFingerprint?: string;
-  evaluationCriteria?: string[];
-  createdAt?: string;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  estimatedHours: number;
+  prerequisites: string[];
+  questionIds: string[];
+}
+
+export interface RoleLearningPath {
+  roleId: string;
+  roleTitle: string;
+  description: string;
+  stages: {
+    stage: number;
+    title: string;
+    description: string;
+    topics: LearningPathTopic[];
+  }[];
 }
 
 export interface SessionTurnRecord {
@@ -199,24 +205,6 @@ export interface InterviewSessionData {
   createdAt: string;
   updatedAt: string;
   report?: SessionEvaluationReport;
-=======
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
-  estimatedHours: number;
-  prerequisites: string[];
-  questionIds: string[];
-}
-
-export interface RoleLearningPath {
-  roleId: string;
-  roleTitle: string;
-  description: string;
-  stages: {
-    stage: number;
-    title: string;
-    description: string;
-    topics: LearningPathTopic[];
-  }[];
->>>>>>> origin/feature/question-library
 }
 
 export interface SessionOutlineItem {
