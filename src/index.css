@@ -94,9 +94,41 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  
+
   body {
     overscroll-behavior-y: none;
+  }
+
+  html.dark {
+    --color-surface: #111216;
+    --color-on-surface: #e4e2e6;
+    --color-surface-container: #17181c;
+    --color-surface-container-low: #131417;
+    --color-surface-container-lowest: #0c0d0f;
+    --color-surface-container-high: #212227;
+    --color-surface-container-highest: #2b2c32;
+    --color-surface-variant: #26272e;
+    --color-on-surface-variant: #c6c6d0;
+    --color-outline: #8d8f99;
+    --color-outline-variant: #36373f;
+    --color-primary: #8699ff;
+    --color-primary-container: #475ecc;
+    --color-on-primary: #ffffff;
+    --color-on-primary-container: #ffffff;
+    --color-background: #111216;
+    --color-on-background: #e4e2e6;
+    --color-inverse-surface: #e4e2e6;
+    --color-inverse-on-surface: #1c1b1b;
+
+    /* Fixed Brand Colors in Dark Theme */
+    --color-brand-navy: #0c0d12;
+    --color-brand-blue: #5b84ff;
+    --color-brand-bg: #0f121a;
+    --color-brand-white: #161b26;
+    --color-brand-text-primary: #f2f4f8;
+    --color-brand-text-secondary: #9aa1b2;
+    --color-brand-border: #293042;
+    --color-brand-subtle: #1a233d;
   }
 }
 

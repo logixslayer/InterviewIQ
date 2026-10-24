@@ -1,6 +1,6 @@
 /**
  * InterviewIQ Authentication Service
- * 
+ *
  * Powered by Firebase Authentication SDK.
  * Features:
  * - Real email & password login and registration
@@ -10,14 +10,14 @@
  * - Clear error mapping for invalid credentials, duplicate accounts, and network drops
  */
 
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  updateProfile, 
-  signOut as firebaseSignOut, 
-  onAuthStateChanged, 
-  setPersistence, 
-  browserLocalPersistence, 
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence,
   browserSessionPersistence,
   User as FirebaseUser
 } from 'firebase/auth';
@@ -25,6 +25,7 @@ import { auth, isFirebaseConfigured } from './firebase';
 
 export interface AuthUser {
   id: string;
+  uid?: string;
   email: string;
   fullName: string;
   createdAt: string;
@@ -60,6 +61,7 @@ const REMEMBERED_EMAIL_STORAGE_KEY = 'interviewiq_remembered_username';
 function formatFirebaseUser(user: FirebaseUser): AuthUser {
   return {
     id: user.uid,
+    uid: user.uid,
     email: user.email || '',
     fullName: user.displayName || user.email?.split('@')[0] || 'Candidate',
     createdAt: user.metadata.creationTime || new Date().toISOString(),
@@ -222,15 +224,15 @@ export async function loginWithEmail(credentials: LoginCredentials): Promise<Aut
 
   try {
     // Apply session persistence according to Remember Me selection
-    const persistenceMode = credentials.rememberMe 
-      ? browserLocalPersistence 
+    const persistenceMode = credentials.rememberMe
+      ? browserLocalPersistence
       : browserSessionPersistence;
-    
+
     await setPersistence(auth, persistenceMode);
 
     const credential = await signInWithEmailAndPassword(
-      auth, 
-      credentials.email.trim(), 
+      auth,
+      credentials.email.trim(),
       credentials.password
     );
 
@@ -242,7 +244,7 @@ export async function loginWithEmail(credentials: LoginCredentials): Promise<Aut
   } catch (error: any) {
     const errorCode = error?.code || '';
     const friendlyMessage = mapFirebaseError(
-      errorCode, 
+      errorCode,
       error?.message || 'Authentication failed. Please verify your credentials.'
     );
 
@@ -270,8 +272,8 @@ export async function signUpWithEmail(credentials: SignUpCredentials): Promise<A
 
   try {
     const credential = await createUserWithEmailAndPassword(
-      auth, 
-      credentials.email.trim(), 
+      auth,
+      credentials.email.trim(),
       credentials.password
     );
 
@@ -290,7 +292,7 @@ export async function signUpWithEmail(credentials: SignUpCredentials): Promise<A
   } catch (error: any) {
     const errorCode = error?.code || '';
     const friendlyMessage = mapFirebaseError(
-      errorCode, 
+      errorCode,
       error?.message || 'Registration failed. Please check your details.'
     );
 

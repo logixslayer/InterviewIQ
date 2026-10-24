@@ -32,7 +32,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       <aside className="hidden lg:flex fixed left-0 top-0 h-full w-[230px] bg-surface-container-lowest z-50 flex-col justify-between border-r border-surface-variant select-none">
         <div className="flex flex-col">
           {/* Logo Header */}
-          <div 
+          <div
             className="h-[52px] px-space-md flex items-center gap-space-sm border-b border-surface-variant cursor-pointer hover:bg-surface-container-low/50 transition-colors"
             onClick={() => onNavigate('overview')}
           >
@@ -179,7 +179,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               <nav className="flex flex-col gap-0.5">
                 <button
                   type="button"
-                  onClick={() => onNavigate('settings')}
+                  onClick={() => onNavigate('profile')}
                   className={`flex items-center gap-space-sm px-space-md py-2 rounded transition-colors font-body-md text-body-md text-left w-full ${
                     currentView === 'profile'
                       ? 'bg-surface-container-low text-primary font-medium border-l-2 border-primary'
@@ -219,36 +219,46 @@ export const Navigation: React.FC<NavigationProps> = ({
 
         {/* User Card at Bottom */}
         <div className="p-space-sm border-t border-surface-variant bg-surface-container-lowest">
-          <div 
-            onClick={() => onOpenResumeModal ? onOpenResumeModal() : onNavigate('settings')}
+          <div
+            onClick={() => onNavigate('profile')}
             className="flex items-center justify-between p-1.5 rounded hover:bg-surface-container-low transition-colors cursor-pointer group"
             title="Click to view/update candidate profile"
           >
             <div className="flex items-center gap-space-sm overflow-hidden">
               <div className="w-8 h-8 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden relative">
-                <img 
-                  alt="Profile" 
-                  className="w-full h-full object-cover" 
-                  src={AVATAR_URL} 
-                  onError={(e) => {
-                    (e.currentTarget as HTMLElement).style.display = 'none';
-                  }}
-                />
+                {userProfile?.avatarUrl ? (
+                  <img
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                    src={userProfile.avatarUrl}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                ) : null}
                 <span className="text-primary font-bold text-xs">
-                  {userProfile?.fullName ? userProfile.fullName.slice(0, 2).toUpperCase() : 'AH'}
+                  {userProfile?.fullName
+                    ? userProfile.fullName
+                        .split(' ')
+                        .filter(Boolean)
+                        .map((n) => n[0])
+                        .slice(0, 2)
+                        .join('')
+                        .toUpperCase() || 'U'
+                    : 'U'}
                 </span>
               </div>
               <div className="flex flex-col truncate">
                 <span className="font-label-md text-label-md text-on-surface font-semibold tracking-tight truncate group-hover:text-primary transition-colors">
-                  {userProfile?.fullName ? userProfile.fullName.toUpperCase() : 'ABIGAIL HALL'}
+                  {userProfile?.fullName || 'Candidate Profile'}
                 </span>
                 <span className="font-label-micro text-label-micro text-outline truncate flex items-center gap-1">
-                  Resume Analyzed
+                  {userProfile?.primaryRole || userProfile?.targetRoles?.[0]?.title || (userProfile?.experienceYears ? `${userProfile.experienceYears} yrs exp` : 'Candidate')}
                   <span className="w-1.5 h-1.5 rounded-full bg-secondary inline-block"></span>
                 </span>
               </div>
             </div>
-            <span className="material-symbols-outlined text-outline text-[16px]">unfold_more</span>
+            <span className="material-symbols-outlined text-outline text-[16px] group-hover:text-primary transition-colors">chevron_right</span>
           </div>
         </div>
       </aside>
@@ -257,7 +267,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       <header className="hidden lg:flex fixed top-0 left-[230px] right-0 h-[52px] bg-surface-container-lowest/90 backdrop-blur-md border-b border-surface-variant z-40 px-space-lg items-center justify-between">
         {/* Breadcrumb based on View */}
         <div className="flex items-center gap-space-sm text-outline font-label-md text-label-md">
-          <span 
+          <span
             className="hover:text-on-surface cursor-pointer transition-colors"
             onClick={() => onNavigate('overview')}
           >
@@ -313,6 +323,10 @@ export const Navigation: React.FC<NavigationProps> = ({
             <span className="text-on-surface font-medium">Question Library</span>
           )}
 
+          {currentView === 'profile' && (
+            <span className="text-on-surface font-medium">Profile</span>
+          )}
+
           {currentView === 'settings' && (
             <span className="text-on-surface font-medium">Settings</span>
           )}
@@ -324,10 +338,10 @@ export const Navigation: React.FC<NavigationProps> = ({
             <span className="material-symbols-outlined absolute left-2.5 text-outline pointer-events-none text-[16px]">
               search
             </span>
-            <input 
+            <input
               className="w-56 h-[34px] pl-8 pr-12 rounded bg-surface-container-low border border-surface-variant font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary transition-colors"
-              placeholder="Search questions, plans..." 
-              type="text" 
+              placeholder="Search questions, plans..."
+              type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
             />
@@ -350,14 +364,14 @@ export const Navigation: React.FC<NavigationProps> = ({
           )}
 
           <div className="flex items-center gap-1 border-l border-surface-variant pl-space-md">
-            <button 
+            <button
               className="relative p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded transition-colors"
               title="Notifications"
             >
               <span className="material-symbols-outlined text-[18px]">notifications</span>
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-error rounded-full"></span>
             </button>
-            <button 
+            <button
               className="p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded transition-colors"
               title="Help & Documentation"
               onClick={() => onNavigate('question-library')}
@@ -373,7 +387,7 @@ export const Navigation: React.FC<NavigationProps> = ({
         <div className="h-14 px-margin flex items-center justify-between">
           <div className="flex items-center gap-space-sm">
             {isMockSubView ? (
-              <button 
+              <button
                 onClick={() => onNavigate(currentView === 'evaluation-report' ? 'overview' : 'mock-interviews')}
                 className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant/40 text-on-surface -ml-1 transition-colors"
                 title="Go Back"
@@ -381,7 +395,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                 <span className="material-symbols-outlined text-[20px]">arrow_back</span>
               </button>
             ) : (
-              <div 
+              <div
                 className="w-7 h-7 rounded-lg bg-inverse-surface flex items-center justify-center cursor-pointer"
                 onClick={() => onNavigate('overview')}
               >
@@ -402,26 +416,41 @@ export const Navigation: React.FC<NavigationProps> = ({
                  currentView === 'evaluation-report' ? 'Session Report' :
                  currentView === 'question-library' ? 'Questions' :
                  currentView === 'my-progress' ? 'My Progress' :
-                 currentView === 'practice-plan' ? 'Practice Plan' : 'Settings'}
+                 currentView === 'practice-plan' ? 'Practice Plan' :
+                 currentView === 'profile' ? 'Profile' : 'Settings'}
               </h1>
             </div>
           </div>
 
           <div className="flex items-center gap-space-xs">
-            <button 
+            <button
               className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant/40 transition-colors relative"
               title="Notifications"
             >
               <span className="material-symbols-outlined text-on-surface-variant text-[22px]">notifications</span>
               <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-primary-container ring-2 ring-surface"></span>
             </button>
-            <button 
-              onClick={() => onNavigate('settings')}
+            <button
+              onClick={() => onNavigate('profile')}
               className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant/40 transition-colors"
-              title="Settings & Profile"
+              title="Profile"
             >
-              <div className="w-8 h-8 rounded-full overflow-hidden ring-1 ring-surface-variant">
-                <img src={AVATAR_URL} alt="Alex Morgan" className="w-full h-full object-cover" />
+              <div className="w-8 h-8 rounded-full overflow-hidden ring-1 ring-surface-variant bg-primary-fixed text-primary flex items-center justify-center font-bold text-xs">
+                {userProfile?.avatarUrl ? (
+                  <img src={userProfile.avatarUrl} alt={userProfile.fullName || 'User'} className="w-full h-full object-cover" />
+                ) : (
+                  <span>
+                    {userProfile?.fullName
+                      ? userProfile.fullName
+                          .split(' ')
+                          .filter(Boolean)
+                          .map((n) => n[0])
+                          .slice(0, 2)
+                          .join('')
+                          .toUpperCase() || 'U'
+                      : 'U'}
+                  </span>
+                )}
               </div>
             </button>
           </div>

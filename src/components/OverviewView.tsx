@@ -24,7 +24,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   const [newRoleInput, setNewRoleInput] = useState('');
 
   // Candidate Name
-  const candidateFullName = userProfile?.fullName || 'ABIGAIL HALL';
+  const candidateFullName = userProfile?.fullName || 'Candidate';
   const candidateFirstName = candidateFullName.split(' ')[0].toUpperCase();
 
   // Target Roles Label (clean, focused format from reference image)
@@ -174,7 +174,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             </span>
           </div>
 
-          <button 
+          <button
             type="button"
             onClick={onStartInterview}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors shadow-sm font-label-md text-label-md font-medium cursor-pointer"
@@ -267,7 +267,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           </div>
           <div className="flex items-center justify-between text-xs text-outline">
             <span className="text-on-surface-variant font-normal">Target benchmark: 85+</span>
-            <button 
+            <button
               type="button"
               onClick={() => onNavigate('my-progress')}
               className="text-primary font-medium hover:underline cursor-pointer"
@@ -303,7 +303,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   <span className="material-symbols-outlined text-[15px]">add</span>
                 </button>
               </div>
-              <button 
+              <button
                 type="button"
                 onClick={() => onNavigate('my-progress')}
                 className="font-label-md text-label-md text-primary font-medium hover:text-on-primary-fixed-variant transition-colors flex items-center gap-0.5 cursor-pointer"
@@ -611,7 +611,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             </div>
 
             {/* Quick 10-min Session Action Button */}
-            <button 
+            <button
               type="button"
               onClick={onStartInterview}
               className="w-full py-2.5 px-space-md rounded-lg bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors flex items-center justify-center gap-1.5 text-xs font-semibold shadow-sm cursor-pointer"

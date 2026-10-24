@@ -152,6 +152,28 @@ async function callAiWithFallback(systemPrompt: string, userPrompt: string, maxT
   throw lastError || new Error('All candidate AI models failed');
 }
 
+import fs from 'fs';
+
+// Data storage directory for persistent user profiles and settings
+const USERS_DATA_DIR = path.join(__dirname, '.data', 'users');
+if (!fs.existsSync(USERS_DATA_DIR)) {
+  try {
+    fs.mkdirSync(USERS_DATA_DIR, { recursive: true });
+  } catch (e) {
+    console.warn('Could not create .data/users directory:', e);
+  }
+}
+
+function getUserProfilePath(uid: string): string {
+  const sanitized = uid.replace(/[^a-zA-Z0-9_-]/g, '');
+  return path.join(USERS_DATA_DIR, `${sanitized}-profile.json`);
+}
+
+function getUserSettingsPath(uid: string): string {
+  const sanitized = uid.replace(/[^a-zA-Z0-9_-]/g, '');
+  return path.join(USERS_DATA_DIR, `${sanitized}-settings.json`);
+}
+
 // Health & Config Check
 app.get('/api/status', (_req, res) => {
   const key = process.env.NVIDIA_API_KEY;
@@ -163,6 +185,94 @@ app.get('/api/status', (_req, res) => {
     provider: config?.provider || 'none',
     engine: config?.provider === 'openrouter' ? 'OpenRouter / NVIDIA Nemotron 3.5' : 'NVIDIA Nemotron 3.5 Native',
   });
+});
+
+// User Profile Persistence Endpoints
+app.get('/api/user/profile/:uid', (req, res) => {
+  const { uid } = req.params;
+  if (!uid || typeof uid !== 'string') return res.status(400).json({ error: 'UID is required' });
+  const filePath = getUserProfilePath(uid);
+  if (fs.existsSync(filePath)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      return res.json({ profile: data });
+    } catch (e: any) {
+      console.warn('Failed to parse profile for uid', uid, e?.message);
+    }
+  }
+  return res.json({ profile: null });
+});
+
+app.post('/api/user/profile/:uid', (req, res) => {
+  const { uid } = req.params;
+  const profile = req.body;
+  if (!uid || typeof uid !== 'string' || !profile) {
+    return res.status(400).json({ error: 'Valid UID and profile data are required' });
+  }
+  try {
+    const filePath = getUserProfilePath(uid);
+    const dataToSave = {
+      ...profile,
+      uid,
+      updatedAt: new Date().toISOString()
+    };
+    fs.writeFileSync(filePath, JSON.stringify(dataToSave, null, 2), 'utf-8');
+    return res.json({ success: true, profile: dataToSave });
+  } catch (e: any) {
+    console.error('Failed to save profile for uid', uid, e);
+    return res.status(500).json({ error: 'Internal server error saving profile' });
+  }
+});
+
+// User Settings Persistence Endpoints
+app.get('/api/user/settings/:uid', (req, res) => {
+  const { uid } = req.params;
+  if (!uid || typeof uid !== 'string') return res.status(400).json({ error: 'UID is required' });
+  const filePath = getUserSettingsPath(uid);
+  if (fs.existsSync(filePath)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      return res.json({ settings: data });
+    } catch (e: any) {
+      console.warn('Failed to parse settings for uid', uid, e?.message);
+    }
+  }
+  return res.json({ settings: null });
+});
+
+app.post('/api/user/settings/:uid', (req, res) => {
+  const { uid } = req.params;
+  const settings = req.body;
+  if (!uid || typeof uid !== 'string' || !settings) {
+    return res.status(400).json({ error: 'Valid UID and settings are required' });
+  }
+  try {
+    const filePath = getUserSettingsPath(uid);
+    const dataToSave = {
+      ...settings,
+      updatedAt: new Date().toISOString()
+    };
+    fs.writeFileSync(filePath, JSON.stringify(dataToSave, null, 2), 'utf-8');
+    return res.json({ success: true, settings: dataToSave });
+  } catch (e: any) {
+    console.error('Failed to save settings for uid', uid, e);
+    return res.status(500).json({ error: 'Internal server error saving settings' });
+  }
+});
+
+app.delete('/api/user/data/:uid', (req, res) => {
+  const { uid } = req.params;
+  if (!uid || typeof uid !== 'string') return res.status(400).json({ error: 'UID is required' });
+  try {
+    const pPath = getUserProfilePath(uid);
+    const sPath = getUserSettingsPath(uid);
+    if (fs.existsSync(pPath)) fs.unlinkSync(pPath);
+    if (fs.existsSync(sPath)) fs.unlinkSync(sPath);
+    return res.json({ success: true, message: 'User data removed' });
+  } catch (e: any) {
+    console.error('Failed to delete data for uid', uid, e);
+    return res.status(500).json({ error: 'Internal server error deleting user data' });
+  }
 });
 
 // Document Parsing Endpoint (PDF, DOCX, TXT, MD)
@@ -459,7 +569,7 @@ Output STRICT JSON only (no markdown, valid JSON):
 app.post('/api/interview/generate-report', async (req, res) => {
   try {
     const { role = 'Frontend Developer', duration = '15 mins', answers = [] } = req.body;
-    
+
     const aiConfig = getAiClientConfig();
     if (aiConfig && answers.length > 0) {
       try {
@@ -495,7 +605,7 @@ Output STRICT JSON only:
       }
     }
 
-    const avgScore = answers.length > 0 
+    const avgScore = answers.length > 0
       ? Math.round(answers.reduce((acc: number, a: any) => acc + (a.score || 82), 0) / answers.length)
       : 84;
 
@@ -588,7 +698,7 @@ function evaluateAnswerHeuristically(
 // Heuristic Resume Parser
 function analyzeResumeHeuristically(text: string, targetDate?: string) {
   const lower = text.toLowerCase();
-  
+
   // Name extraction attempt (first non-empty line or Alex Morgan)
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   let name = 'Alex Morgan';
@@ -604,7 +714,7 @@ function analyzeResumeHeuristically(text: string, targetDate?: string) {
   const knownSkills = [
     'Solidity', 'EVM', 'Ethereum', 'Smart Contracts', 'Web3', 'Hardhat', 'Truffle',
     'PyTorch', 'TensorFlow', 'Machine Learning', 'Deep Learning', 'LLMs', 'NLP',
-    'React', 'TypeScript', 'JavaScript', 'Next.js', 'Node.js', 'Python', 'Java', 'Go', 
+    'React', 'TypeScript', 'JavaScript', 'Next.js', 'Node.js', 'Python', 'Java', 'Go',
     'GraphQL', 'PostgreSQL', 'SQL', 'Docker', 'Kubernetes', 'AWS', 'Redis', 'Tailwind CSS',
     'HTML/CSS', 'System Design', 'Git', 'Webpack', 'Vite', 'Kafka', 'Spring Boot', 'Terraform'
   ];
