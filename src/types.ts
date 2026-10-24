@@ -1,4 +1,4 @@
-export type ViewMode = 
+export type ViewMode =
   | 'welcome'
   | 'login'
   | 'signup'
@@ -111,14 +111,19 @@ export interface AnalyzedRole {
 }
 
 export interface UserProfile {
+  uid?: string;
   fullName: string;
   email: string;
+  avatarUrl?: string;
   primaryRole?: string;
   experienceLevel?: string;
   currentStage: string;
   experienceYears: number;
   targetRoles: AnalyzedRole[];
   topSkills: string[];
+  targetCompanies?: string[];
+  careerGoals?: string;
+  preferredInterviewType?: string;
   targetInterviewDate: string;
   readinessTier: string;
   keyAchievements: string[];
@@ -126,6 +131,43 @@ export interface UserProfile {
   summary: string;
   rawResumeText?: string;
   analyzedAt?: string;
+  updatedAt?: string;
+}
+
+export type ThemeMode = 'light' | 'dark' | 'system';
+
+export interface InterviewDefaults {
+  defaultRole: string;
+  defaultLevel: string;
+  defaultType: string;
+  defaultDifficulty: string;
+  duration: string;
+  questionsPerSession: number;
+  feedbackRigor: 'Lenient' | 'Calibrated' | 'Rigorous';
+  preferredRole?: string;
+  preferredType?: string;
+  durationMinutes?: number;
+}
+
+export interface NotificationPreferences {
+  practiceReminders: boolean;
+  weeklyProgressUpdates: boolean;
+  productAnnouncements: boolean;
+  frequency: 'daily' | 'weekly' | 'never';
+}
+
+export interface AccessibilitySettings {
+  reducedMotion: boolean;
+  highContrast: boolean;
+  soundEffects: boolean;
+}
+
+export interface UserSettings {
+  theme: ThemeMode;
+  interviewDefaults: InterviewDefaults;
+  notifications: NotificationPreferences;
+  accessibility: AccessibilitySettings;
+  updatedAt?: string;
 }
 
 export interface RecentInterviewItem {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ViewMode, InterviewConfig, QuestionItem, UserProfile, RecentInterviewItem, SessionEvaluationReport } from './types';
+import { ViewMode, InterviewConfig, QuestionItem, UserProfile, UserSettings, RecentInterviewItem, SessionEvaluationReport } from './types';
 import { RECENT_INTERVIEWS_DATA } from './data/mockData';
 import { Navigation } from './components/Navigation';
 import { OverviewView } from './components/OverviewView';
@@ -9,18 +9,27 @@ import { EvaluationReportView } from './components/EvaluationReportView';
 import { MyProgressView } from './components/MyProgressView';
 import { QuestionLibraryView } from './components/QuestionLibraryView';
 import { PracticePlanView } from './components/PracticePlanView';
+import { ProfileView } from './components/ProfileView';
 import { SettingsView } from './components/SettingsView';
 import { ResumeOnboardingModal } from './components/ResumeOnboardingModal';
 import { WelcomeView } from './components/WelcomeView';
 import { LoginView } from './components/LoginView';
 import { SignUpView } from './components/SignUpView';
-import { 
-  AuthUser, 
-  checkAuthSession, 
-  getCurrentAuthUser, 
+import {
+  AuthUser,
+  checkAuthSession,
+  getCurrentAuthUser,
   subscribeToAuthChanges,
-  signOut as authSignOut 
+  signOut as authSignOut
 } from './services/authService';
+import { initTheme } from './services/themeService';
+import {
+  loadUserProfile,
+  saveUserProfile,
+  loadUserSettings,
+  saveUserSettings,
+  createDefaultSettings
+} from './services/userService';
 import { Loader2 } from 'lucide-react';
 
 const PUBLIC_ROUTES = new Set(['/', '/login', '/signup']);
@@ -77,9 +86,41 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
 
+  // Initialize application-wide theme (light/dark/system)
+  useEffect(() => {
+    initTheme();
+  }, []);
+
   // Authentication session state verified with backend / provider
   const [authUser, setAuthUser] = useState<AuthUser | null>(() => getCurrentAuthUser());
   const [isVerifyingSession, setIsVerifyingSession] = useState<boolean>(true);
+
+  // User Settings State (scoped per UID)
+  const [userSettings, setUserSettings] = useState<UserSettings>(() => {
+    const current = getCurrentAuthUser();
+    const uid = current ? (current.uid || current.id) : null;
+    if (uid) {
+      try {
+        const cached = localStorage.getItem(`interviewiq_settings_${uid}`);
+        if (cached) return JSON.parse(cached);
+      } catch {}
+      return createDefaultSettings(uid);
+    }
+    return createDefaultSettings('guest');
+  });
+
+  // User Profile State (scoped per UID, loads from real account)
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
+    const current = getCurrentAuthUser();
+    const uid = current ? (current.uid || current.id) : null;
+    if (uid) {
+      try {
+        const cached = localStorage.getItem(`interviewiq_profile_${uid}`);
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return null;
+  });
 
   // Session verification and real-time auth subscription
   useEffect(() => {
@@ -96,6 +137,48 @@ export default function App() {
       unsubscribe();
     };
   }, []);
+
+  // Asynchronously load real user profile and settings when authUser changes
+  useEffect(() => {
+    const uid = authUser ? (authUser.uid || authUser.id) : null;
+    if (!uid) {
+      setUserProfile(null);
+      setUserSettings(createDefaultSettings('guest'));
+      return;
+    }
+
+    let isMounted = true;
+    async function loadUserData() {
+      try {
+        const [loadedProfile, loadedSettings] = await Promise.all([
+          loadUserProfile(uid!, authUser!.email || undefined, authUser!.fullName || undefined),
+          loadUserSettings(uid!)
+        ]);
+        if (isMounted) {
+          setUserProfile(loadedProfile);
+          setUserSettings(loadedSettings);
+
+          // Calibrate active interview config with user defaults
+          if (loadedSettings.interviewDefaults) {
+            setConfig(prev => ({
+              ...prev,
+              role: loadedSettings.interviewDefaults.preferredRole || loadedSettings.interviewDefaults.defaultRole || loadedProfile.primaryRole || loadedProfile.targetRoles?.[0]?.title || prev.role,
+              difficulty: loadedSettings.interviewDefaults.defaultDifficulty || prev.difficulty,
+              type: loadedSettings.interviewDefaults.preferredType || loadedSettings.interviewDefaults.defaultType || prev.type,
+              duration: loadedSettings.interviewDefaults.duration || (loadedSettings.interviewDefaults.durationMinutes ? `${loadedSettings.interviewDefaults.durationMinutes} min (${loadedSettings.interviewDefaults.questionsPerSession} questions)` : prev.duration),
+            }));
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load user profile and settings:', err);
+      }
+    }
+
+    loadUserData();
+    return () => {
+      isMounted = false;
+    };
+  }, [authUser]);
 
   // Sync route changes with browser History API
   const handleNavigate = useCallback((target: string | ViewMode) => {
@@ -144,54 +227,40 @@ export default function App() {
   const handleSignOut = async () => {
     await authSignOut();
     setAuthUser(null);
+    setUserProfile(null);
+    setUserSettings(createDefaultSettings('guest'));
     handleNavigate('/');
   };
 
-  // User Profile State (persisted with fallback default)
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
-    try {
-      const saved = localStorage.getItem('interviewiq_user_profile');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {
-      console.warn('Error reading stored profile:', e);
+  const handleProfileUpdated = (updated: UserProfile) => {
+    setUserProfile(updated);
+    const uid = authUser ? (authUser.uid || authUser.id) : null;
+    if (uid) {
+      saveUserProfile(uid, updated).catch(err => {
+        console.error('Failed to persist profile:', err);
+      });
     }
-    return {
-      fullName: 'Alex Morgan',
-      email: 'alex.morgan@example.com',
-      currentStage: 'Active Job Hunter',
-      experienceYears: 5,
-      targetRoles: [
-        {
-          title: 'Frontend Developer',
-          desc: 'UI Architecture, React, CSS, Web Vitals & Hydration',
-          match: 94,
-          reason: 'Deep expertise in React 18, Next.js, and TypeScript performance optimization.'
-        },
-        {
-          title: 'Full Stack Developer',
-          desc: 'End-to-end Systems, Integrations, Auth & State',
-          match: 88,
-          reason: 'Solid fullstack delivery with Node.js, GraphQL, and database integration.'
-        },
-        {
-          title: 'Software Engineer',
-          desc: 'Algorithms, Data Structures, Complexity Analysis',
-          match: 82,
-          reason: 'Strong foundation in systems architecture and distributed state.'
-        }
-      ],
-      topSkills: ['React 18', 'TypeScript', 'Next.js', 'Tailwind CSS', 'State Machines', 'Web Vitals', 'GraphQL'],
-      targetInterviewDate: 'October 28, 2026',
-      readinessTier: 'Tier B+',
-      keyAchievements: [
-        'Reduced Core Web Vitals (LCP/INP) by 42% on high-traffic consumer product',
-        'Architected real-time telemetry dashboard handling 150k DAU with <50ms render response',
-        'Mentored 8+ junior engineers on modern TypeScript patterns and testing SLAs'
-      ],
-      suggestedFocus: 'Refine STAR behavioral structure with quantitative business metrics; practice state machine trade-offs.',
-      summary: 'Senior Frontend Engineer with 5+ years specializing in high-performance React architectures and web vitals.'
-    };
-  });
+  };
+
+  const handleSettingsUpdated = (updated: UserSettings) => {
+    setUserSettings(updated);
+    const uid = authUser ? (authUser.uid || authUser.id) : null;
+    if (uid) {
+      saveUserSettings(uid, updated).catch(err => {
+        console.error('Failed to persist settings:', err);
+      });
+    }
+    // Apply interview defaults to active config
+    if (updated.interviewDefaults) {
+      setConfig(prev => ({
+        ...prev,
+        role: updated.interviewDefaults.preferredRole || updated.interviewDefaults.defaultRole || prev.role,
+        difficulty: updated.interviewDefaults.defaultDifficulty || prev.difficulty,
+        type: updated.interviewDefaults.preferredType || updated.interviewDefaults.defaultType || prev.type,
+        duration: updated.interviewDefaults.duration || (updated.interviewDefaults.durationMinutes ? `${updated.interviewDefaults.durationMinutes} min (${updated.interviewDefaults.questionsPerSession} questions)` : prev.duration),
+      }));
+    }
+  };
 
   // Real-time Recent Interviews State (persisted with fallback)
   const [recentInterviews, setRecentInterviews] = useState<RecentInterviewItem[]>(() => {
@@ -270,27 +339,28 @@ export default function App() {
         match: 92,
         reason: 'Added as priority candidate track.'
       };
-      const updated = prev ? {
+      const uid = authUser ? (authUser.uid || authUser.id) : 'guest';
+      const updated: UserProfile = prev ? {
         ...prev,
         targetRoles: [...prev.targetRoles, newRoleObj]
       } : {
-        fullName: 'Alex Morgan',
-        email: 'alex.morgan@example.com',
+        uid,
+        fullName: authUser?.fullName || 'Candidate',
+        email: authUser?.email || '',
         currentStage: 'Active Job Hunter',
-        experienceYears: 4,
+        experienceYears: 1,
+        experienceLevel: 'Entry Level',
         targetRoles: [newRoleObj],
-        topSkills: ['Full Stack', 'System Design', 'React', 'Node.js'],
-        targetInterviewDate: 'November 28, 2026',
-        readinessTier: 'Tier B+',
-        keyAchievements: ['Engineered scalable web applications'],
+        topSkills: ['Full Stack', 'System Design', 'React'],
+        targetInterviewDate: '',
+        readinessTier: 'Tier B',
+        keyAchievements: [],
         suggestedFocus: 'System Architecture & Behavioral Delivery',
         summary: 'Target candidate profile'
       };
 
-      try {
-        localStorage.setItem('interviewiq_user_profile', JSON.stringify(updated));
-      } catch (e) {
-        console.warn('Failed to save profile:', e);
+      if (uid && uid !== 'guest') {
+        saveUserProfile(uid, updated).catch(console.warn);
       }
       return updated;
     });
@@ -493,8 +563,24 @@ export default function App() {
             />
           )}
 
-          {(currentView === 'settings' || currentView === 'profile') && (
-            <SettingsView />
+          {currentView === 'profile' && (
+            <ProfileView
+              authUser={authUser}
+              userProfile={userProfile}
+              onProfileUpdated={handleProfileUpdated}
+              onNavigate={handleNavigate}
+            />
+          )}
+
+          {currentView === 'settings' && (
+            <SettingsView
+              authUser={authUser}
+              userProfile={userProfile}
+              userSettings={userSettings}
+              onSettingsUpdated={handleSettingsUpdated}
+              onProfileUpdated={handleProfileUpdated}
+              onSignOut={handleSignOut}
+            />
           )}
         </main>
       </div>
