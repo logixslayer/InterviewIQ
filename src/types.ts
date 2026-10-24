@@ -9,6 +9,7 @@ export type ViewMode =
   | 'question-library'
   | 'my-progress'
   | 'practice-plan'
+  | 'learning-resources'
   | 'profile'
   | 'settings';
 

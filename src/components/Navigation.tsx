@@ -162,8 +162,12 @@ export const Navigation: React.FC<NavigationProps> = ({
 
                 <button
                   type="button"
-                  onClick={() => onNavigate('question-library')}
-                  className="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md text-left w-full"
+                  onClick={() => onNavigate('learning-resources')}
+                  className={`flex items-center gap-space-sm px-space-md py-2 rounded transition-colors font-body-md text-body-md text-left w-full ${
+                    currentView === 'learning-resources'
+                      ? 'bg-surface-container-low text-primary font-medium border-l-2 border-primary'
+                      : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
+                  }`}
                 >
                   <span className="material-symbols-outlined text-[18px]">school</span>
                   <span>Learning Resources</span>
@@ -319,6 +323,14 @@ export const Navigation: React.FC<NavigationProps> = ({
             </>
           )}
 
+          {currentView === 'learning-resources' && (
+            <>
+              <span className="hover:text-on-surface cursor-pointer" onClick={() => onNavigate('overview')}>Improvement</span>
+              <span className="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
+              <span className="text-on-surface font-medium">Learning Resources</span>
+            </>
+          )}
+
           {currentView === 'question-library' && (
             <span className="text-on-surface font-medium">Question Library</span>
           )}
@@ -416,6 +428,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                  currentView === 'evaluation-report' ? 'Session Report' :
                  currentView === 'question-library' ? 'Questions' :
                  currentView === 'my-progress' ? 'My Progress' :
+                 currentView === 'learning-resources' ? 'Learning' :
                  currentView === 'practice-plan' ? 'Practice Plan' :
                  currentView === 'profile' ? 'Profile' : 'Settings'}
               </h1>
@@ -513,6 +526,17 @@ export const Navigation: React.FC<NavigationProps> = ({
           >
             <span className="material-symbols-outlined text-[22px]">event_note</span>
             <span className="font-label-micro text-label-micro mt-0.5">Plan</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onNavigate('learning-resources')}
+            className={`flex-1 flex flex-col items-center justify-center py-1 transition-colors min-h-[44px] ${
+              currentView === 'learning-resources' ? 'text-primary-container font-semibold' : 'text-on-surface-variant'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[22px]">school</span>
+            <span className="font-label-micro text-label-micro mt-0.5">Learn</span>
           </button>
         </div>
       </nav>
