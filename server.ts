@@ -661,7 +661,8 @@ Output STRICT JSON only (no markdown, valid JSON):
       }
     }
 
-    const fallbackEval = evaluateAnswerHeuristically(questionTitle, candidateAnswer, codeSnippet, role);
+    const { metrics = null, type = 'Technical' } = req.body;
+    const fallbackEval = evaluateAnswerHeuristically(questionTitle, candidateAnswer, codeSnippet, role, metrics, type);
     return res.json({
       success: true,
       evaluation: fallbackEval,
@@ -1308,7 +1309,7 @@ Output STRICT JSON only:
     }
 
     if (!evaluation || typeof evaluation.score !== 'number') {
-      evaluation = evaluateAnswerHeuristically(questionTitle, candidateAnswer, codeSnippet, role);
+      evaluation = evaluateAnswerHeuristically(questionTitle, candidateAnswer, codeSnippet, role, metrics, type);
     }
 
     // Adaptive follow-up decision
@@ -1478,54 +1479,137 @@ app.get('/api/interview/questions/history', (req, res) => {
 
 
 function evaluateAnswerHeuristically(
-  _questionTitle: string,
+  questionTitle: string,
   answer: string,
-  code: string,
-  role: string
+  code: string = '',
+  role: string = 'Software Engineer',
+  metrics?: any,
+  _type: string = 'Technical'
 ) {
-  const words = answer.trim().split(/\s+/).length;
-  const lower = (answer + ' ' + code).toLowerCase();
+  const words = answer.trim().split(/\s+/).filter(Boolean).length;
+  const lowerAnswer = (answer + ' ' + (code || '')).toLowerCase();
+  const lowerQuestion = (questionTitle || '').toLowerCase();
 
-  const hasTradeoffs = lower.includes('trade-off') || lower.includes('however') || lower.includes('alternatively') || lower.includes('versus') || lower.includes('vs');
-  const hasArchitecture = lower.includes('decouple') || lower.includes('layer') || lower.includes('pattern') || lower.includes('pipeline') || lower.includes('state') || lower.includes('cache') || lower.includes('queue');
-  const hasPerformance = lower.includes('latency') || lower.includes('optimize') || lower.includes('virtual') || lower.includes('batch') || lower.includes('memory') || lower.includes('throughput');
-  const hasStar = lower.includes('first') || lower.includes('second') || lower.includes('result') || lower.includes('metric') || lower.includes('approach');
+  // 1. Evaluate Communication Skill strictly depending on speaking pace (WPM) & articulation
+  const wpm = metrics?.wpm ? Number(metrics.wpm) : Math.round((words / Math.max(1, (metrics?.durationSeconds || 45))) * 60);
+  let communicationDelivery = 80;
+  let pacingFeedback = '';
 
-  let baseScore = 65;
-  if (words > 40) baseScore += 10;
-  if (words > 80) baseScore += 8;
-  if (hasTradeoffs) baseScore += 6;
-  if (hasArchitecture) baseScore += 5;
-  if (hasPerformance) baseScore += 4;
-  if (code.trim().length > 30) baseScore += 5;
-  const finalScore = Math.min(96, Math.max(50, baseScore));
-
-  const strengths = [];
-  if (hasArchitecture) strengths.push('Clear separation of concerns and architectural boundaries.');
-  if (hasPerformance) strengths.push('Demonstrates concrete awareness of latency and memory bottlenecks.');
-  if (code.trim().length > 20) strengths.push('Backed up verbal reasoning with structured implementation details.');
-  if (strengths.length === 0) strengths.push('Direct response addressing the primary requirements of the question.');
-
-  const gaps = [];
-  if (!hasTradeoffs) gaps.push('Discuss alternative trade-offs and edge failure modes more explicitly.');
-  if (words < 50) gaps.push('Expand response depth with concrete production metrics and real-world scale examples.');
-  if (!lower.includes('monitor') && !lower.includes('telemetry') && !lower.includes('metric')) {
-    gaps.push('Mention observability, SLAs, and error logging strategies.');
+  if (wpm >= 120 && wpm <= 160) {
+    // Optimal executive interview pace
+    communicationDelivery = Math.min(96, 90 + Math.min(5, Math.floor(words / 30)));
+    pacingFeedback = `Optimal cadence (${wpm} WPM). Fluid, confident articulation that is easy to follow in an engineering interview.`;
+  } else if (wpm >= 95 && wpm < 120) {
+    // Deliberate, thoughtful pace
+    communicationDelivery = Math.min(88, 82 + Math.min(4, Math.floor(words / 40)));
+    pacingFeedback = `Measured, deliberate pacing (${wpm} WPM). Thoughts were structured; accelerating slightly towards 130 WPM will project higher velocity.`;
+  } else if (wpm >= 70 && wpm < 95) {
+    // Slower pace
+    communicationDelivery = Math.max(72, 75 + Math.min(4, Math.floor(words / 40)));
+    pacingFeedback = `Deliberate delivery (${wpm} WPM). Clear speech, though picking up the cadence to ~125 WPM will convey greater conviction.`;
+  } else if (wpm < 70) {
+    // Very slow or brief response
+    communicationDelivery = Math.max(55, 62 + Math.min(6, Math.floor(words / 20)));
+    pacingFeedback = `Pacing was hesitant (${wpm} WPM). Practice continuous vocal flow to avoid prolonged thinking pauses.`;
+  } else {
+    // > 160 WPM: fast/rushed
+    communicationDelivery = Math.max(68, 78 - Math.floor((wpm - 160) / 10));
+    pacingFeedback = `Fast speaking pace (${wpm} WPM). Be mindful to insert natural breath pauses so the interviewer can absorb complex points.`;
   }
-  if (gaps.length === 0) gaps.push('Could further quantify business and latency impact using concrete benchmarks.');
+
+  // Structural discourse markers
+  const hasDiscourse = lowerAnswer.includes('first') || lowerAnswer.includes('second') || lowerAnswer.includes('specifically') || lowerAnswer.includes('for example') || lowerAnswer.includes('in summary') || lowerAnswer.includes('key');
+  if (hasDiscourse) communicationDelivery = Math.min(97, communicationDelivery + 3);
+
+  // 2. Evaluate Technical Depth & Domain Relevance
+  const questionKeywords = lowerQuestion.match(/\b[a-z]{3,}\b/g) || [];
+  let keywordMatches = 0;
+  for (const kw of questionKeywords) {
+    if (!['what', 'how', 'when', 'with', 'your', 'this', 'that', 'explain', 'describe', 'difference', 'between'].includes(kw)) {
+      if (lowerAnswer.includes(kw)) keywordMatches++;
+    }
+  }
+
+  const hasTradeoffs = lowerAnswer.includes('trade-off') || lowerAnswer.includes('tradeoff') || lowerAnswer.includes('however') || lowerAnswer.includes('alternatively') || lowerAnswer.includes('versus') || lowerAnswer.includes('vs') || lowerAnswer.includes('drawback') || lowerAnswer.includes('advantage');
+  const hasArchitecture = lowerAnswer.includes('decouple') || lowerAnswer.includes('layer') || lowerAnswer.includes('pattern') || lowerAnswer.includes('pipeline') || lowerAnswer.includes('state') || lowerAnswer.includes('cache') || lowerAnswer.includes('queue') || lowerAnswer.includes('server') || lowerAnswer.includes('client');
+  const hasPerformance = lowerAnswer.includes('latency') || lowerAnswer.includes('optimize') || lowerAnswer.includes('memory') || lowerAnswer.includes('throughput') || lowerAnswer.includes('tti') || lowerAnswer.includes('lcp') || lowerAnswer.includes('load') || lowerAnswer.includes('performance');
+  const hasCode = (code || '').trim().length > 30;
+
+  let techScore = 70;
+  if (keywordMatches >= 2) techScore += 8;
+  if (keywordMatches >= 4) techScore += 7;
+  if (hasArchitecture) techScore += 5;
+  if (hasPerformance) techScore += 4;
+  if (hasCode) techScore += 4;
+  if (words > 40) techScore += 4;
+  const technicalKnowledge = Math.min(96, Math.max(55, techScore));
+
+  // 3. Problem Solving & Tradeoff Analysis
+  let problemScore = 70;
+  if (hasTradeoffs) problemScore += 11;
+  if (lowerAnswer.includes('because') || lowerAnswer.includes('therefore') || lowerAnswer.includes('reason') || lowerAnswer.includes('handle')) problemScore += 6;
+  if (lowerAnswer.includes('scale') || lowerAnswer.includes('fallback') || lowerAnswer.includes('failover') || lowerAnswer.includes('edge')) problemScore += 5;
+  if (words > 50) problemScore += 4;
+  const problemSolving = Math.min(95, Math.max(52, problemScore));
+
+  // 4. System Architecture
+  let archScore = hasArchitecture ? 84 : 74;
+  if (hasPerformance) archScore += 6;
+  if (hasTradeoffs) archScore += 5;
+  const systemArchitecture = Math.min(95, Math.max(58, archScore));
+
+  // Overall Score (weighted)
+  const finalScore = Math.round(
+    technicalKnowledge * 0.4 +
+    problemSolving * 0.3 +
+    communicationDelivery * 0.2 +
+    systemArchitecture * 0.1
+  );
+
+  // Dynamic tailored Strengths & Gaps
+  const strengths: string[] = [];
+  if (keywordMatches >= 2) strengths.push(`Addressed core concepts in the question with role-appropriate terminology.`);
+  if (hasTradeoffs) strengths.push(`Articulated architectural trade-offs rather than assuming a single ideal pattern.`);
+  if (wpm >= 115 && wpm <= 165) strengths.push(`Maintained an optimal conversational delivery cadence of ${wpm} WPM.`);
+  if (hasPerformance) strengths.push(`Demonstrated conscious awareness of latency, caching, and execution bottlenecks.`);
+  if (hasCode) strengths.push(`Reinforced verbal explanation with structured scratchpad code.`);
+  if (strengths.length === 0) strengths.push(`Provided a responsive, clear answer addressing the interviewer's prompt.`);
+
+  const gaps: string[] = [];
+  if (!hasTradeoffs) gaps.push(`Discuss edge cases, failure states, or alternative architecture trade-offs more explicitly.`);
+  if (words < 50) gaps.push(`Elaborate on production scale: mention data volumes, SLAs, or concrete business impact.`);
+  if (wpm < 95) gaps.push(`Pick up verbal cadence from ${wpm} WPM towards 125-140 WPM to project authoritative confidence.`);
+  if (!lowerAnswer.includes('monitor') && !lowerAnswer.includes('metric') && !lowerAnswer.includes('test')) {
+    gaps.push(`Cite observability metrics, P99 latency thresholds, or automated test strategies.`);
+  }
+  if (gaps.length === 0) gaps.push(`Provide specific quantitative benchmarks from past production deployments.`);
+
+  // Follow-up question tailored to the topic
+  let followUp = `How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?`;
+  if (lowerQuestion.includes('csr') || lowerQuestion.includes('ssr') || lowerQuestion.includes('ssg') || lowerQuestion.includes('rendering')) {
+    followUp = `How does streaming SSR or progressive hydration affect your Time-To-Interactive (TTI) and server memory footprint under concurrent peak traffic?`;
+  } else if (lowerQuestion.includes('state') || lowerQuestion.includes('redux') || lowerQuestion.includes('zustand') || lowerQuestion.includes('cache')) {
+    followUp = `How do you handle stale cache invalidation and race conditions when multiple client mutations arrive out of order?`;
+  } else if (lowerQuestion.includes('memory') || lowerQuestion.includes('leak') || lowerQuestion.includes('performance')) {
+    followUp = `What specific Chrome DevTools or memory heap profiler metrics would you inspect to confirm the leak is resolved?`;
+  } else if (hasTradeoffs) {
+    followUp = `If your engineering team faced a strict 200ms P99 SLA constraint, which of those trade-offs would you compromise first?`;
+  }
 
   return {
     score: finalScore,
-    summary: `Strong technical grounding for ${role}. Response demonstrated clear domain intuition with actionable implementation steps.`,
+    summary: `Candidate demonstrated solid domain reasoning for ${role} (${finalScore}/100). ${pacingFeedback}`,
     strengths,
     gaps,
     rubricScores: {
-      technicalAccuracy: Math.min(95, finalScore + 2),
-      architectureDepth: hasArchitecture ? 88 : 72,
-      communicationDelivery: hasStar ? 86 : 74,
-      performanceOptimization: hasPerformance ? 85 : 68,
+      technicalKnowledge,
+      problemSolving,
+      communicationDelivery,
+      systemArchitecture,
+      technicalAccuracy: technicalKnowledge,
+      architectureDepth: systemArchitecture,
     },
-    followUpQuestion: `How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?`,
+    followUpQuestion: followUp,
     coachingTip: `When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability.`
   };
 }

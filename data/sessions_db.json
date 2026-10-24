@@ -63,5 +63,1088 @@
     "totalQuestions": 5,
     "createdAt": "2026-10-24T04:09:57.309Z",
     "updatedAt": "2026-10-24T04:10:39.074Z"
+  },
+  {
+    "sessionId": "c706ef59-8fa0-422a-9389-8a5959e89ea4",
+    "userId": "candidate_main",
+    "role": "Frontend Developer",
+    "level": "Entry Level",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "interviewer_speaking",
+    "turns": [],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T07:11:24.596Z",
+    "updatedAt": "2026-10-24T07:11:47.745Z"
+  },
+  {
+    "sessionId": "1cde2416-62f1-4a27-92ad-7ec92baa2df5",
+    "userId": "candidate_main",
+    "role": "Frontend Developer",
+    "level": "Entry Level",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "interviewer_speaking",
+    "turns": [],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T07:11:58.633Z",
+    "updatedAt": "2026-10-24T07:12:14.778Z"
+  },
+  {
+    "sessionId": "acf508cb-cea5-437d-929d-7aef46fe271c",
+    "userId": "candidate_main",
+    "role": "Frontend Developer",
+    "level": "Entry Level",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "generating_follow_up",
+    "turns": [
+      {
+        "turnId": "cc5f58e1-7f68-4b23-9055-9c217a87f762",
+        "question": {
+          "questionId": "a118e17d-ea9e-4953-b320-0ebcf63c5a03",
+          "userId": "candidate_main",
+          "sessionId": "acf508cb-cea5-437d-929d-7aef46fe271c",
+          "roleTarget": "Frontend Developer",
+          "questionText": "How do you structure an optimistic UI mutation pipeline with automatic rollback and local offline queueing?",
+          "normalizedQuestionText": "how do you structure an optimistic ui mutation pipeline with automatic rollback and local offline queueing",
+          "contentFingerprint": "726341398ba4be950ed21bb4dbf00317f104ab23b4e7622afc194f60fa9e94cc",
+          "category": "Interview Turn",
+          "difficulty": "Medium",
+          "experienceLevel": "Entry Level",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T07:17:47.881Z"
+        },
+        "candidateAnswer": "structuring and optimistic why mutation pipeline with automatic",
+        "codeSnippet": "// Frontend Developer Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n",
+        "evaluation": {
+          "score": 75,
+          "summary": "Strong technical grounding for Frontend Developer. Response demonstrated clear domain intuition with actionable implementation steps.",
+          "strengths": [
+            "Clear separation of concerns and architectural boundaries.",
+            "Backed up verbal reasoning with structured implementation details."
+          ],
+          "gaps": [
+            "Discuss alternative trade-offs and edge failure modes more explicitly.",
+            "Expand response depth with concrete production metrics and real-world scale examples.",
+            "Mention observability, SLAs, and error logging strategies."
+          ],
+          "rubricScores": {
+            "technicalAccuracy": 77,
+            "architectureDepth": 88,
+            "communicationDelivery": 74,
+            "performanceOptimization": 68
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 115,
+        "metrics": null,
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T07:17:47.881Z"
+      }
+    ],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T07:15:42.120Z",
+    "updatedAt": "2026-10-24T07:17:47.883Z"
+  },
+  {
+    "sessionId": "944a27ab-26ab-434c-9eed-7d799c4ce0f5",
+    "userId": "candidate_main",
+    "role": "Frontend Developer",
+    "level": "Entry Level",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "interviewer_speaking",
+    "turns": [],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T07:19:04.055Z",
+    "updatedAt": "2026-10-24T07:19:17.918Z"
+  },
+  {
+    "sessionId": "6f218a54-4b37-4a62-aecb-035b4427a053",
+    "userId": "candidate_main",
+    "role": "Frontend Developer",
+    "level": "Entry Level",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "interviewer_speaking",
+    "turns": [],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T07:19:59.544Z",
+    "updatedAt": "2026-10-24T07:20:23.569Z"
+  },
+  {
+    "sessionId": "c77d19a5-7dd0-42d1-8d05-b42b867a1621",
+    "userId": "candidate_main",
+    "role": "Backend Engineer",
+    "level": "Beginner",
+    "type": "Technical",
+    "difficulty": "Easy",
+    "duration": "10 min (3 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "interviewer_speaking",
+    "turns": [],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 3,
+    "createdAt": "2026-10-24T07:41:25.736Z",
+    "updatedAt": "2026-10-24T07:41:31.088Z"
+  },
+  {
+    "sessionId": "e65d2c5a-fa84-4d36-ba9d-8cf9cb31e91b",
+    "userId": "NnG4Ew2um0UBvCJmyzAwO7ZIkZi1",
+    "role": "Backend Engineer",
+    "level": "Beginner",
+    "type": "Technical",
+    "difficulty": "Easy",
+    "duration": "10 min (3 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "generating_follow_up",
+    "turns": [
+      {
+        "turnId": "d218f4f2-9906-4285-8e8c-0b95aa912ae7",
+        "question": {
+          "questionId": "dbc68917-e0f0-48ea-a6b8-280e736b1f88",
+          "userId": "NnG4Ew2um0UBvCJmyzAwO7ZIkZi1",
+          "sessionId": "e65d2c5a-fa84-4d36-ba9d-8cf9cb31e91b",
+          "roleTarget": "Backend Engineer",
+          "questionText": "What are the key trade-offs between relational database transactions (ACID) and eventual consistency in NoSQL stores?",
+          "normalizedQuestionText": "what are the key tradeoffs between relational database transactions acid and eventual consistency in nosql stores",
+          "contentFingerprint": "a3a4e984a21f10a3306d64c3ef1b485cbef76becb7312918b81f91cf4156b560",
+          "category": "Interview Turn",
+          "difficulty": "Easy",
+          "experienceLevel": "Beginner",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T07:49:59.181Z"
+        },
+        "candidateAnswer": "basically difference between relational database and transitional database is",
+        "codeSnippet": "// Backend Engineer Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n",
+        "evaluation": {
+          "score": 70,
+          "summary": "Strong technical grounding for Backend Engineer. Response demonstrated clear domain intuition with actionable implementation steps.",
+          "strengths": [
+            "Backed up verbal reasoning with structured implementation details."
+          ],
+          "gaps": [
+            "Discuss alternative trade-offs and edge failure modes more explicitly.",
+            "Expand response depth with concrete production metrics and real-world scale examples.",
+            "Mention observability, SLAs, and error logging strategies."
+          ],
+          "rubricScores": {
+            "technicalAccuracy": 72,
+            "architectureDepth": 72,
+            "communicationDelivery": 74,
+            "performanceOptimization": 68
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 24,
+        "metrics": {
+          "wordCount": 9,
+          "durationSeconds": 2,
+          "wpm": 270,
+          "pacingStatus": "optimal",
+          "pacingLabel": "Optimal Pacing (120–160 WPM)",
+          "fillerCount": 1,
+          "fillersPerMinute": 5,
+          "fillerBreakdown": {
+            "basically": 1
+          },
+          "identifiedFillers": [
+            {
+              "word": "basically",
+              "count": 1
+            }
+          ]
+        },
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T07:49:59.181Z"
+      },
+      {
+        "turnId": "ecf2b576-21e6-4238-83fd-917047861917",
+        "question": {
+          "questionId": "dbc68917-e0f0-48ea-a6b8-280e736b1f88",
+          "userId": "NnG4Ew2um0UBvCJmyzAwO7ZIkZi1",
+          "sessionId": "e65d2c5a-fa84-4d36-ba9d-8cf9cb31e91b",
+          "roleTarget": "Backend Engineer",
+          "questionText": "What are the key trade-offs between relational database transactions (ACID) and eventual consistency in NoSQL stores?",
+          "normalizedQuestionText": "what are the key tradeoffs between relational database transactions acid and eventual consistency in nosql stores",
+          "contentFingerprint": "a3a4e984a21f10a3306d64c3ef1b485cbef76becb7312918b81f91cf4156b560",
+          "category": "Interview Turn",
+          "difficulty": "Easy",
+          "experienceLevel": "Beginner",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T07:50:14.114Z"
+        },
+        "candidateAnswer": "basically difference between relational database and transitional database is your propose",
+        "codeSnippet": "// Backend Engineer Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n",
+        "evaluation": {
+          "score": 70,
+          "summary": "Strong technical grounding for Backend Engineer. Response demonstrated clear domain intuition with actionable implementation steps.",
+          "strengths": [
+            "Backed up verbal reasoning with structured implementation details."
+          ],
+          "gaps": [
+            "Discuss alternative trade-offs and edge failure modes more explicitly.",
+            "Expand response depth with concrete production metrics and real-world scale examples.",
+            "Mention observability, SLAs, and error logging strategies."
+          ],
+          "rubricScores": {
+            "technicalAccuracy": 72,
+            "architectureDepth": 72,
+            "communicationDelivery": 74,
+            "performanceOptimization": 68
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 24,
+        "metrics": {
+          "wordCount": 11,
+          "durationSeconds": 2,
+          "wpm": 330,
+          "pacingStatus": "optimal",
+          "pacingLabel": "Optimal Pacing (120–160 WPM)",
+          "fillerCount": 1,
+          "fillersPerMinute": 5,
+          "fillerBreakdown": {
+            "basically": 1
+          },
+          "identifiedFillers": [
+            {
+              "word": "basically",
+              "count": 1
+            }
+          ]
+        },
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T07:50:14.114Z"
+      }
+    ],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 3,
+    "createdAt": "2026-10-24T07:49:11.300Z",
+    "updatedAt": "2026-10-24T07:50:14.145Z"
+  },
+  {
+    "sessionId": "535ace5a-1ecc-4657-969f-b596b40f0490",
+    "userId": "candidate_main",
+    "role": "Frontend Developer",
+    "level": "Entry Level",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "generating_follow_up",
+    "turns": [
+      {
+        "turnId": "74a5308b-a686-4152-b375-b1290fb11640",
+        "question": {
+          "questionId": "c0cbf78e-abc2-4886-a03f-c8c2e15c5d71",
+          "userId": "candidate_main",
+          "sessionId": "535ace5a-1ecc-4657-969f-b596b40f0490",
+          "roleTarget": "Frontend Developer",
+          "questionText": "Design a micro-frontend shell integrating disparate legacy applications with zero style collisions and cross-app event communication.",
+          "normalizedQuestionText": "design a microfrontend shell integrating disparate legacy applications with zero style collisions and crossapp event communication",
+          "contentFingerprint": "9807a50b544afa58ce648eff902960a41037b769451dcbc46e979752632ba1cd",
+          "category": "Interview Turn",
+          "difficulty": "Medium",
+          "experienceLevel": "Entry Level",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T08:03:08.764Z"
+        },
+        "candidateAnswer": "practice Kalim Bhai hello Manju",
+        "codeSnippet": "// Frontend Developer Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n",
+        "evaluation": {
+          "score": 70,
+          "summary": "Strong technical grounding for Frontend Developer. Response demonstrated clear domain intuition with actionable implementation steps.",
+          "strengths": [
+            "Backed up verbal reasoning with structured implementation details."
+          ],
+          "gaps": [
+            "Discuss alternative trade-offs and edge failure modes more explicitly.",
+            "Expand response depth with concrete production metrics and real-world scale examples.",
+            "Mention observability, SLAs, and error logging strategies."
+          ],
+          "rubricScores": {
+            "technicalAccuracy": 72,
+            "architectureDepth": 72,
+            "communicationDelivery": 74,
+            "performanceOptimization": 68
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 31,
+        "metrics": {
+          "wordCount": 5,
+          "durationSeconds": 2,
+          "wpm": 150,
+          "pacingStatus": "optimal",
+          "pacingLabel": "Optimal Pacing (120–160 WPM)",
+          "fillerCount": 0,
+          "fillersPerMinute": 0,
+          "fillerBreakdown": {},
+          "identifiedFillers": []
+        },
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T08:03:08.764Z"
+      }
+    ],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T07:50:30.453Z",
+    "updatedAt": "2026-10-24T08:03:08.767Z"
+  },
+  {
+    "sessionId": "2aff2f95-ea23-43d3-b4ce-8560eef5c9fc",
+    "userId": "NnG4Ew2um0UBvCJmyzAwO7ZIkZi1",
+    "role": "Backend Engineer",
+    "level": "Beginner",
+    "type": "Technical",
+    "difficulty": "Easy",
+    "duration": "10 min (3 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "completed",
+    "turns": [],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 3,
+    "createdAt": "2026-10-24T07:52:38.466Z",
+    "updatedAt": "2026-10-24T07:55:21.052Z",
+    "report": {
+      "overallScore": 83,
+      "grade": "B+",
+      "hireRecommendation": "Hire",
+      "summary": "Candidate demonstrated strong core competency in Backend Engineer patterns with clear articulation. Key differentiator was structured technical breakdown and pragmatic trade-off awareness.",
+      "competencyBreakdown": {
+        "communication": {
+          "score": 84,
+          "feedback": "Articulate responses with structured technical storytelling."
+        },
+        "technicalKnowledge": {
+          "score": 83,
+          "feedback": "Solid foundational grasp of Backend Engineer paradigms and edge cases."
+        },
+        "problemSolving": {
+          "score": 81,
+          "feedback": "Deconstructs multi-faceted problems systematically."
+        }
+      },
+      "keyStrengths": [
+        "Clear separation of architectural boundaries in Backend Engineer contexts",
+        "Strong problem decomposition following STAR principles",
+        "Proactive consideration for failure recovery and production edge-cases"
+      ],
+      "growthAreas": [
+        "Incorporate quantitative production KPIs, latency bounds, and SLAs into answers",
+        "Address failover, concurrency, and degradation strategies during network partition"
+      ],
+      "actionItems": [
+        "Practice 2 deep-dive drill sessions focusing on high-throughput Backend Engineer bottlenecks",
+        "Refine STAR framework delivery using 3-minute concise verbal summaries",
+        "Prepare concrete trade-off matrices for state management and caching tiers"
+      ],
+      "role": "Backend Engineer",
+      "duration": "2 min",
+      "speechAnalytics": {
+        "totalWords": 0,
+        "averageWpm": 0,
+        "fillerWordsTotal": 0,
+        "fillerWordsPerMinute": 0,
+        "fillerWordBreakdown": {},
+        "speakingDurationSeconds": 0,
+        "pacingFeedback": "Candidate spoke clearly with conversational pacing."
+      }
+    }
+  },
+  {
+    "sessionId": "530aaff0-1ab9-4749-84fb-ad6e625a2f35",
+    "userId": "candidate_main",
+    "role": "Frontend Developer",
+    "level": "Entry Level",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "preparing",
+    "turns": [],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T08:15:51.324Z",
+    "updatedAt": "2026-10-24T08:15:51.324Z"
+  },
+  {
+    "sessionId": "c62aef4a-3a65-418f-be35-d7e5004ba359",
+    "userId": "jlJa6EPHXiMH6Rh6IsAFQAH38sV2",
+    "role": "Frontend Developer",
+    "level": "Intermediate",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "interviewer_speaking",
+    "turns": [],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T08:16:39.678Z",
+    "updatedAt": "2026-10-24T08:16:44.446Z"
+  },
+  {
+    "sessionId": "53e13abb-b94a-4078-8c33-235cf1bf8838",
+    "userId": "candidate_main",
+    "role": "Frontend Developer",
+    "level": "Entry Level",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "interviewer_speaking",
+    "turns": [],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T08:18:26.301Z",
+    "updatedAt": "2026-10-24T08:18:53.812Z"
+  },
+  {
+    "sessionId": "e72e624c-a79f-4379-8efb-b1e5ea9b2988",
+    "userId": "NnG4Ew2um0UBvCJmyzAwO7ZIkZi1",
+    "role": "Backend Engineer",
+    "level": "Intermediate",
+    "type": "HR Screening",
+    "difficulty": "Easy",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "interviewer_speaking",
+    "turns": [],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T08:20:20.075Z",
+    "updatedAt": "2026-10-24T08:20:25.279Z"
+  },
+  {
+    "sessionId": "b9635759-c4e1-4ea8-af84-a641e51c901a",
+    "userId": "candidate_main",
+    "role": "Frontend Developer",
+    "level": "Entry Level",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "interviewer_speaking",
+    "turns": [],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T08:27:20.207Z",
+    "updatedAt": "2026-10-24T08:28:05.740Z"
+  },
+  {
+    "sessionId": "8752d084-0ae8-436d-b1fc-616ed7978bdc",
+    "userId": "NnG4Ew2um0UBvCJmyzAwO7ZIkZi1",
+    "role": "Frontend Developer",
+    "level": "Intermediate",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "generating_follow_up",
+    "turns": [
+      {
+        "turnId": "c8380aae-57be-40b0-b209-c0477eb22a6f",
+        "question": {
+          "questionId": "719c061c-27c0-4ab8-8152-c8f341ca45b7",
+          "userId": "NnG4Ew2um0UBvCJmyzAwO7ZIkZi1",
+          "sessionId": "8752d084-0ae8-436d-b1fc-616ed7978bdc",
+          "roleTarget": "Frontend Developer",
+          "questionText": "Explain the difference between useEffect, useLayoutEffect, and useInsertionEffect with practical use cases.",
+          "normalizedQuestionText": "explain the difference between useeffect uselayouteffect and useinsertioneffect with practical use cases",
+          "contentFingerprint": "235724e80ea27e7493d0d454a917098b08723431e70583f141f2325f98be884e",
+          "category": "Interview Turn",
+          "difficulty": "Medium",
+          "experienceLevel": "Intermediate",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T08:42:03.021Z"
+        },
+        "candidateAnswer": "use effect is used for giving the use effect for the website and layout effective used for giving the layout affect and use insertion affect is this like used for giving the insertion",
+        "codeSnippet": "// Frontend Developer Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n",
+        "evaluation": {
+          "score": 70,
+          "summary": "Strong technical grounding for Frontend Developer. Response demonstrated clear domain intuition with actionable implementation steps.",
+          "strengths": [
+            "Backed up verbal reasoning with structured implementation details."
+          ],
+          "gaps": [
+            "Discuss alternative trade-offs and edge failure modes more explicitly.",
+            "Expand response depth with concrete production metrics and real-world scale examples.",
+            "Mention observability, SLAs, and error logging strategies."
+          ],
+          "rubricScores": {
+            "technicalAccuracy": 72,
+            "architectureDepth": 72,
+            "communicationDelivery": 74,
+            "performanceOptimization": 68
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 144,
+        "metrics": {
+          "wordCount": 33,
+          "durationSeconds": 45,
+          "wpm": 44,
+          "pacingStatus": "slow",
+          "pacingLabel": "Deliberate / Slow Pace (<110 WPM)",
+          "fillerCount": 0,
+          "fillersPerMinute": 0,
+          "fillerBreakdown": {},
+          "identifiedFillers": []
+        },
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T08:42:03.021Z"
+      }
+    ],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T08:39:32.831Z",
+    "updatedAt": "2026-10-24T08:42:03.023Z"
+  },
+  {
+    "sessionId": "1b2f00dd-d784-440e-9261-9e9d268338ee",
+    "userId": "candidate_main",
+    "role": "Frontend Developer",
+    "level": "Entry Level",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "interviewer_speaking",
+    "turns": [],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T08:45:28.125Z",
+    "updatedAt": "2026-10-24T08:45:49.669Z"
+  },
+  {
+    "sessionId": "08166d14-177e-422e-8357-8259ec38802d",
+    "userId": "NnG4Ew2um0UBvCJmyzAwO7ZIkZi1",
+    "role": "Frontend Developer",
+    "level": "Intermediate",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "interviewer_speaking",
+    "turns": [],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T08:45:49.679Z",
+    "updatedAt": "2026-10-24T08:45:56.814Z"
+  },
+  {
+    "sessionId": "7b2d93e0-bcb7-482e-8c0c-fc9f27267994",
+    "userId": "NnG4Ew2um0UBvCJmyzAwO7ZIkZi1",
+    "role": "Frontend Developer",
+    "level": "Intermediate",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "interviewer_speaking",
+    "turns": [],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T08:47:19.341Z",
+    "updatedAt": "2026-10-24T08:47:50.235Z"
+  },
+  {
+    "sessionId": "96f52be1-56fa-4086-9554-63a8fc5d17ed",
+    "userId": "candidate_main",
+    "role": "Frontend Developer",
+    "level": "Entry Level",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "generating_follow_up",
+    "turns": [
+      {
+        "turnId": "90dcf331-e7a0-4e46-92cd-4aa389c3db6a",
+        "question": {
+          "questionId": "e283e0de-9fe7-4581-96c9-974c6a85770f",
+          "userId": "candidate_main",
+          "sessionId": "96f52be1-56fa-4086-9554-63a8fc5d17ed",
+          "roleTarget": "Frontend Developer",
+          "questionText": "Explain the architectural trade-offs between CSR, SSR, and SSG in high-traffic consumer web applications.",
+          "normalizedQuestionText": "explain the architectural tradeoffs between csr ssr and ssg in hightraffic consumer web applications",
+          "contentFingerprint": "a297a18ea0ffe3afd0c7ffdef1a533137e9b4d23a47f77de29be17192602162f",
+          "category": "Interview Turn",
+          "difficulty": "Medium",
+          "experienceLevel": "Entry Level",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T08:53:49.541Z"
+        },
+        "candidateAnswer": "the architectural grade of between CSR client side rendering and SSR services rendering and SSD statics site generation in high traffic consumer web applications focusing on time to interactive TTI largest content full paint lcp server load variance and cdn casing in validation",
+        "codeSnippet": "// Frontend Developer Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n",
+        "evaluation": {
+          "score": 80,
+          "summary": "Strong technical grounding for Frontend Developer. Response demonstrated clear domain intuition with actionable implementation steps.",
+          "strengths": [
+            "Backed up verbal reasoning with structured implementation details."
+          ],
+          "gaps": [
+            "Discuss alternative trade-offs and edge failure modes more explicitly.",
+            "Expand response depth with concrete production metrics and real-world scale examples.",
+            "Mention observability, SLAs, and error logging strategies."
+          ],
+          "rubricScores": {
+            "technicalAccuracy": 82,
+            "architectureDepth": 72,
+            "communicationDelivery": 74,
+            "performanceOptimization": 68
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 70,
+        "metrics": {
+          "wordCount": 43,
+          "durationSeconds": 29,
+          "wpm": 89,
+          "pacingStatus": "slow",
+          "pacingLabel": "Deliberate / Slow Pace (<110 WPM)",
+          "fillerCount": 0,
+          "fillersPerMinute": 0,
+          "fillerBreakdown": {},
+          "identifiedFillers": []
+        },
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T08:53:49.541Z"
+      },
+      {
+        "turnId": "5e24921e-a0d0-465a-8e52-a4ceec325735",
+        "question": {
+          "questionId": "e283e0de-9fe7-4581-96c9-974c6a85770f",
+          "userId": "candidate_main",
+          "sessionId": "96f52be1-56fa-4086-9554-63a8fc5d17ed",
+          "roleTarget": "Frontend Developer",
+          "questionText": "Explain the architectural trade-offs between CSR, SSR, and SSG in high-traffic consumer web applications.",
+          "normalizedQuestionText": "explain the architectural tradeoffs between csr ssr and ssg in hightraffic consumer web applications",
+          "contentFingerprint": "a297a18ea0ffe3afd0c7ffdef1a533137e9b4d23a47f77de29be17192602162f",
+          "category": "Interview Turn",
+          "difficulty": "Medium",
+          "experienceLevel": "Entry Level",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T09:00:23.419Z"
+        },
+        "candidateAnswer": "headphone",
+        "codeSnippet": "// Frontend Developer Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n",
+        "evaluation": {
+          "score": 70,
+          "summary": "Strong technical grounding for Frontend Developer. Response demonstrated clear domain intuition with actionable implementation steps.",
+          "strengths": [
+            "Backed up verbal reasoning with structured implementation details."
+          ],
+          "gaps": [
+            "Discuss alternative trade-offs and edge failure modes more explicitly.",
+            "Expand response depth with concrete production metrics and real-world scale examples.",
+            "Mention observability, SLAs, and error logging strategies."
+          ],
+          "rubricScores": {
+            "technicalAccuracy": 72,
+            "architectureDepth": 72,
+            "communicationDelivery": 74,
+            "performanceOptimization": 68
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 457,
+        "metrics": {
+          "wordCount": 1,
+          "durationSeconds": 374,
+          "wpm": 0,
+          "pacingStatus": "optimal",
+          "pacingLabel": "Optimal Pacing (120–160 WPM)",
+          "fillerCount": 0,
+          "fillersPerMinute": 0,
+          "fillerBreakdown": {},
+          "identifiedFillers": []
+        },
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T09:00:23.419Z"
+      },
+      {
+        "turnId": "390716b1-edd2-46ff-87d3-138d70f8ba02",
+        "question": {
+          "questionId": "e283e0de-9fe7-4581-96c9-974c6a85770f",
+          "userId": "candidate_main",
+          "sessionId": "96f52be1-56fa-4086-9554-63a8fc5d17ed",
+          "roleTarget": "Frontend Developer",
+          "questionText": "Explain the architectural trade-offs between CSR, SSR, and SSG in high-traffic consumer web applications.",
+          "normalizedQuestionText": "explain the architectural tradeoffs between csr ssr and ssg in hightraffic consumer web applications",
+          "contentFingerprint": "a297a18ea0ffe3afd0c7ffdef1a533137e9b4d23a47f77de29be17192602162f",
+          "category": "Interview Turn",
+          "difficulty": "Medium",
+          "experienceLevel": "Entry Level",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T09:01:01.461Z"
+        },
+        "candidateAnswer": "so I would use 50x under network partition and what I can see yes",
+        "codeSnippet": "// Frontend Developer Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n",
+        "evaluation": {
+          "score": 70,
+          "summary": "Strong technical grounding for Frontend Developer. Response demonstrated clear domain intuition with actionable implementation steps.",
+          "strengths": [
+            "Backed up verbal reasoning with structured implementation details."
+          ],
+          "gaps": [
+            "Discuss alternative trade-offs and edge failure modes more explicitly.",
+            "Expand response depth with concrete production metrics and real-world scale examples.",
+            "Mention observability, SLAs, and error logging strategies."
+          ],
+          "rubricScores": {
+            "technicalAccuracy": 72,
+            "architectureDepth": 72,
+            "communicationDelivery": 74,
+            "performanceOptimization": 68
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 499,
+        "metrics": {
+          "wordCount": 14,
+          "durationSeconds": 24,
+          "wpm": 35,
+          "pacingStatus": "slow",
+          "pacingLabel": "Deliberate / Slow Pace (<110 WPM)",
+          "fillerCount": 0,
+          "fillersPerMinute": 0,
+          "fillerBreakdown": {},
+          "identifiedFillers": []
+        },
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T09:01:01.461Z"
+      },
+      {
+        "turnId": "a822394c-179d-4f3d-ab94-f67eb911868f",
+        "question": {
+          "questionId": "e283e0de-9fe7-4581-96c9-974c6a85770f",
+          "userId": "candidate_main",
+          "sessionId": "96f52be1-56fa-4086-9554-63a8fc5d17ed",
+          "roleTarget": "Frontend Developer",
+          "questionText": "Explain the architectural trade-offs between CSR, SSR, and SSG in high-traffic consumer web applications.",
+          "normalizedQuestionText": "explain the architectural tradeoffs between csr ssr and ssg in hightraffic consumer web applications",
+          "contentFingerprint": "a297a18ea0ffe3afd0c7ffdef1a533137e9b4d23a47f77de29be17192602162f",
+          "category": "Interview Turn",
+          "difficulty": "Medium",
+          "experienceLevel": "Entry Level",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T09:01:39.043Z"
+        },
+        "candidateAnswer": "I would use 50x under network partition",
+        "codeSnippet": "// Frontend Developer Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n",
+        "evaluation": {
+          "score": 70,
+          "summary": "Strong technical grounding for Frontend Developer. Response demonstrated clear domain intuition with actionable implementation steps.",
+          "strengths": [
+            "Backed up verbal reasoning with structured implementation details."
+          ],
+          "gaps": [
+            "Discuss alternative trade-offs and edge failure modes more explicitly.",
+            "Expand response depth with concrete production metrics and real-world scale examples.",
+            "Mention observability, SLAs, and error logging strategies."
+          ],
+          "rubricScores": {
+            "technicalAccuracy": 72,
+            "architectureDepth": 72,
+            "communicationDelivery": 74,
+            "performanceOptimization": 68
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 523,
+        "metrics": {
+          "wordCount": 7,
+          "durationSeconds": 13,
+          "wpm": 32,
+          "pacingStatus": "optimal",
+          "pacingLabel": "Optimal Pacing (120–160 WPM)",
+          "fillerCount": 0,
+          "fillersPerMinute": 0,
+          "fillerBreakdown": {},
+          "identifiedFillers": []
+        },
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T09:01:39.043Z"
+      },
+      {
+        "turnId": "b614ebe8-7dba-498e-bd75-5e2fdc703552",
+        "question": {
+          "questionId": "e283e0de-9fe7-4581-96c9-974c6a85770f",
+          "userId": "candidate_main",
+          "sessionId": "96f52be1-56fa-4086-9554-63a8fc5d17ed",
+          "roleTarget": "Frontend Developer",
+          "questionText": "Explain the architectural trade-offs between CSR, SSR, and SSG in high-traffic consumer web applications.",
+          "normalizedQuestionText": "explain the architectural tradeoffs between csr ssr and ssg in hightraffic consumer web applications",
+          "contentFingerprint": "a297a18ea0ffe3afd0c7ffdef1a533137e9b4d23a47f77de29be17192602162f",
+          "category": "Interview Turn",
+          "difficulty": "Medium",
+          "experienceLevel": "Entry Level",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T09:02:09.882Z"
+        },
+        "candidateAnswer": "okay so the answer is I don't know",
+        "codeSnippet": "// Frontend Developer Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n",
+        "evaluation": {
+          "score": 70,
+          "summary": "Strong technical grounding for Frontend Developer. Response demonstrated clear domain intuition with actionable implementation steps.",
+          "strengths": [
+            "Backed up verbal reasoning with structured implementation details."
+          ],
+          "gaps": [
+            "Discuss alternative trade-offs and edge failure modes more explicitly.",
+            "Expand response depth with concrete production metrics and real-world scale examples.",
+            "Mention observability, SLAs, and error logging strategies."
+          ],
+          "rubricScores": {
+            "technicalAccuracy": 72,
+            "architectureDepth": 72,
+            "communicationDelivery": 74,
+            "performanceOptimization": 68
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 562,
+        "metrics": {
+          "wordCount": 8,
+          "durationSeconds": 17,
+          "wpm": 28,
+          "pacingStatus": "optimal",
+          "pacingLabel": "Optimal Pacing (120–160 WPM)",
+          "fillerCount": 0,
+          "fillersPerMinute": 0,
+          "fillerBreakdown": {},
+          "identifiedFillers": []
+        },
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T09:02:09.882Z"
+      },
+      {
+        "turnId": "1a1921ef-2272-4948-823f-c60e09c6f58a",
+        "question": {
+          "questionId": "e283e0de-9fe7-4581-96c9-974c6a85770f",
+          "userId": "candidate_main",
+          "sessionId": "96f52be1-56fa-4086-9554-63a8fc5d17ed",
+          "roleTarget": "Frontend Developer",
+          "questionText": "Explain the architectural trade-offs between CSR, SSR, and SSG in high-traffic consumer web applications.",
+          "normalizedQuestionText": "explain the architectural tradeoffs between csr ssr and ssg in hightraffic consumer web applications",
+          "contentFingerprint": "a297a18ea0ffe3afd0c7ffdef1a533137e9b4d23a47f77de29be17192602162f",
+          "category": "Interview Turn",
+          "difficulty": "Medium",
+          "experienceLevel": "Entry Level",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T09:02:46.011Z"
+        },
+        "candidateAnswer": "learning resources",
+        "codeSnippet": "// Frontend Developer Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n",
+        "evaluation": {
+          "score": 70,
+          "summary": "Strong technical grounding for Frontend Developer. Response demonstrated clear domain intuition with actionable implementation steps.",
+          "strengths": [
+            "Backed up verbal reasoning with structured implementation details."
+          ],
+          "gaps": [
+            "Discuss alternative trade-offs and edge failure modes more explicitly.",
+            "Expand response depth with concrete production metrics and real-world scale examples.",
+            "Mention observability, SLAs, and error logging strategies."
+          ],
+          "rubricScores": {
+            "technicalAccuracy": 72,
+            "architectureDepth": 72,
+            "communicationDelivery": 74,
+            "performanceOptimization": 68
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 589,
+        "metrics": {
+          "wordCount": 2,
+          "durationSeconds": 16,
+          "wpm": 8,
+          "pacingStatus": "optimal",
+          "pacingLabel": "Optimal Pacing (120–160 WPM)",
+          "fillerCount": 0,
+          "fillersPerMinute": 0,
+          "fillerBreakdown": {},
+          "identifiedFillers": []
+        },
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T09:02:46.012Z"
+      },
+      {
+        "turnId": "eeca7a83-c616-497f-9e8b-51297b8cebf4",
+        "question": {
+          "questionId": "e283e0de-9fe7-4581-96c9-974c6a85770f",
+          "userId": "candidate_main",
+          "sessionId": "96f52be1-56fa-4086-9554-63a8fc5d17ed",
+          "roleTarget": "Frontend Developer",
+          "questionText": "Explain the architectural trade-offs between CSR, SSR, and SSG in high-traffic consumer web applications.",
+          "normalizedQuestionText": "explain the architectural tradeoffs between csr ssr and ssg in hightraffic consumer web applications",
+          "contentFingerprint": "a297a18ea0ffe3afd0c7ffdef1a533137e9b4d23a47f77de29be17192602162f",
+          "category": "Interview Turn",
+          "difficulty": "Medium",
+          "experienceLevel": "Entry Level",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T09:04:17.609Z"
+        },
+        "candidateAnswer": "okay so to tackle scaling challenges of this magnitude 50th increase combined with the severe infrastructure called network partition you responsible your response should cover these architectural pillars and in the 50th scale horizontal auto scaling a synchronous processing failure Optimisation",
+        "codeSnippet": "// Frontend Developer Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n",
+        "evaluation": {
+          "score": 80,
+          "summary": "Strong technical grounding for Frontend Developer. Response demonstrated clear domain intuition with actionable implementation steps.",
+          "strengths": [
+            "Backed up verbal reasoning with structured implementation details."
+          ],
+          "gaps": [
+            "Discuss alternative trade-offs and edge failure modes more explicitly.",
+            "Expand response depth with concrete production metrics and real-world scale examples.",
+            "Mention observability, SLAs, and error logging strategies."
+          ],
+          "rubricScores": {
+            "technicalAccuracy": 82,
+            "architectureDepth": 72,
+            "communicationDelivery": 74,
+            "performanceOptimization": 68
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 679,
+        "metrics": {
+          "wordCount": 41,
+          "durationSeconds": 72,
+          "wpm": 34,
+          "pacingStatus": "slow",
+          "pacingLabel": "Deliberate / Slow Pace (<110 WPM)",
+          "fillerCount": 0,
+          "fillersPerMinute": 0,
+          "fillerBreakdown": {},
+          "identifiedFillers": []
+        },
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T09:04:17.609Z"
+      }
+    ],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T08:52:31.100Z",
+    "updatedAt": "2026-10-24T09:04:17.610Z"
   }
 ]
