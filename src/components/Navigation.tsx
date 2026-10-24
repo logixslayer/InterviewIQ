@@ -266,69 +266,69 @@ export const Navigation: React.FC<NavigationProps> = ({
       {/* DESKTOP TOP HEADER (Fixed at top, left-[230px]) */}
       <header className="hidden lg:flex fixed top-0 left-[230px] right-0 h-[52px] bg-surface-container-lowest/90 backdrop-blur-md border-b border-surface-variant z-40 px-space-lg items-center justify-between">
         {/* Breadcrumb based on View */}
-        <div className="flex items-center gap-space-sm text-outline font-label-md text-label-md">
+        <div className="flex items-center gap-1.5 text-xs sm:text-sm text-outline font-medium">
           <span
             className="hover:text-on-surface cursor-pointer transition-colors"
             onClick={() => onNavigate('overview')}
           >
             Workspace
           </span>
-          <span className="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
+          <span className="material-symbols-outlined text-[15px] text-outline/70 select-none inline-flex items-center justify-center leading-none">chevron_right</span>
 
           {currentView === 'overview' && (
-            <span className="text-on-surface font-medium">Overview</span>
+            <span className="text-on-surface font-semibold">Overview</span>
           )}
 
           {currentView === 'mock-interviews' && (
             <>
-              <span className="hover:text-on-surface cursor-pointer" onClick={() => onNavigate('mock-interviews')}>Mock Interviews</span>
-              <span className="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
-              <span className="text-on-surface font-medium">Setup</span>
+              <span className="hover:text-on-surface cursor-pointer transition-colors" onClick={() => onNavigate('mock-interviews')}>Mock Interviews</span>
+              <span className="material-symbols-outlined text-[15px] text-outline/70 select-none inline-flex items-center justify-center leading-none">chevron_right</span>
+              <span className="text-on-surface font-semibold">Setup</span>
             </>
           )}
 
           {currentView === 'mock-interview-workspace' && (
             <>
-              <span className="hover:text-on-surface cursor-pointer" onClick={() => onNavigate('mock-interviews')}>Mock Interviews</span>
-              <span className="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
-              <span className="text-on-surface font-medium">Session</span>
+              <span className="hover:text-on-surface cursor-pointer transition-colors" onClick={() => onNavigate('mock-interviews')}>Mock Interviews</span>
+              <span className="material-symbols-outlined text-[15px] text-outline/70 select-none inline-flex items-center justify-center leading-none">chevron_right</span>
+              <span className="text-on-surface font-semibold">Session</span>
             </>
           )}
 
           {currentView === 'evaluation-report' && (
             <>
-              <span className="hover:text-on-surface cursor-pointer" onClick={() => onNavigate('mock-interviews')}>Mock Interviews</span>
-              <span className="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
-              <span className="text-on-surface font-medium">Evaluation #IV-8492</span>
+              <span className="hover:text-on-surface cursor-pointer transition-colors" onClick={() => onNavigate('mock-interviews')}>Mock Interviews</span>
+              <span className="material-symbols-outlined text-[15px] text-outline/70 select-none inline-flex items-center justify-center leading-none">chevron_right</span>
+              <span className="text-on-surface font-semibold">Evaluation #IV-8492</span>
             </>
           )}
 
           {currentView === 'my-progress' && (
             <>
-              <span className="hover:text-on-surface cursor-pointer">Improvement</span>
-              <span className="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
-              <span className="text-on-surface font-medium">My Progress</span>
+              <span className="hover:text-on-surface cursor-pointer transition-colors" onClick={() => onNavigate('my-progress')}>Improvement</span>
+              <span className="material-symbols-outlined text-[15px] text-outline/70 select-none inline-flex items-center justify-center leading-none">chevron_right</span>
+              <span className="text-on-surface font-semibold">My Progress</span>
             </>
           )}
 
           {currentView === 'practice-plan' && (
             <>
-              <span className="hover:text-on-surface cursor-pointer">Improvement</span>
-              <span className="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
-              <span className="text-on-surface font-medium">Practice Plan</span>
+              <span className="hover:text-on-surface cursor-pointer transition-colors" onClick={() => onNavigate('practice-plan')}>Improvement</span>
+              <span className="material-symbols-outlined text-[15px] text-outline/70 select-none inline-flex items-center justify-center leading-none">chevron_right</span>
+              <span className="text-on-surface font-semibold">Practice Plan</span>
             </>
           )}
 
           {currentView === 'question-library' && (
-            <span className="text-on-surface font-medium">Question Library</span>
+            <span className="text-on-surface font-semibold">Question Library</span>
           )}
 
           {currentView === 'profile' && (
-            <span className="text-on-surface font-medium">Profile</span>
+            <span className="text-on-surface font-semibold">Profile</span>
           )}
 
           {currentView === 'settings' && (
-            <span className="text-on-surface font-medium">Settings</span>
+            <span className="text-on-surface font-semibold">Settings</span>
           )}
         </div>
 

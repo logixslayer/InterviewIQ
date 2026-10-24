@@ -21,18 +21,126 @@ export interface InterviewConfig {
   jobDescription: string;
 }
 
+export type QuestionDifficulty = 'Easy' | 'Medium' | 'Hard';
+
+export type QuestionType =
+  | 'Conceptual'
+  | 'Coding'
+  | 'Debugging'
+  | 'Output Prediction'
+  | 'Scenario-based'
+  | 'System Design'
+  | 'Database Query'
+  | 'Behavioral'
+  | 'Trade-off Analysis'
+  | 'Practical Trade-off'
+  | 'Practical Trade-off Analysis'
+  | 'Technical Architecture';
+
+export interface CodeExample {
+  language: string;
+  code: string;
+  explanation?: string;
+  input?: string;
+  output?: string;
+  exampleInput?: string;
+  exampleOutput?: string;
+}
+
 export interface QuestionItem {
+  id: string;
+  slug?: string;
+  title: string;
+  questionText?: string;
+  category: string;
+  categoryId?: string;
+  topicId?: string;
+  subtopicId?: string;
+  difficulty: QuestionDifficulty;
+  questionType?: QuestionType;
+  roleTarget: string;
+  roleIds?: string[];
+  estimatedTime: string;
+  estimatedMinutes?: number;
+  description: string;
+  shortAnswer?: string;
+  detailedAnswer?: string;
+  explanation?: string;
+  codeExample?: CodeExample;
+  commonMistakes?: string[];
+  realWorldUseCases?: string[];
+  tradeOffs?: string[];
+  followUpQuestions?: string[];
+  relatedQuestionIds?: string[];
+  relatedTopicIds?: string[];
+  prerequisiteTopicIds?: string[];
+  nextTopicIds?: string[];
+  tags?: string[];
+  keywords?: string[];
+  companies?: string[];
+  status?: 'passed' | 'review' | 'unattempted';
+  statusLabel?: string;
+  isBookmarked?: boolean;
+  isCustom?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface RoleCategory {
+  id: string;
+  name: string;
+  description: string;
+  roles: {
+    id: string;
+    title: string;
+    description: string;
+    icon?: string;
+  }[];
+}
+
+export interface TopicSubtopic {
+  id: string;
+  name: string;
+  description?: string;
+  estimatedMinutes?: number;
+}
+
+export interface TopicCategory {
+  id: string;
+  name: string;
+  icon?: string;
+  description: string;
+  topics: {
+    id: string;
+    name: string;
+    description: string;
+    subtopics?: TopicSubtopic[];
+    prerequisites?: string[];
+    nextTopics?: string[];
+  }[];
+}
+
+export interface LearningPathTopic {
   id: string;
   title: string;
   category: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
-  roleTarget: string;
-  estimatedTime: string;
   description: string;
-  companies: string[];
-  status: 'passed' | 'review' | 'unattempted';
-  statusLabel?: string;
-  isBookmarked: boolean;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  estimatedHours: number;
+  prerequisites: string[];
+  questionIds: string[];
+}
+
+export interface RoleLearningPath {
+  roleId: string;
+  roleTitle: string;
+  description: string;
+  stages: {
+    stage: number;
+    title: string;
+    description: string;
+    topics: LearningPathTopic[];
+  }[];
 }
 
 export interface SessionOutlineItem {
