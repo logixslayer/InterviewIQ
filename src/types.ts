@@ -9,6 +9,28 @@ export type ViewMode =
   | 'profile'
   | 'settings';
 
+export type InterviewState = 
+  | 'preparing'
+  | 'interviewer_speaking'
+  | 'listening'
+  | 'transcribing'
+  | 'evaluating'
+  | 'generating_follow_up'
+  | 'generating_next_question'
+  | 'paused'
+  | 'completed'
+  | 'error';
+
+export interface VoiceSettings {
+  provider: 'google' | 'browser';
+  voiceName: string;
+  locale: string;
+  gender?: 'MALE' | 'FEMALE' | 'NEUTRAL';
+  voiceType?: string; // Journey, Neural2, WaveNet, Standard, Studio
+  speakingRate?: number;
+  pitch?: number;
+}
+
 export interface InterviewConfig {
   role: string;
   level: string;
@@ -16,11 +38,13 @@ export interface InterviewConfig {
   difficulty: string;
   duration: string;
   jobDescription: string;
+  voiceSettings?: VoiceSettings;
 }
 
 export interface QuestionItem {
-  id: string;
+  id: string; // Persistent UUID
   title: string;
+  normalizedQuestionText?: string;
   category: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
   roleTarget: string;
@@ -30,6 +54,41 @@ export interface QuestionItem {
   status: 'passed' | 'review' | 'unattempted';
   statusLabel?: string;
   isBookmarked: boolean;
+  source?: 'curated' | 'generated' | 'follow-up';
+  parentQuestionId?: string;
+  contentFingerprint?: string;
+  evaluationCriteria?: string[];
+  createdAt?: string;
+}
+
+export interface SessionTurnRecord {
+  turnId: string;
+  question: QuestionItem;
+  candidateAnswer: string;
+  codeSnippet?: string;
+  evaluation?: AnswerEvaluationResult;
+  durationSeconds: number;
+  metrics?: RealTimeSpeechMetrics;
+  isFollowUp?: boolean;
+  timestamp: string;
+}
+
+export interface InterviewSessionData {
+  sessionId: string;
+  userId: string;
+  role: string;
+  level: string;
+  type: string;
+  difficulty: string;
+  duration: string;
+  voiceSettings: VoiceSettings;
+  state: InterviewState;
+  turns: SessionTurnRecord[];
+  currentQuestionIndex: number;
+  totalQuestions: number;
+  createdAt: string;
+  updatedAt: string;
+  report?: SessionEvaluationReport;
 }
 
 export interface SessionOutlineItem {
@@ -115,3 +174,25 @@ export interface SessionEvaluationReport {
   completedAt?: string;
 }
 
+export interface RealTimeSpeechMetrics {
+  wpm: number;
+  pacingLabel: string;
+  pacingStatus: 'slow' | 'optimal' | 'fast';
+  fillerWordsCount: number;
+  fillerWordDetails: Record<string, number>;
+  silenceDurationSeconds: number;
+  rubricCoverage: {
+    context: boolean;
+    architecture: boolean;
+    metrics: boolean;
+    tradeoffs: boolean;
+  };
+}
+
+export interface InterviewerTurnMessage {
+  id: string;
+  speaker: 'interviewer' | 'candidate';
+  text: string;
+  timestamp: string;
+  type?: 'question' | 'clarification' | 'feedback' | 'followup';
+}

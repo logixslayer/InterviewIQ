@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { InterviewConfig, UserProfile } from '../types';
+import { InterviewSetupConfirmationModal } from './InterviewSetupConfirmationModal';
 
 interface MockSetupViewProps {
   config: InterviewConfig;
@@ -184,7 +185,7 @@ export const MockSetupView: React.FC<MockSetupViewProps> = ({
             )}
             <button
               type="button"
-              onClick={onStartSession}
+              onClick={() => setShowModal(true)}
               className="px-4 py-1.5 bg-primary hover:bg-on-primary-fixed-variant text-on-primary rounded-lg font-label-md text-label-md font-semibold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
             >
               <span>Launch Mock Interview</span>
@@ -607,60 +608,18 @@ export const MockSetupView: React.FC<MockSetupViewProps> = ({
         </div>
       </div>
 
-      {/* Confirmation Modal */}
-      {showModal && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-sm animate-in fade-in duration-200"
-          onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
-        >
-          <div className="bg-surface-container-lowest rounded-2xl shadow-xl max-w-md w-full p-space-xl flex flex-col items-center text-center">
-            <div className="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center text-primary mb-space-md">
-              <span className="material-symbols-outlined text-[24px]">verified</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span>
-              <span className="font-label-micro text-label-micro font-semibold uppercase tracking-wider">
-                Ready for Next Phase
-              </span>
-            </div>
-            <h3 className="font-headline-lg text-headline-lg text-on-surface font-semibold">
-              Configuration Captured
-            </h3>
-            <p className="font-body-md text-body-md text-on-surface-variant mt-2 leading-relaxed">
-              Your mock interview session is configured for <strong className="text-on-surface font-medium">{config.role}</strong> ({config.level}). The simulation workspace runtime is ready to launch.
-            </p>
-            <div className="w-full mt-space-lg p-space-md bg-surface-container-low rounded-lg text-left flex flex-col gap-1.5">
-              <div className="flex items-center justify-between font-label-sm text-label-sm">
-                <span className="text-outline">Mode:</span>
-                <span className="font-medium text-on-surface">{config.type} • {config.difficulty} • {config.duration}</span>
-              </div>
-              <div className="flex items-center justify-between font-label-sm text-label-sm">
-                <span className="text-outline">Engine:</span>
-                <span className="font-medium text-secondary">Neural Voice &amp; Assessment ready</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-space-sm w-full mt-space-lg">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowModal(false);
-                  onStartSession();
-                }}
-                className="flex-1 py-2 px-4 rounded-lg bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary-container transition-colors cursor-pointer shadow-sm"
-              >
-                Launch Workspace
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                className="py-2 px-4 rounded-lg bg-surface-container hover:bg-surface-container-high font-label-md text-label-md text-on-surface transition-colors cursor-pointer"
-              >
-                Edit Setup
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Role-Calibrated Confirmation & Preflight Diagnostics Modal */}
+      <InterviewSetupConfirmationModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onConfirmLaunch={() => {
+          setShowModal(false);
+          onStartSession();
+        }}
+        config={config}
+        userProfile={userProfile}
+        onConfigChange={onConfigChange}
+      />
 
       {/* Add Custom/Target Role Modal */}
       {showAddRoleModal && (

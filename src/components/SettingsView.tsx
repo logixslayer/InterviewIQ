@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { VoiceSettingsSection } from './VoiceSettingsSection';
 
 const SETTINGS_AVATAR_URL = "https://lh3.googleusercontent.com/aida-public/AB6AXuCjjxolxnff2-9s14RCmPG3ueg30WrwDybKqFNnE1UvPL3k1HN94Rd2FC6riNujEzSWC38cUUKaNmqTieBNIPs5bvFrmnz-lKEbmPj5y0s7neS0L72ofWH5R-d9nUanjfOkEJbzBcQ3gulOGw7N2O-0QgbtQiHNCuDRBGarnADKM2JfyTNHj--imBtE6nRMRYjvtr4Cp-9K8J9A5kSgAT1W2HArG_MIA_tSFTQnGv3dH1zGUyMMrcJYRQ";
 
@@ -335,93 +336,9 @@ export const SettingsView: React.FC = () => {
               </span>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <label className="font-label-md text-label-md text-on-surface font-medium">Interviewer Voice &amp; Attitude</label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-space-sm">
-                {/* Nova */}
-                <div
-                  onClick={() => setVoicePersona('Nova')}
-                  className={`relative flex flex-col gap-1.5 p-space-md rounded-lg cursor-pointer transition-all ${
-                    voicePersona === 'Nova'
-                      ? 'bg-surface-container-low ring-1 ring-primary'
-                      : 'bg-surface-container-lowest hover:bg-surface-container-low'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-label-md text-label-md text-on-surface font-semibold flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-primary text-[16px]">record_voice_over</span>
-                      Nova
-                    </span>
-                    <span className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                      voicePersona === 'Nova' ? 'bg-primary text-on-primary' : 'bg-surface-container'
-                    }`}>
-                      {voicePersona === 'Nova' && <span className="material-symbols-outlined text-[12px]">check</span>}
-                    </span>
-                  </div>
-                  <span className="font-label-micro text-label-micro text-primary font-medium">
-                    Direct &amp; Technical (Default)
-                  </span>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant text-[11px] leading-tight mt-1">
-                    Concise cadence. Prioritizes architecture depth, algorithmic trade-offs, and edge cases.
-                  </p>
-                </div>
-
-                {/* Alloy */}
-                <div
-                  onClick={() => setVoicePersona('Alloy')}
-                  className={`relative flex flex-col gap-1.5 p-space-md rounded-lg cursor-pointer transition-all ${
-                    voicePersona === 'Alloy'
-                      ? 'bg-surface-container-low ring-1 ring-primary'
-                      : 'bg-surface-container-lowest hover:bg-surface-container-low'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-label-md text-label-md text-on-surface font-semibold flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-outline text-[16px]">record_voice_over</span>
-                      Alloy
-                    </span>
-                    <span className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                      voicePersona === 'Alloy' ? 'bg-primary text-on-primary' : 'bg-surface-container'
-                    }`}>
-                      {voicePersona === 'Alloy' && <span className="material-symbols-outlined text-[12px]">check</span>}
-                    </span>
-                  </div>
-                  <span className="font-label-micro text-label-micro text-outline font-medium">
-                    Supportive &amp; Encouraging
-                  </span>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant text-[11px] leading-tight mt-1">
-                    Collaborative tone with constructive hints when you face roadblocks during coding.
-                  </p>
-                </div>
-
-                {/* Echo */}
-                <div
-                  onClick={() => setVoicePersona('Echo')}
-                  className={`relative flex flex-col gap-1.5 p-space-md rounded-lg cursor-pointer transition-all ${
-                    voicePersona === 'Echo'
-                      ? 'bg-surface-container-low ring-1 ring-primary'
-                      : 'bg-surface-container-lowest hover:bg-surface-container-low'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-label-md text-label-md text-on-surface font-semibold flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-outline text-[16px]">record_voice_over</span>
-                      Echo
-                    </span>
-                    <span className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                      voicePersona === 'Echo' ? 'bg-primary text-on-primary' : 'bg-surface-container'
-                    }`}>
-                      {voicePersona === 'Echo' && <span className="material-symbols-outlined text-[12px]">check</span>}
-                    </span>
-                  </div>
-                  <span className="font-label-micro text-label-micro text-outline font-medium">
-                    Executive &amp; Challenging
-                  </span>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant text-[11px] leading-tight mt-1">
-                    Drills into business impact, scale thresholds, and behavioral ownership tradeoffs.
-                  </p>
-                </div>
-              </div>
+            {/* Full Selectable Google Cloud TTS & Natural Voice Studio */}
+            <div className="pt-1">
+              <VoiceSettingsSection />
             </div>
 
             {/* Evaluation Strictness Level */}

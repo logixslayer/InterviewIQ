@@ -1,0 +1,67 @@
+[
+  {
+    "sessionId": "a31b33f3-caa5-4d46-803b-daff7d942c6b",
+    "userId": "test_candidate_1",
+    "role": "Frontend Developer",
+    "level": "Entry Level",
+    "type": "Technical",
+    "difficulty": "Medium",
+    "duration": "20 min (5 questions)",
+    "voiceSettings": {
+      "provider": "browser",
+      "voiceName": "en-US-Journey-F",
+      "locale": "en-US"
+    },
+    "state": "generating_follow_up",
+    "turns": [
+      {
+        "turnId": "ee7bbb15-5183-4c9d-9edd-d8adc3b23f3c",
+        "question": {
+          "questionId": "f4d9d3ec-5f95-4a86-8267-6253abc3e111",
+          "userId": "test_candidate_1",
+          "sessionId": "a31b33f3-caa5-4d46-803b-daff7d942c6b",
+          "roleTarget": "Frontend Developer",
+          "questionText": "Explain the difference between useEffect, useLayoutEffect, and useInsertionEffect with practical use cases.",
+          "normalizedQuestionText": "explain the difference between useeffect uselayouteffect and useinsertioneffect with practical use cases",
+          "contentFingerprint": "235724e80ea27e7493d0d454a917098b08723431e70583f141f2325f98be884e",
+          "category": "Interview Turn",
+          "difficulty": "Medium",
+          "experienceLevel": "Entry Level",
+          "questionType": "Technical",
+          "source": "curated",
+          "createdAt": "2026-10-24T04:10:39.073Z"
+        },
+        "candidateAnswer": "In our production app, we handled rendering performance by implementing windowed virtualization for long feeds and using memoized selectors in Zustand to avoid re-rendering unrelated leaf components.",
+        "codeSnippet": "",
+        "evaluation": {
+          "score": 69,
+          "summary": "Strong technical grounding for Frontend Developer. Response demonstrated clear domain intuition with actionable implementation steps.",
+          "strengths": [
+            "Demonstrates concrete awareness of latency and memory bottlenecks."
+          ],
+          "gaps": [
+            "Discuss alternative trade-offs and edge failure modes more explicitly.",
+            "Expand response depth with concrete production metrics and real-world scale examples.",
+            "Mention observability, SLAs, and error logging strategies."
+          ],
+          "rubricScores": {
+            "technicalAccuracy": 71,
+            "architectureDepth": 72,
+            "communicationDelivery": 74,
+            "performanceOptimization": 85
+          },
+          "followUpQuestion": "How would your proposed solution scale if traffic or payload volume increased by a factor of 50x under network partition?",
+          "coachingTip": "When concluding your answer, state the exact metric you would monitor in production dashboards to verify system stability."
+        },
+        "durationSeconds": 60,
+        "metrics": null,
+        "isFollowUp": false,
+        "timestamp": "2026-10-24T04:10:39.073Z"
+      }
+    ],
+    "currentQuestionIndex": 0,
+    "totalQuestions": 5,
+    "createdAt": "2026-10-24T04:09:57.309Z",
+    "updatedAt": "2026-10-24T04:10:39.074Z"
+  }
+]

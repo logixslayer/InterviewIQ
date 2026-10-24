@@ -1,11 +1,33 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 import { OpenAI } from 'openai';
 import { PDFParse } from 'pdf-parse';
 import mammoth from 'mammoth';
+import {
+  recordDeliveredQuestion,
+  getAllQuestions,
+  getUserQuestions,
+  getSessionQuestions,
+  saveSessionRecord,
+  getSessionRecord,
+  listUserSessions,
+  checkQuestionDuplication,
+  computeContentFingerprint,
+  normalizeQuestionText,
+  saveVoicePreferences,
+  getVoicePreferences,
+  StoredQuestion,
+  StoredSession,
+  StoredTurn,
+} from './server/db.js';
+import {
+  getAvailableTtsVoices,
+  synthesizeSpeechAudio,
+} from './server/tts.js';
 
 dotenv.config();
 
@@ -66,8 +88,11 @@ const getAiClientConfig = (): AiClientConfig | null => {
       }),
       models: [
         'nvidia/nemotron-3.5-lightning:free',
+        'google/gemini-2.0-flash-exp:free',
+        'google/gemini-2.0-flash-thinking-exp:free',
+        'qwen/qwen-2.5-coder-32b-instruct:free',
+        'meta-llama/llama-3.2-3b-instruct:free',
         'nvidia/nemotron-3.5-super-vl:free',
-        'meta-llama/llama-3.3-70b-instruct:free',
       ],
       provider: 'openrouter',
     };
@@ -90,8 +115,18 @@ function extractJsonFromModelOutput(text: string): any {
   if (!text) return null;
   // Strip <think>...</think> reasoning blocks if present
   let cleaned = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-  // Strip markdown code fences
-  cleaned = cleaned.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
+
+  // Check for ```json ... ``` code fence
+  const codeBlockMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (codeBlockMatch && codeBlockMatch[1]) {
+    try {
+      return JSON.parse(codeBlockMatch[1].trim());
+    } catch (_e) {
+      cleaned = codeBlockMatch[1].trim();
+    }
+  } else {
+    cleaned = cleaned.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
+  }
 
   try {
     return JSON.parse(cleaned);
@@ -112,21 +147,31 @@ function extractJsonFromModelOutput(text: string): any {
 
     if (startIdx !== -1 && endIdx > startIdx) {
       const slice = cleaned.slice(startIdx, endIdx + 1);
-      return JSON.parse(slice);
+      try {
+        return JSON.parse(slice);
+      } catch (_e2) {
+        // Fix common LLM json flaws like trailing commas
+        const sanitized = slice.replace(/,\s*([}\]])/g, '$1');
+        try {
+          return JSON.parse(sanitized);
+        } catch (_e3) {
+          // Fall through
+        }
+      }
     }
     throw new Error('Failed to parse valid JSON from AI model output');
   }
 }
 
 // Resilient AI caller with model fallback
-async function callAiWithFallback(systemPrompt: string, userPrompt: string, maxTokens = 2500, temperature = 0.2): Promise<string> {
+async function callAiWithFallback(systemPrompt: string, userPrompt: string, maxTokens = 2500, temperature = 0.2, timeoutMs = 4500): Promise<string> {
   const config = getAiClientConfig();
   if (!config) throw new Error('API key not configured');
 
   let lastError: any = null;
   for (const model of config.models) {
     try {
-      const completion = await config.client.chat.completions.create({
+      const completionPromise = config.client.chat.completions.create({
         model,
         messages: [
           { role: 'system', content: systemPrompt },
@@ -135,6 +180,12 @@ async function callAiWithFallback(systemPrompt: string, userPrompt: string, maxT
         temperature,
         max_tokens: maxTokens,
       });
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`Model ${model} request timeout after ${timeoutMs}ms`)), timeoutMs)
+      );
+
+      const completion: any = await Promise.race([completionPromise, timeoutPromise]);
 
       const message = completion.choices[0]?.message;
       let text = message?.content?.trim() || '';
@@ -455,6 +506,202 @@ Output STRICT JSON only (no markdown, valid JSON):
   }
 });
 
+// AI Live Answer Streaming Evaluation Endpoint (Server-Sent Events)
+app.post('/api/interview/stream-evaluate', async (req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*',
+  });
+
+  const sendEvent = (event: string, data: any) => {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  };
+
+  try {
+    const {
+      questionTitle = 'Technical Architecture Question',
+      candidateAnswer = '',
+      codeSnippet = '',
+      role = 'Frontend Developer',
+      difficulty = 'Medium',
+    } = req.body;
+
+    if (!candidateAnswer || typeof candidateAnswer !== 'string' || candidateAnswer.trim().length < 5) {
+      sendEvent('error', { error: 'Please provide a valid candidate answer to evaluate.' });
+      return res.end();
+    }
+
+    sendEvent('status', { message: 'Calibrating against staff-level hiring criteria...' });
+
+    const aiConfig = getAiClientConfig();
+    let evaluationResult: any = null;
+
+    if (aiConfig) {
+      const systemPrompt = `You are a Principal Engineering Bar-Raiser conducting a high-stakes mock interview.
+Evaluate the candidate's response for:
+- Role: ${role}
+- Difficulty: ${difficulty}
+- Question: "${questionTitle}"
+- Candidate Answer: "${candidateAnswer.slice(0, 3000)}"
+${codeSnippet ? `- Candidate Scratchpad/Code: "${codeSnippet.slice(0, 2000)}"` : ''}
+
+Output STRICT JSON only (no markdown, valid JSON):
+{
+  "score": number (0-100),
+  "summary": "1-2 concise sentences summarizing performance against staff-level hiring bar",
+  "strengths": ["specific strength 1", "specific strength 2"],
+  "gaps": ["actionable improvement 1", "actionable improvement 2"],
+  "rubricScores": {
+    "communicationDelivery": number (0-100),
+    "technicalKnowledge": number (0-100),
+    "problemSolving": number (0-100),
+    "systemArchitecture": number (0-100)
+  },
+  "sampleIdealAnswer": "2-3 concise sentences demonstrating the gold standard, staff-level answer with concrete metrics and trade-offs.",
+  "followUpQuestion": "A sharp, conversational follow-up drill-down question from the interviewer probing an edge case in their response",
+  "coachingTip": "1 practical sentence on how to elevate this response to top 1% bar"
+}`;
+
+      for (const model of aiConfig.models) {
+        try {
+          const stream = await aiConfig.client.chat.completions.create({
+            model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: 'Evaluate candidate answer strictly with real-time feedback.' },
+            ],
+            stream: true,
+            temperature: 0.3,
+            max_tokens: 1800,
+          });
+
+          let accumulatedText = '';
+          for await (const chunk of stream) {
+            const token = chunk.choices[0]?.delta?.content || '';
+            if (token) {
+              accumulatedText += token;
+              sendEvent('token', { token });
+            }
+          }
+
+          evaluationResult = extractJsonFromModelOutput(accumulatedText);
+          if (evaluationResult && typeof evaluationResult.score === 'number') {
+            sendEvent('done', {
+              success: true,
+              evaluation: evaluationResult,
+              source: aiConfig.provider,
+            });
+            return res.end();
+          }
+        } catch (streamErr: any) {
+          console.warn(`Model ${model} stream error:`, streamErr?.message);
+        }
+      }
+    }
+
+    // Heuristic streaming fallback with simulated progressive token emission
+    const fallbackEval = evaluateAnswerHeuristically(questionTitle, candidateAnswer, codeSnippet, role);
+    const summaryWords = fallbackEval.summary.split(' ');
+    for (const word of summaryWords) {
+      sendEvent('token', { token: word + ' ' });
+      await new Promise(r => setTimeout(r, 25));
+    }
+
+    sendEvent('done', {
+      success: true,
+      evaluation: fallbackEval,
+      source: aiConfig ? 'heuristic_fallback' : 'local_evaluator',
+    });
+    return res.end();
+  } catch (err: any) {
+    console.error('Streaming eval error:', err);
+    sendEvent('error', { error: err?.message || 'Streaming evaluation encountered an error.' });
+    return res.end();
+  }
+});
+
+// Conversational AI Interviewer Turn endpoint: interactive dialogue during interview
+app.post('/api/interview/interviewer-turn', async (req, res) => {
+  try {
+    const {
+      role = 'Frontend Developer',
+      questionTitle = '',
+      candidateMessage = '',
+      context = '',
+      mode = 'clarification',
+    } = req.body;
+
+    if (!candidateMessage || candidateMessage.trim().length === 0) {
+      return res.status(400).json({ error: 'Message cannot be empty.' });
+    }
+
+    const aiConfig = getAiClientConfig();
+    if (aiConfig) {
+      try {
+        const systemPrompt = `You are a Principal Engineering Bar-Raiser conducting a live mock interview for ${role}.
+The candidate is currently answering: "${questionTitle}".
+The candidate just said or asked: "${candidateMessage}".
+Interaction mode: ${mode}.
+${context ? `Prior context: ${context.slice(0, 600)}` : ''}
+
+Respond naturally and conversationally AS THE INTERVIEWER (speaking directly to candidate):
+- If candidate is asking a clarifying question (constraints, scale, throughput, boundaries): answer realistically like an experienced interviewer. Clarify the boundary and prompt them to state their assumptions.
+- If candidate wants feedback, a hint, or an edge-case challenge: give a concise 1-2 sentence reaction, validating sound reasoning and prompting for trade-offs or SLAs.
+- Keep the response sharp, realistic, and between 2 to 3 spoken sentences.
+Return STRICT JSON only:
+{
+  "spokenResponse": "The exact words the interviewer speaks aloud to the candidate.",
+  "followUpPrompt": "A short guidance cue or edge-case probe",
+  "category": "Clarification" | "Probing" | "Bar-Raiser Cue"
+}`;
+
+        const rawText = await callAiWithFallback(systemPrompt, 'Respond to candidate in character.', 600, 0.4);
+        const parsed = extractJsonFromModelOutput(rawText);
+        if (parsed && parsed.spokenResponse) {
+          return res.json({
+            success: true,
+            turn: parsed,
+            source: aiConfig.provider,
+          });
+        }
+      } catch (err: any) {
+        console.warn('Interviewer turn AI error, falling back:', err?.message);
+      }
+    }
+
+    // Heuristic turn response
+    let responseText = '';
+    const lower = candidateMessage.toLowerCase();
+    if (lower.includes('scale') || lower.includes('throughput') || lower.includes('traffic') || lower.includes('qps')) {
+      responseText = `Assume 50,000 queries per second at peak, with a 99.9th percentile latency budget under 80 milliseconds. How would that affect your caching and partitioning strategy?`;
+    } else if (lower.includes('database') || lower.includes('sql') || lower.includes('store') || lower.includes('storage')) {
+      responseText = `For primary storage, assume relational transactional consistency for orders, but append-only distributed streams for audit events. State your read/write consistency assumptions as you design.`;
+    } else if (lower.includes('time') || lower.includes('duration') || lower.includes('timeout') || lower.includes('sla')) {
+      responseText = `Assume downstream services have a 3-second network deadline before circuit-breaking. Keep walking me through your retry and fallback patterns.`;
+    } else if (lower.includes('security') || lower.includes('auth') || lower.includes('token')) {
+      responseText = `Assume stateless JWT authentication with OAuth 2.0 at the API gateway, with scoped mTLS between microservices. How will you propagate principal identity?`;
+    } else {
+      responseText = `Good point to consider. In production, we assume high concurrency with occasional network partitions. Go ahead and detail the trade-offs of your proposed approach under those constraints.`;
+    }
+
+    return res.json({
+      success: true,
+      turn: {
+        spokenResponse: responseText,
+        followUpPrompt: 'Walk through your trade-offs and latency boundaries.',
+        category: 'Clarification',
+      },
+      source: 'heuristic',
+    });
+  } catch (err: any) {
+    console.error('Interviewer turn error:', err);
+    res.status(500).json({ error: err?.message || 'Failed to process interviewer turn.' });
+  }
+});
+
+
 // AI Final Session Report Generation Endpoint: Comprehensive debrief
 app.post('/api/interview/generate-report', async (req, res) => {
   try {
@@ -531,6 +778,517 @@ Output STRICT JSON only:
     res.status(500).json({ error: err?.message || 'Failed to generate report' });
   }
 });
+
+// ==========================================
+// GOOGLE CLOUD TTS & VOICE ENGINE ENDPOINTS
+// ==========================================
+
+// Lists available voices (Google Cloud TTS with browser fallback)
+app.get('/api/tts/voices', async (req, res) => {
+  try {
+    const lang = (req.query.lang as string) || 'en';
+    const data = await getAvailableTtsVoices(lang);
+    res.json({ success: true, ...data });
+  } catch (err: any) {
+    console.error('TTS voices fetch error:', err);
+    res.status(500).json({ error: err?.message || 'Failed to list voices' });
+  }
+});
+
+// Synthesizes speech audio for questions or follow-ups
+app.post('/api/tts/synthesize', async (req, res) => {
+  try {
+    const result = await synthesizeSpeechAudio(req.body);
+    res.json({ success: true, ...result });
+  } catch (err: any) {
+    console.error('TTS synthesis error:', err);
+    res.status(500).json({ error: err?.message || 'Synthesis failed' });
+  }
+});
+
+// Previews a voice with the standard test sample sentence
+app.post('/api/tts/preview', async (req, res) => {
+  try {
+    const { voiceName, locale, gender, speakingRate, pitch } = req.body;
+    const sampleText = "Welcome to your mock interview. Let's begin by discussing your experience and approach to problem-solving.";
+    const result = await synthesizeSpeechAudio({
+      text: sampleText,
+      voiceName,
+      locale,
+      gender,
+      speakingRate,
+      pitch,
+    });
+    res.json({ success: true, sampleText, ...result });
+  } catch (err: any) {
+    console.error('TTS preview error:', err);
+    res.status(500).json({ error: err?.message || 'Voice preview failed' });
+  }
+});
+
+// Get user saved voice preferences
+app.get('/api/user/voice-settings', (req, res) => {
+  const userId = (req.query.userId as string) || 'default_user';
+  const settings = getVoicePreferences(userId);
+  res.json({ success: true, settings });
+});
+
+// Save user voice preferences
+app.post('/api/user/voice-settings', (req, res) => {
+  const { userId = 'default_user', settings } = req.body;
+  saveVoicePreferences(userId, settings);
+  res.json({ success: true });
+});
+
+// ========================================================
+// REAL-TIME SESSION ENGINE & DEDUPLICATION SYSTEM
+// ========================================================
+
+// Starts a persistent interview session
+app.post('/api/interview/session/start', (req, res) => {
+  try {
+    const {
+      userId = 'default_user',
+      role = 'Frontend Developer',
+      level = 'Entry Level',
+      type = 'Technical',
+      difficulty = 'Medium',
+      duration = '20 min (5 questions)',
+      voiceSettings = { provider: 'browser', voiceName: 'en-US-Journey-F', locale: 'en-US' },
+    } = req.body;
+
+    const sessionId = crypto.randomUUID();
+    const countMatch = duration.match(/\b(\d+)\s*questions?\b/i);
+    const totalQuestions = countMatch ? parseInt(countMatch[1], 10) : 5;
+
+    const newSession: StoredSession = {
+      sessionId,
+      userId,
+      role,
+      level,
+      type,
+      difficulty,
+      duration,
+      voiceSettings,
+      state: 'preparing',
+      turns: [],
+      currentQuestionIndex: 0,
+      totalQuestions,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    saveSessionRecord(newSession);
+    res.json({ success: true, sessionId, session: newSession });
+  } catch (err: any) {
+    console.error('Session start error:', err);
+    res.status(500).json({ error: err?.message || 'Failed to start interview session' });
+  }
+});
+
+// Generates or selects the next non-duplicate question and advances turn
+app.post('/api/interview/session/next-turn', async (req, res) => {
+  try {
+    const {
+      sessionId,
+      userId = 'default_user',
+      role = 'Frontend Developer',
+      difficulty = 'Medium',
+      type = 'Technical',
+      targetCategory = 'System Architecture',
+    } = req.body;
+
+    const session = sessionId ? getSessionRecord(sessionId) : null;
+    const sessionHistory = sessionId ? getSessionQuestions(sessionId) : [];
+    const userHistory = getUserQuestions(userId);
+
+    // Combine current session questions (100% deduplication) and user history
+    const allHistoryToAvoid = [...sessionHistory, ...userHistory];
+
+    const aiConfig = getAiClientConfig();
+    let approvedQuestion: StoredQuestion | null = null;
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    while (!approvedQuestion && attempts < maxAttempts) {
+      attempts++;
+
+      // Attempt AI calibrated question generation
+      let candidateTitle = '';
+      let candidateDesc = '';
+      let candidateCategory = targetCategory;
+      let candidateCompanies = ['Meta', 'Google', 'Stripe'];
+      let candidateTime = '3-4 mins response';
+
+      if (aiConfig) {
+        try {
+          const excludeSummaries = allHistoryToAvoid.slice(-8).map(q => `"${q.questionText}"`).join(', ');
+          const systemPrompt = `You are a Principal Engineering Bar-Raiser conducting a high-stakes mock interview for ${role} (${difficulty} / ${type}).
+Generate ONE fresh, rigorous question.
+CRITICAL DEDUPLICATION RULE: The question MUST NOT repeat or resemble any of these previously delivered questions: [${excludeSummaries}].
+
+Output STRICT JSON only:
+{
+  "title": "Exact interview question prompt (1-2 clear, rigorous sentences)",
+  "category": "${role} Core" | "Architecture & System Design" | "Trade-offs & Resilience" | "STAR Behavioral",
+  "difficulty": "${difficulty}",
+  "estimatedTime": "3-4 mins",
+  "description": "2-sentence rubric guide on what interviewers look for (trade-offs, SLAs, failure modes).",
+  "companies": ["Top Tech Firm A", "Top Tech Firm B"]
+}`;
+
+          const raw = await callAiWithFallback(systemPrompt, `Generate next calibrated question for ${role}.`, 900, 0.4);
+          const parsed = extractJsonFromModelOutput(raw);
+          if (parsed && parsed.title) {
+            candidateTitle = parsed.title;
+            candidateDesc = parsed.description || 'Discuss architectural boundaries and trade-offs.';
+            candidateCategory = parsed.category || targetCategory;
+            candidateCompanies = parsed.companies || ['Amazon', 'Google'];
+          }
+        } catch (e: any) {
+          console.warn('AI question candidate generation error:', e?.message);
+        }
+      }
+
+      // Fallback candidate if AI was unavailable
+      if (!candidateTitle) {
+        const fallbackPool = generateDynamicQuestions(role, targetCategory, difficulty, 6);
+        const unasked = fallbackPool.find(q => !allHistoryToAvoid.some(h => computeContentFingerprint(h.questionText) === computeContentFingerprint(q.title)));
+        const chosen = unasked || fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
+        candidateTitle = chosen.title;
+        candidateDesc = chosen.description;
+        candidateCategory = chosen.category;
+        candidateCompanies = chosen.companies;
+      }
+
+      // Run deduplication check: if duplicate and more attempts remain, retry. Otherwise accept to prevent stall.
+      const dupCheck = checkQuestionDuplication(candidateTitle, allHistoryToAvoid, 0.65);
+      if (dupCheck.isDuplicate && attempts < maxAttempts) {
+        console.warn(`[Deduplication] Retrying non-duplicate candidate (Attempt ${attempts}): "${candidateTitle}". Reason: ${dupCheck.reason}`);
+        continue;
+      }
+
+      // Approved question
+      const questionId = crypto.randomUUID();
+      approvedQuestion = {
+        questionId,
+        userId,
+        sessionId: sessionId || 'standalone',
+        roleTarget: role,
+        questionText: candidateTitle,
+        normalizedQuestionText: normalizeQuestionText(candidateTitle),
+        contentFingerprint: computeContentFingerprint(candidateTitle),
+        category: candidateCategory,
+        difficulty: difficulty as any,
+        experienceLevel: session?.level || 'Intermediate',
+        questionType: type,
+        source: aiConfig ? 'generated' : 'curated',
+        companies: candidateCompanies,
+        estimatedTime: candidateTime,
+        description: candidateDesc,
+        createdAt: new Date().toISOString(),
+      };
+    }
+
+    if (!approvedQuestion) {
+      // Dynamic fallback probe tailored to candidate role
+      const questionId = crypto.randomUUID();
+      const dynamicTopic = `${role} Architecture & Trade-offs`;
+      approvedQuestion = {
+        questionId,
+        userId,
+        sessionId: sessionId || 'standalone',
+        roleTarget: role,
+        questionText: `Walk me through your architectural strategy for high-concurrency state synchronization and fault isolation in a production ${role} platform.`,
+        normalizedQuestionText: normalizeQuestionText(`high concurrency state synchronization in ${role}`),
+        contentFingerprint: computeContentFingerprint(`${role} state synchronization ${Date.now()}`),
+        category: dynamicTopic,
+        difficulty: difficulty as any,
+        experienceLevel: session?.level || 'Intermediate',
+        questionType: type,
+        source: 'curated',
+        companies: ['Stripe', 'Google', 'Netflix'],
+        estimatedTime: '3-4 mins',
+        description: 'Address component isolation, backpressure handling, data consistency guarantees, and recovery SLAs.',
+        createdAt: new Date().toISOString(),
+      };
+    }
+
+    // Persist delivered question
+    recordDeliveredQuestion(approvedQuestion);
+
+    // Synthesize audio with selected voice
+    const voiceSettings = session?.voiceSettings || { voiceName: 'en-US-Journey-F', locale: 'en-US', gender: 'FEMALE' };
+    const audioResult = await synthesizeSpeechAudio({
+      text: `${approvedQuestion.questionText}. ${approvedQuestion.description || ''}`,
+      voiceName: voiceSettings.voiceName,
+      locale: voiceSettings.locale,
+      gender: voiceSettings.gender,
+    });
+
+    // Update session state
+    if (session) {
+      session.state = 'interviewer_speaking';
+      session.currentQuestionIndex = (session.turns.length);
+      saveSessionRecord(session);
+    }
+
+    return res.json({
+      success: true,
+      question: {
+        id: approvedQuestion.questionId,
+        title: approvedQuestion.questionText,
+        category: approvedQuestion.category,
+        difficulty: approvedQuestion.difficulty,
+        roleTarget: approvedQuestion.roleTarget,
+        estimatedTime: approvedQuestion.estimatedTime,
+        description: approvedQuestion.description,
+        companies: approvedQuestion.companies,
+        status: 'unattempted',
+        statusLabel: `AI Calibrated • ${approvedQuestion.difficulty}`,
+        isBookmarked: false,
+        source: approvedQuestion.source,
+        contentFingerprint: approvedQuestion.contentFingerprint,
+        normalizedQuestionText: approvedQuestion.normalizedQuestionText,
+      },
+      audio: audioResult,
+      state: 'interviewer_speaking',
+      questionNumber: (session?.turns.length || 0) + 1,
+      totalQuestions: session?.totalQuestions || 5,
+    });
+  } catch (err: any) {
+    console.error('Session next-turn error:', err);
+    res.status(500).json({ error: err?.message || 'Failed to advance to next interview question' });
+  }
+});
+
+// Submits candidate answer, evaluates response, and decides adaptive follow-up
+app.post('/api/interview/session/submit-answer', async (req, res) => {
+  try {
+    const {
+      sessionId,
+      questionId,
+      questionTitle,
+      candidateAnswer = '',
+      codeSnippet = '',
+      durationSeconds = 60,
+      metrics = null,
+      role = 'Frontend Developer',
+      type = 'Technical',
+      difficulty = 'Medium',
+    } = req.body;
+
+    if (!candidateAnswer || candidateAnswer.trim().length < 5) {
+      return res.status(400).json({ error: 'Please provide a valid answer to submit.' });
+    }
+
+    const session = sessionId ? getSessionRecord(sessionId) : null;
+    const aiConfig = getAiClientConfig();
+
+    // Select calibrated rubric prompt based on interview type
+    let rubricInstructions = '';
+    if (type.toLowerCase().includes('behavioral')) {
+      rubricInstructions = `Assess strictly on STAR methodology:
+- Situation & Task: Was the business context and objective clear?
+- Action: Did candidate describe specific, personal ownership actions rather than vague "we"?
+- Result: Were quantifiable business impact, metrics, or learnings shared?
+- Rubric keys: communicationDelivery, technicalKnowledge (domain context), problemSolving (STAR effectiveness), systemArchitecture (organizational alignment)`;
+    } else if (type.toLowerCase().includes('hr')) {
+      rubricInstructions = `Assess on candidate motivation, communication professionalism, cultural values, and self-awareness.`;
+    } else {
+      rubricInstructions = `Assess on technical correctness, architecture decoupling, trade-off analysis, latency/scalability constraints, and clarity.`;
+    }
+
+    let evaluation: any = null;
+
+    if (aiConfig) {
+      try {
+        const systemPrompt = `You are a Principal Technical Bar-Raiser conducting an interview for ${role}.
+${rubricInstructions}
+Evaluate:
+- Question: "${questionTitle}"
+- Candidate Answer: "${candidateAnswer.slice(0, 3000)}"
+${codeSnippet ? `- Candidate Scratchpad/Code: "${codeSnippet.slice(0, 1500)}"` : ''}
+
+Output STRICT JSON only:
+{
+  "score": number (0-100),
+  "summary": "1-2 concise sentences summarizing performance against staff-level hiring bar",
+  "strengths": ["specific strength 1", "specific strength 2"],
+  "gaps": ["actionable improvement 1", "actionable improvement 2"],
+  "rubricScores": {
+    "communicationDelivery": number (0-100),
+    "technicalKnowledge": number (0-100),
+    "problemSolving": number (0-100),
+    "systemArchitecture": number (0-100)
+  },
+  "sampleIdealAnswer": "2-3 concise sentences demonstrating the gold standard, staff-level answer with concrete metrics and trade-offs.",
+  "followUpQuestion": "A sharp, conversational follow-up drill-down question from the interviewer probing an edge case or specific trade-off in candidate's answer",
+  "coachingTip": "1 practical sentence on how to elevate this response to top 1% bar"
+}`;
+
+        const raw = await callAiWithFallback(systemPrompt, 'Evaluate answer strictly against rubric.', 1800, 0.3);
+        evaluation = extractJsonFromModelOutput(raw);
+      } catch (err: any) {
+        console.warn('AI evaluation error, using heuristic evaluator:', err?.message);
+      }
+    }
+
+    if (!evaluation || typeof evaluation.score !== 'number') {
+      evaluation = evaluateAnswerHeuristically(questionTitle, candidateAnswer, codeSnippet, role);
+    }
+
+    // Adaptive follow-up decision
+    // Only ask follow-up if candidate score is decent (>= 60) AND session turn count allows it
+    const existingFollowUpsCount = session?.turns.filter(t => t.isFollowUp).length || 0;
+    const shouldAskFollowUp = existingFollowUpsCount < 2 && evaluation.score >= 65 && evaluation.followUpQuestion;
+
+    let followUpQuestionRecord: StoredQuestion | null = null;
+    let followUpAudioResult: any = null;
+
+    if (shouldAskFollowUp && evaluation.followUpQuestion) {
+      const followUpId = crypto.randomUUID();
+      followUpQuestionRecord = {
+        questionId: followUpId,
+        userId: session?.userId || 'default_user',
+        sessionId: sessionId || 'standalone',
+        roleTarget: role,
+        questionText: evaluation.followUpQuestion,
+        normalizedQuestionText: normalizeQuestionText(evaluation.followUpQuestion),
+        contentFingerprint: computeContentFingerprint(evaluation.followUpQuestion),
+        category: 'Follow-up Drill-down',
+        difficulty: difficulty as any,
+        experienceLevel: session?.level || 'Intermediate',
+        questionType: type,
+        source: 'follow-up',
+        parentQuestionId: questionId,
+        companies: ['Interviewer Drill-down'],
+        estimatedTime: '2-3 mins',
+        description: 'Contextual follow-up probing the specific implementation details of your previous answer.',
+        createdAt: new Date().toISOString(),
+      };
+
+      recordDeliveredQuestion(followUpQuestionRecord);
+
+      // Synthesize follow-up audio
+      const voiceSettings = session?.voiceSettings || { voiceName: 'en-US-Journey-F', locale: 'en-US', gender: 'FEMALE' };
+      followUpAudioResult = await synthesizeSpeechAudio({
+        text: evaluation.followUpQuestion,
+        voiceName: voiceSettings.voiceName,
+        locale: voiceSettings.locale,
+        gender: voiceSettings.gender,
+      });
+    }
+
+    // Record turn in session
+    if (session) {
+      const turnRecord: StoredTurn = {
+        turnId: crypto.randomUUID(),
+        question: {
+          questionId: questionId || crypto.randomUUID(),
+          userId: session.userId,
+          sessionId: session.sessionId,
+          roleTarget: role,
+          questionText: questionTitle,
+          normalizedQuestionText: normalizeQuestionText(questionTitle),
+          contentFingerprint: computeContentFingerprint(questionTitle),
+          category: 'Interview Turn',
+          difficulty: difficulty as any,
+          experienceLevel: session.level,
+          questionType: type,
+          source: 'curated',
+          createdAt: new Date().toISOString(),
+        },
+        candidateAnswer,
+        codeSnippet,
+        evaluation,
+        durationSeconds,
+        metrics,
+        isFollowUp: false,
+        timestamp: new Date().toISOString(),
+      };
+
+      session.turns.push(turnRecord);
+      session.state = shouldAskFollowUp ? 'generating_follow_up' : 'generating_next_question';
+      saveSessionRecord(session);
+    }
+
+    return res.json({
+      success: true,
+      evaluation,
+      hasFollowUp: shouldAskFollowUp,
+      followUpQuestion: followUpQuestionRecord ? {
+        id: followUpQuestionRecord.questionId,
+        title: followUpQuestionRecord.questionText,
+        category: followUpQuestionRecord.category,
+        difficulty: followUpQuestionRecord.difficulty,
+        roleTarget: followUpQuestionRecord.roleTarget,
+        estimatedTime: followUpQuestionRecord.estimatedTime,
+        description: followUpQuestionRecord.description,
+        companies: followUpQuestionRecord.companies,
+        status: 'unattempted',
+        statusLabel: 'Follow-up Probe',
+        isBookmarked: false,
+        source: 'follow-up',
+        parentQuestionId: questionId,
+      } : null,
+      followUpAudio: followUpAudioResult,
+      nextState: shouldAskFollowUp ? 'generating_follow_up' : 'generating_next_question',
+    });
+  } catch (err: any) {
+    console.error('Submit answer error:', err);
+    res.status(500).json({ error: err?.message || 'Failed to submit answer' });
+  }
+});
+
+// Concludes session and saves report
+app.post('/api/interview/session/complete', async (req, res) => {
+  try {
+    const { sessionId, report } = req.body;
+    const session = sessionId ? getSessionRecord(sessionId) : null;
+
+    if (session) {
+      session.state = 'completed';
+      if (report) {
+        session.report = report;
+      }
+      saveSessionRecord(session);
+    }
+
+    res.json({ success: true, session });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || 'Failed to complete session' });
+  }
+});
+
+// Retrieves stored session for resume / reload
+app.get('/api/interview/session/:sessionId', (req, res) => {
+  const session = getSessionRecord(req.params.sessionId);
+  if (!session) {
+    return res.status(404).json({ error: 'Interview session not found' });
+  }
+  res.json({ success: true, session });
+});
+
+// Retrieves delivered question history for user (deduplication verification)
+app.get('/api/interview/questions/history', (req, res) => {
+  const userId = (req.query.userId as string) || 'default_user';
+  const questions = getUserQuestions(userId);
+  res.json({
+    success: true,
+    totalDelivered: questions.length,
+    questions: questions.map(q => ({
+      questionId: q.questionId,
+      title: q.questionText,
+      roleTarget: q.roleTarget,
+      difficulty: q.difficulty,
+      source: q.source,
+      contentFingerprint: q.contentFingerprint,
+      createdAt: q.createdAt,
+    })),
+  });
+});
+
 
 function evaluateAnswerHeuristically(
   _questionTitle: string,
@@ -897,26 +1655,52 @@ function generateDynamicQuestions(role: string, category: string, _difficulty: s
   const pool = isBlockchain ? blockchainProgression : isBackend ? backendProgression : frontendProgression;
   const selected = pool.slice(0, Math.min(count, pool.length));
 
-  return selected.map((item, i) => ({
-    id: `gen-${Date.now()}-${i}`,
-    title: item.title,
-    category: item.category || category,
-    difficulty: item.difficulty,
-    roleTarget: role,
-    estimatedTime: item.time,
-    description: item.desc,
-    companies: item.companies,
-    status: (i === 0 ? 'passed' : i === 1 ? 'review' : 'unattempted') as 'passed' | 'review' | 'unattempted',
-    statusLabel: i === 0 ? 'Practiced 2x • High Score: 86%' : i === 1 ? 'Needs Review • Last Score: 62%' : 'Not attempted yet',
-    isBookmarked: i === 0 || i === 2
-  }));
+  return selected.map((item, i) => {
+    const questionId = crypto.randomUUID();
+    return {
+      id: questionId,
+      questionId,
+      title: item.title,
+      normalizedQuestionText: normalizeQuestionText(item.title),
+      contentFingerprint: computeContentFingerprint(item.title),
+      category: item.category || category,
+      difficulty: item.difficulty,
+      roleTarget: role,
+      estimatedTime: item.time,
+      description: item.desc,
+      companies: item.companies,
+      status: (i === 0 ? 'passed' : i === 1 ? 'review' : 'unattempted') as 'passed' | 'review' | 'unattempted',
+      statusLabel: i === 0 ? 'Practiced 2x • High Score: 86%' : i === 1 ? 'Needs Review • Last Score: 62%' : 'Not attempted yet',
+      isBookmarked: i === 0 || i === 2,
+      source: 'curated' as const,
+      createdAt: new Date().toISOString(),
+    };
+  });
 }
 
 // Vite middleware in dev or static files in production
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        watch: {
+          ignored: [
+            '**/data/**',
+            '**/data/*',
+            '**/*.json',
+            '**/*.log',
+            '**/server/**',
+            '**/server.ts',
+            '**/.system_generated/**',
+            '**/brain/**',
+            '**/.user_uploaded/**',
+            '**/.tempmediaStorage/**',
+            '**/dist/**',
+            '**/node_modules/**',
+          ],
+        },
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
