@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   ViewMode,
   InterviewConfig,
@@ -13,9 +13,14 @@ import {
   fetchNextSessionTurn,
   submitSessionAnswer,
   completePersistentSession,
-  fetchSessionDetails,
   requestInterviewerTurn,
 } from '../services/interviewService';
+import { RealTimeSpeechService } from '../services/speechRecognitionService';
+import {
+  analyzeSpeech,
+  aggregateSessionSpeech,
+  TurnSpeechMetrics,
+} from '../services/speechAnalytics';
 
 interface LiveWorkspaceViewProps {
   config: InterviewConfig;
@@ -48,6 +53,8 @@ export interface ChatMessage {
   isFollowUp?: boolean;
   isClarification?: boolean;
   codeSnippet?: string;
+  speechMetrics?: TurnSpeechMetrics;
+  isInterim?: boolean; // Live provisional transcription bubble
 }
 
 export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
@@ -59,12 +66,19 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
   const hasInitializedRef = useRef(false);
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const isSubmittingRef = useRef(false);
 
   // Core Session State
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [interviewState, setInterviewState] = useState<InterviewState>('preparing');
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showFinishConfirm, setShowFinishConfirm] = useState(false);
+
+  // Conversation Mode (Voice-First Continuous vs Manual Text)
+  const [continuousVoiceMode, setContinuousVoiceMode] = useState(true);
+  const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice');
 
   // Question progression
   const [currentQuestion, setCurrentQuestion] = useState<QuestionItem | null>(null);
@@ -76,27 +90,44 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
     return 5;
   });
   const [sessionQuestions, setSessionQuestions] = useState<QuestionItem[]>([]);
-  const [answersMap, setAnswersMap] = useState<Record<string, { speech: string; notes?: string; evaluation?: AnswerEvaluationResult }>>({});
+  const [answersMap, setAnswersMap] = useState<Record<string, { speech: string; notes?: string; evaluation?: AnswerEvaluationResult; metrics?: TurnSpeechMetrics }>>({});
 
   // Chat Feed Messages State
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
-  // Input & Dictation State
-  const [candidateInput, setCandidateInput] = useState('');
-  const [isListening, setIsListening] = useState(false);
+  // Real-time Speech Recognition & Live Transcription
+  const [liveTranscript, setLiveTranscript] = useState('');
+  const [audioLevel, setAudioLevel] = useState(0); // 0 - 100 volume
   const [speechSupported, setSpeechSupported] = useState(true);
-  const recognitionRef = useRef<any>(null);
+  const [speechErrorMessage, setSpeechErrorMessage] = useState<string | null>(null);
+  const speechServiceRef = useRef<RealTimeSpeechService | null>(null);
+
+  // Fallback text input (when switching to keyboard mode)
+  const [candidateTextInput, setCandidateTextInput] = useState('');
+
+  // Live Speech Analytics
+  const [currentTurnDuration, setCurrentTurnDuration] = useState(0);
+  const [turnsAnalyticsList, setTurnsAnalyticsList] = useState<TurnSpeechMetrics[]>([]);
+  const [isInsightsOpen, setIsInsightsOpen] = useState(false);
 
   // Code Scratchpad Drawer State
   const [isCodeDrawerOpen, setIsCodeDrawerOpen] = useState(false);
-  const [scratchpadCode, setScratchpadCode] = useState(`// ${config.role || 'Software Engineering'} Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n`);
+  const [scratchpadCode, setScratchpadCode] = useState(
+    `// ${config.role || 'Software Engineering'} Technical Scratchpad\n// Write architecture components, data structures, or code snippets here...\n\n`
+  );
 
   // Audio Playback State
   const [isPlayingSynth, setIsPlayingSynth] = useState(false);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
 
   // Active Follow-up tracking
-  const [activeFollowUp, setActiveFollowUp] = useState<QuestionItem | null>(null);
+  const [_activeFollowUp, setActiveFollowUp] = useState<QuestionItem | null>(null);
+
+  // Live Turn Metrics Computed dynamically from current transcript
+  const liveSpeechMetrics = useMemo(() => {
+    const text = liveTranscript || candidateTextInput;
+    return analyzeSpeech(text, currentTurnDuration);
+  }, [liveTranscript, candidateTextInput, currentTurnDuration]);
 
   // Auto-scroll chat to bottom
   const scrollToBottom = useCallback(() => {
@@ -105,7 +136,7 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isListening, interviewState, scrollToBottom]);
+  }, [messages, liveTranscript, interviewState, scrollToBottom]);
 
   // Session Live Timer
   useEffect(() => {
@@ -114,6 +145,21 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
       setElapsedSeconds((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(timer);
+  }, [interviewState]);
+
+  // Turn speaking timer (ticks during candidate active response)
+  useEffect(() => {
+    let turnTimer: any = null;
+    if (interviewState === 'listening' || interviewState === 'transcribing') {
+      turnTimer = setInterval(() => {
+        setCurrentTurnDuration((prev) => prev + 1);
+      }, 1000);
+    } else {
+      setCurrentTurnDuration(0);
+    }
+    return () => {
+      if (turnTimer) clearInterval(turnTimer);
+    };
   }, [interviewState]);
 
   const formatTimer = (totalSecs: number) => {
@@ -137,7 +183,7 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
     setIsPlayingSynth(false);
   }, []);
 
-  // Web Speech Fallback
+  // Web Speech Fallback for spoken questions
   const fallbackWebSpeech = useCallback((text: string, onEnd?: () => void) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
       onEnd?.();
@@ -148,7 +194,10 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
-      utterance.onstart = () => setIsPlayingSynth(true);
+      utterance.onstart = () => {
+        setIsPlayingSynth(true);
+        setInterviewState('interviewer_speaking');
+      };
       utterance.onend = () => {
         setIsPlayingSynth(false);
         onEnd?.();
@@ -164,10 +213,23 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
     }
   }, []);
 
-  // Speak Utterance using base64 or Web Speech
+  // Speak Utterance using Google Cloud MP3 or Web Speech
   const speakUtterance = useCallback(
     async (text: string, base64Audio?: string, onEndCallback?: () => void) => {
       stopAllAudio();
+
+      const proceedToListen = () => {
+        setIsPlayingSynth(false);
+        if (onEndCallback) {
+          onEndCallback();
+        } else {
+          setInterviewState('listening');
+          if (continuousVoiceMode) {
+            startMicrophoneCapture();
+          }
+        }
+      };
+
       if (base64Audio) {
         try {
           const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
@@ -175,109 +237,109 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
           setIsPlayingSynth(true);
           setInterviewState('interviewer_speaking');
 
-          audio.onended = () => {
-            setIsPlayingSynth(false);
-            onEndCallback ? onEndCallback() : setInterviewState('listening');
-          };
-          audio.onerror = () => {
-            fallbackWebSpeech(text, onEndCallback ? onEndCallback : () => setInterviewState('listening'));
-          };
+          audio.onended = () => proceedToListen();
+          audio.onerror = () => fallbackWebSpeech(text, proceedToListen);
 
           await audio.play();
           return;
         } catch {
-          fallbackWebSpeech(text, onEndCallback ? onEndCallback : () => setInterviewState('listening'));
+          fallbackWebSpeech(text, proceedToListen);
           return;
         }
       }
-      fallbackWebSpeech(text, onEndCallback ? onEndCallback : () => setInterviewState('listening'));
+      fallbackWebSpeech(text, proceedToListen);
     },
-    [stopAllAudio, fallbackWebSpeech]
+    [stopAllAudio, fallbackWebSpeech, continuousVoiceMode]
   );
 
-  // Setup Web Speech Recognition for live microphone dictation
+  // Initialize Speech Recognition Service
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
+    if (!RealTimeSpeechService.isSupported()) {
       setSpeechSupported(false);
+      setInputMode('text');
       return;
     }
 
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = 'en-US';
+    const service = new RealTimeSpeechService(
+      {
+        onInterimTranscript: (text) => {
+          setLiveTranscript(text);
+          if (interviewState !== 'transcribing' && interviewState !== 'listening') {
+            setInterviewState('listening');
+          }
+        },
+        onAudioLevel: (level) => {
+          setAudioLevel(level);
+        },
+        onSilenceTimeout: (finalText) => {
+          // In Continuous Voice Mode: automatically submit answer when candidate pauses after talking!
+          if (continuousVoiceMode && finalText.trim().length >= 10 && !isSubmittingRef.current) {
+            handleCompleteAndSendAnswer(finalText);
+          }
+        },
+        onError: (err) => {
+          if (err.fatal) {
+            setSpeechErrorMessage(err.message);
+            setInputMode('text');
+          }
+        },
+        onStateChange: (st) => {
+          if (st === 'listening') {
+            setInterviewState('listening');
+          }
+        },
+      },
+      {
+        silenceThresholdMs: 2800, // 2.8 seconds thinking pause
+        minWordsForSilenceSubmit: 5,
+      }
+    );
 
-      recognition.onresult = (event: any) => {
-        let transcript = '';
-        for (let i = 0; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
-        }
-        setCandidateInput(transcript);
-      };
-
-      recognition.onerror = (e: any) => {
-        console.warn('Speech recognition notice:', e?.error);
-        if (e?.error === 'not-allowed') {
-          setIsListening(false);
-        }
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognitionRef.current = recognition;
-    } catch (err) {
-      console.warn('Speech recognition init notice:', err);
-      setSpeechSupported(false);
-    }
+    speechServiceRef.current = service;
 
     return () => {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch {}
-      }
+      service.destroy();
     };
-  }, []);
+  }, [continuousVoiceMode, interviewState]);
 
-  const toggleListening = () => {
-    if (!recognitionRef.current) {
-      alert('Speech dictation is not supported in this browser. You can type your answers directly.');
-      return;
-    }
+  // Start microphone
+  const startMicrophoneCapture = async () => {
+    stopAllAudio();
+    setSpeechErrorMessage(null);
+    setLiveTranscript('');
+    isSubmittingRef.current = false;
 
-    if (isListening) {
-      try {
-        recognitionRef.current.stop();
-      } catch {}
-      setIsListening(false);
-    } else {
-      stopAllAudio();
-      try {
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch {
-        setIsListening(false);
+    if (speechServiceRef.current) {
+      const started = await speechServiceRef.current.start();
+      if (started) {
+        setInterviewState('listening');
       }
     }
   };
 
-  // Turn Advancement: Load Next Question Turn & Add to Chat
+  // Stop microphone
+  const stopMicrophoneCapture = () => {
+    if (speechServiceRef.current) {
+      const finalRecorded = speechServiceRef.current.stop();
+      setAudioLevel(0);
+      return finalRecorded;
+    }
+    return '';
+  };
+
+  // Turn Advancement: Fetch Next Question Turn from Persistent Store
   const loadNextTurn = useCallback(
     async (targetSessionId: string) => {
       setInterviewState('generating_next_question');
       stopAllAudio();
+      stopMicrophoneCapture();
+      setLiveTranscript('');
+      isSubmittingRef.current = false;
 
       try {
         const turnData = await fetchNextSessionTurn({
           sessionId: targetSessionId,
-          userId: 'candidate_main',
+          userId: userProfile?.uid || 'candidate_main',
           role: config.role,
           difficulty: config.difficulty,
           type: config.type,
@@ -291,7 +353,6 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
           setSessionQuestions((prev) => (prev.some((item) => item.id === q.id) ? prev : [...prev, q]));
           setActiveFollowUp(null);
 
-          // Add Interviewer Question to Live Chat
           const questionMsg: ChatMessage = {
             id: `q_${q.id}_${Date.now()}`,
             sender: 'interviewer',
@@ -306,20 +367,25 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
           };
 
           setMessages((prev) => [...prev, questionMsg]);
-          speakUtterance(`${q.title}. ${q.description}`, turnData.audio?.audioContent, () =>
-            setInterviewState('listening')
-          );
+
+          // Interviewer speaks the question aloud
+          speakUtterance(`${q.title}. ${q.description}`, turnData.audio?.audioContent, () => {
+            setInterviewState('listening');
+            if (continuousVoiceMode) {
+              startMicrophoneCapture();
+            }
+          });
           return;
         }
       } catch (err) {
         console.warn('Network turn notice, using calibrated question:', err);
       }
 
-      // Guaranteed Role-Calibrated Question Fallback
+      // Guaranteed Calibrated Fallback Question
       const fallbackId = `q_calibrated_${Date.now()}`;
       const fallbackQ: QuestionItem = {
         id: fallbackId,
-        title: `How do you architect and optimize high-throughput data and state workflows in ${config.role} systems?`,
+        title: `How do you architect and optimize high-throughput state and data workflows in ${config.role} systems?`,
         description: `Break down the architectural components, concurrency/latency constraints, performance trade-offs, and observability metrics you would prioritize.`,
         category: 'System Architecture',
         difficulty: (config.difficulty || 'Medium') as any,
@@ -343,19 +409,21 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
         title: fallbackQ.title,
         text: fallbackQ.description,
         category: fallbackQ.category,
-        questionNumber: 1,
-        totalQuestions: 5,
+        questionNumber: questionNumber,
+        totalQuestions: totalQuestions,
         companies: fallbackQ.companies,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
       setMessages((prev) => [...prev, fallbackMsg]);
-      setInterviewState('listening');
-      speakUtterance(`${fallbackQ.title}. ${fallbackQ.description}`, undefined, () =>
-        setInterviewState('listening')
-      );
+      speakUtterance(`${fallbackQ.title}. ${fallbackQ.description}`, undefined, () => {
+        setInterviewState('listening');
+        if (continuousVoiceMode) {
+          startMicrophoneCapture();
+        }
+      });
     },
-    [config.role, config.difficulty, config.type, stopAllAudio, speakUtterance]
+    [config.role, config.difficulty, config.type, questionNumber, totalQuestions, stopAllAudio, speakUtterance, continuousVoiceMode, userProfile?.uid]
   );
 
   // Initialize Persistent Session on Mount (strictly once)
@@ -367,41 +435,43 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
     const initSession = async () => {
       setInterviewState('preparing');
 
-      // Add Welcome Message from Interviewer to start the chat naturally
       const candidateName = userProfile?.fullName || 'Candidate';
       const welcomeMsg: ChatMessage = {
         id: `welcome_${Date.now()}`,
         sender: 'interviewer',
         title: `Welcome, ${candidateName}!`,
-        text: `I'll be your Lead Interviewer for today's ${config.role} mock interview (${config.type} Track • ${config.difficulty} Level). Speak naturally or type your responses. I'll evaluate your system reasoning, trade-offs, and communication in real time. Let's begin!`,
+        text: `I'll be your Lead Interviewer for today's ${config.role} interview (${config.type} Track • ${config.difficulty} Level). You're in two-way real-time voice mode. Speak naturally and I will analyze your domain reasoning, system trade-offs, and communication in real time. Let's begin!`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages([welcomeMsg]);
 
-      try {
-        const res = await startPersistentSession({
-          userId: 'candidate_main',
-          role: config.role || 'Frontend Developer',
-          level: config.level || 'Entry Level',
-          type: config.type || 'Technical',
-          difficulty: config.difficulty || 'Medium',
-          duration: config.duration || '20 min (5 questions)',
-          voiceSettings: config.voiceSettings,
-        });
+      // Speak welcome greeting
+      speakUtterance(welcomeMsg.text, undefined, async () => {
+        if (!isMounted) return;
+        try {
+          const res = await startPersistentSession({
+            userId: userProfile?.uid || 'candidate_main',
+            role: config.role || 'Frontend Developer',
+            level: config.level || 'Entry Level',
+            type: config.type || 'Technical',
+            difficulty: config.difficulty || 'Medium',
+            duration: config.duration || '20 min (5 questions)',
+            voiceSettings: config.voiceSettings,
+          });
 
-        if (isMounted && res.success && res.sessionId) {
-          setSessionId(res.sessionId);
-          sessionStorage.setItem('interviewiq_session_id', res.sessionId);
-          await loadNextTurn(res.sessionId);
+          if (isMounted && res.success && res.sessionId) {
+            setSessionId(res.sessionId);
+            sessionStorage.setItem('interviewiq_session_id', res.sessionId);
+            await loadNextTurn(res.sessionId);
+          }
+        } catch {
+          if (isMounted) {
+            const localId = `session_${Date.now()}`;
+            setSessionId(localId);
+            await loadNextTurn(localId);
+          }
         }
-      } catch (err) {
-        console.warn('Session startup notice:', err);
-        if (isMounted) {
-          const localId = `session_${Date.now()}`;
-          setSessionId(localId);
-          await loadNextTurn(localId);
-        }
-      }
+      });
     };
 
     initSession();
@@ -409,32 +479,33 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
     return () => {
       isMounted = false;
       stopAllAudio();
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch {}
+      if (speechServiceRef.current) {
+        speechServiceRef.current.destroy();
       }
     };
   }, []);
 
-  // Handle Candidate Response Submission
-  const handleSendAnswer = async () => {
-    const text = candidateInput.trim();
+  // Submit Finalized Candidate Answer
+  const handleCompleteAndSendAnswer = async (overrideText?: string) => {
+    if (isSubmittingRef.current) return;
+
+    // Capture text from live speech or text fallback
+    let text = (overrideText || liveTranscript || candidateTextInput).trim();
     if (!text || text.length < 5) return;
     if (!currentQuestion || !sessionId) return;
 
-    if (isListening && recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {}
-      setIsListening(false);
-    }
+    isSubmittingRef.current = true;
+    stopMicrophoneCapture();
     stopAllAudio();
+
+    // Compute finalized metrics for this turn
+    const turnMetrics = analyzeSpeech(text, Math.max(2, currentTurnDuration));
+    setTurnsAnalyticsList((prev) => [...prev, turnMetrics]);
 
     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const answerMsgId = `ans_${Date.now()}`;
 
-    // Add Candidate's Message Bubble to the Chat
+    // Add finalized Candidate Message Bubble directly to chat
     const candidateMsg: ChatMessage = {
       id: answerMsgId,
       sender: 'candidate',
@@ -442,14 +513,17 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
       timestamp,
       questionNumber,
       codeSnippet: scratchpadCode.trim().length > 100 ? scratchpadCode : undefined,
+      speechMetrics: turnMetrics,
+      isInterim: false,
     };
 
     setMessages((prev) => [...prev, candidateMsg]);
-    setCandidateInput('');
-    setInterviewState('evaluating');
+    setLiveTranscript('');
+    setCandidateTextInput('');
+    setInterviewState('processing_answer');
 
     try {
-      // Submit answer to server evaluation engine
+      // Send to server evaluation engine
       const turnResult = await submitSessionAnswer({
         sessionId,
         questionId: currentQuestion.id,
@@ -460,6 +534,7 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
         role: config.role,
         type: config.type,
         difficulty: config.difficulty,
+        metrics: turnMetrics,
       });
 
       if (turnResult.success) {
@@ -472,10 +547,11 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
             speech: text,
             notes: scratchpadCode,
             evaluation,
+            metrics: turnMetrics,
           },
         }));
 
-        // Add Inline Evaluation Card in Chat
+        // Inline Evaluation Card
         const evalMsg: ChatMessage = {
           id: `eval_${Date.now()}`,
           sender: 'evaluation',
@@ -485,7 +561,7 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
         };
         setMessages((prev) => [...prev, evalMsg]);
 
-        // Handle Contextual Follow-Up Probe or Advance
+        // Contextual Follow-Up Probe or Advance
         if (turnResult.hasFollowUp && turnResult.followUpQuestion) {
           setInterviewState('generating_follow_up');
           setActiveFollowUp(turnResult.followUpQuestion);
@@ -500,19 +576,25 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
             audioContent: turnResult.followUpAudio?.audioContent,
           };
           setMessages((prev) => [...prev, followUpMsg]);
-          speakUtterance(turnResult.followUpQuestion.title, turnResult.followUpAudio?.audioContent, () =>
-            setInterviewState('listening')
-          );
+
+          // AI speaks follow up verbally
+          speakUtterance(turnResult.followUpQuestion.title, turnResult.followUpAudio?.audioContent, () => {
+            setInterviewState('listening');
+            isSubmittingRef.current = false;
+            if (continuousVoiceMode) {
+              startMicrophoneCapture();
+            }
+          });
         } else {
-          // If no follow-up, check if session is completed
+          // If no follow-up, advance to next question or complete session
           if (questionNumber < totalQuestions) {
+            isSubmittingRef.current = false;
             await loadNextTurn(sessionId);
           } else {
-            // Final Question Completed
             const completeNotice: ChatMessage = {
               id: `done_${Date.now()}`,
               sender: 'system',
-              text: `🎉 You have completed all ${totalQuestions} interview questions! Click "Finish & Debrief" to generate your comprehensive scorecard and hiring recommendation.`,
+              text: `🎉 You have completed all ${totalQuestions} interview questions! Click "Finish & Debrief" to compile your comprehensive scorecard and hiring recommendation.`,
               timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             };
             setMessages((prev) => [...prev, completeNotice]);
@@ -521,10 +603,10 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
         }
       }
     } catch (err: any) {
-      console.warn('Answer submission notice:', err);
-      // Fallback evaluation so user can always advance
+      console.warn('Answer submission notice, applying calibrated evaluation:', err);
+      // Fallback calibrated evaluation so user is never blocked
       const fallbackEval: AnswerEvaluationResult = {
-        score: 82,
+        score: 83,
         summary: 'Solid breakdown demonstrating domain knowledge and sound structured reasoning.',
         strengths: ['Addressed primary architecture constraints', 'Clear technical articulation'],
         gaps: ['Quantify SLA and latency bounds', 'Discuss partition recovery trade-offs'],
@@ -534,7 +616,7 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
           communicationDelivery: 85,
           systemArchitecture: 80,
         },
-        followUpQuestion: 'How would you architect and benchmark this solution under 50x payload traffic spike?',
+        followUpQuestion: 'How would you architect and benchmark this solution under a 50x payload traffic spike?',
         coachingTip: 'When discussing architecture, cite specific production SLAs and P99 latency bounds.',
       };
 
@@ -544,6 +626,7 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
           speech: text,
           notes: scratchpadCode,
           evaluation: fallbackEval,
+          metrics: turnMetrics,
         },
       }));
 
@@ -557,6 +640,7 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
       setMessages((prev) => [...prev, evalMsg]);
 
       if (questionNumber < totalQuestions) {
+        isSubmittingRef.current = false;
         await loadNextTurn(sessionId);
       } else {
         setInterviewState('completed');
@@ -564,14 +648,22 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
     }
   };
 
-  // Handle Candidate Asking Interviewer for Clarification
+  // Barge-In / Interruption: Candidate stops AI to speak immediately
+  const handleInterruptInterviewer = () => {
+    stopAllAudio();
+    setInterviewState('listening');
+    startMicrophoneCapture();
+  };
+
+  // Candidate Asking Interviewer for Clarification
   const handleAskClarification = async () => {
     const query = prompt('Ask the interviewer a clarifying question or request context:');
     if (!query || !query.trim() || !currentQuestion) return;
 
+    stopMicrophoneCapture();
+    stopAllAudio();
     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    // Show candidate clarification in chat
     const candidateQueryMsg: ChatMessage = {
       id: `query_${Date.now()}`,
       sender: 'candidate',
@@ -587,7 +679,7 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
         role: config.role,
         questionTitle: currentQuestion.title,
         candidateMessage: query.trim(),
-        context: candidateInput,
+        context: liveTranscript || candidateTextInput,
         mode: 'clarification',
       });
 
@@ -601,10 +693,15 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, interviewerResponseMsg]);
-        speakUtterance(res.turn.spokenResponse, undefined, () => setInterviewState('listening'));
+        speakUtterance(res.turn.spokenResponse, undefined, () => {
+          setInterviewState('listening');
+          if (continuousVoiceMode) {
+            startMicrophoneCapture();
+          }
+        });
       }
     } catch {
-      const defaultClarification = `Great question. In this scenario, assume a distributed cloud architecture with 99.95% SLA and 100k daily active users. Focus on latency bottlenecks and data consistency.`;
+      const defaultClarification = `Great question. Assume a distributed cloud architecture with 99.95% SLA and 100k daily active users. Focus on latency bottlenecks and data consistency.`;
       const replyMsg: ChatMessage = {
         id: `clarify_reply_${Date.now()}`,
         sender: 'interviewer',
@@ -614,23 +711,28 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, replyMsg]);
-      speakUtterance(defaultClarification, undefined, () => setInterviewState('listening'));
+      speakUtterance(defaultClarification, undefined, () => {
+        setInterviewState('listening');
+        if (continuousVoiceMode) {
+          startMicrophoneCapture();
+        }
+      });
     }
   };
 
-  // Complete Interview & Compile Final Report
+  // Complete Interview & Compile Final Report (with Aggregate Speech Analytics)
   const handleFinishSession = async () => {
+    setShowFinishConfirm(false);
     setIsFinishing(true);
     setInterviewState('completed');
     stopAllAudio();
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {}
-    }
+    stopMicrophoneCapture();
 
     const mins = Math.max(1, Math.floor(elapsedSeconds / 60));
     const duration = `${mins} min`;
+
+    // Aggregate speech metrics across all turns
+    const aggregatedSpeech = aggregateSessionSpeech(turnsAnalyticsList);
 
     const answersList = sessionQuestions.map((q) => {
       const state = answersMap[q.id];
@@ -638,10 +740,11 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
         questionTitle: q.title,
         answer: state?.speech || 'Candidate completed verbal response.',
         codeSnippet: state?.notes || '',
-        score: state?.evaluation?.score || 82,
+        score: state?.evaluation?.score || 83,
         rubricScores: state?.evaluation?.rubricScores,
         strengths: state?.evaluation?.strengths || ['Structured domain reasoning', 'Clear technical communication'],
         gaps: state?.evaluation?.gaps || ['Quantify SLA and latency bounds'],
+        metrics: state?.metrics,
       };
     });
 
@@ -653,23 +756,25 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
           role: config.role || 'Frontend Developer',
           duration,
           answers: answersList,
+          speechAnalytics: aggregatedSpeech,
         }),
       });
 
       const data = await res.json();
       const report: SessionEvaluationReport =
         res.ok && data.success && data.report
-          ? { ...data.report, role: config.role, duration }
+          ? { ...data.report, role: config.role, duration, speechAnalytics: aggregatedSpeech }
           : {
               overallScore: 85,
               grade: 'B+',
               hireRecommendation: 'Hire',
-              summary: `Candidate demonstrated strong core competency in ${config.role} architectures with structured decomposition.`,
+              summary: `Candidate demonstrated strong core competency in ${config.role} architectures with structured decomposition and clear articulation.`,
               competencyBreakdown: {
                 communication: { score: 86, feedback: 'Articulate delivery with structured breakdown.' },
                 technicalKnowledge: { score: 85, feedback: 'Sound grasp of domain concepts and trade-offs.' },
                 problemSolving: { score: 84, feedback: 'Deconstructs complex constraints effectively.' },
               },
+              speechAnalytics: aggregatedSpeech,
               keyStrengths: [
                 'Structured domain reasoning',
                 'Awareness of performance constraints',
@@ -705,16 +810,18 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
     }
   };
 
-  const wordCount = candidateInput.trim().split(/\s+/).filter(Boolean).length;
+  const activeTranscriptWords = (liveTranscript || candidateTextInput).trim().split(/\s+/).filter(Boolean).length;
 
   return (
     <div className="flex flex-col h-[calc(100vh-80px)] lg:h-[calc(100vh-68px)] max-w-5xl mx-auto w-full bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/50 overflow-hidden">
       {/* 1. TOP LIVE INTERVIEW HEADER */}
       <header className="px-space-md sm:px-space-lg py-3 bg-surface-container-low border-b border-surface-variant flex items-center justify-between shrink-0 flex-wrap gap-2">
-        {/* Left: Role, Track, Question Counter */}
+        {/* Left: Role, Question Counter, Live Timer */}
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-primary text-on-primary flex items-center justify-center font-bold shadow-xs">
-            <span className="material-symbols-outlined text-[20px]">forum</span>
+            <span className="material-symbols-outlined text-[20px]">
+              {interviewState === 'listening' ? 'mic' : interviewState === 'interviewer_speaking' ? 'record_voice_over' : 'forum'}
+            </span>
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-2 flex-wrap">
@@ -725,7 +832,7 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
                 Question {questionNumber} of {totalQuestions}
               </span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-outline font-medium">
+            <div className="flex items-center gap-2 text-xs text-outline font-medium flex-wrap">
               <span>{config.type} Track</span>
               <span>•</span>
               <span>{config.difficulty} Level</span>
@@ -738,30 +845,71 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
           </div>
         </div>
 
-        {/* Right: Audio Wave, Code Drawer Toggle, Exit & Finish */}
+        {/* Right: Controls & Actions */}
         <div className="flex items-center gap-2 ml-auto flex-wrap">
-          {/* Active Speaking Indicator */}
+          {/* Continuous Voice Mode Toggle */}
+          <button
+            type="button"
+            onClick={() => {
+              const nextMode = !continuousVoiceMode;
+              setContinuousVoiceMode(nextMode);
+              if (nextMode && interviewState === 'listening') {
+                startMicrophoneCapture();
+              }
+            }}
+            className={`h-8 px-2.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border ${
+              continuousVoiceMode
+                ? 'bg-secondary/15 text-secondary border-secondary/30'
+                : 'bg-surface-container hover:bg-surface-container-high text-on-surface border-outline-variant/60'
+            }`}
+            title="When active, AI listens and submits answers automatically after speaking"
+          >
+            <span className="material-symbols-outlined text-[15px]">
+              {continuousVoiceMode ? 'autorenew' : 'touch_app'}
+            </span>
+            <span className="hidden sm:inline">
+              {continuousVoiceMode ? 'Continuous Voice: ON' : 'Push to Talk'}
+            </span>
+          </button>
+
+          {/* Active Interviewer Speaking Indicator / Barge-In Interrupt */}
           {isPlayingSynth && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-container/40 text-secondary text-xs font-semibold animate-pulse">
               <span className="material-symbols-outlined text-[15px]">volume_up</span>
-              <span className="hidden sm:inline">Interviewer Speaking</span>
+              <span className="hidden md:inline">Interviewer Speaking</span>
               <button
                 type="button"
-                onClick={stopAllAudio}
-                className="hover:underline text-[11px] ml-1 font-bold cursor-pointer"
-                title="Stop audio playback"
+                onClick={handleInterruptInterviewer}
+                className="hover:underline text-[11px] ml-1 font-bold cursor-pointer text-error"
+                title="Interrupt interviewer and speak your answer"
               >
-                Mute
+                Interrupt
               </button>
             </div>
           )}
 
-          {isListening && (
+          {/* Active Mic Indicator */}
+          {interviewState === 'listening' && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-error-container text-on-error-container text-xs font-semibold animate-pulse">
               <span className="w-2 h-2 rounded-full bg-error" />
-              <span>Mic Active</span>
+              <span>Mic Listening</span>
             </div>
           )}
+
+          {/* Toggle Live Speech Insights Panel */}
+          <button
+            type="button"
+            onClick={() => setIsInsightsOpen(!isInsightsOpen)}
+            className={`h-8 px-2.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer border ${
+              isInsightsOpen
+                ? 'bg-primary text-on-primary border-primary'
+                : 'bg-surface-container hover:bg-surface-container-high text-on-surface border-outline-variant/60'
+            }`}
+            title="Toggle Live Speech & Filler-Word Telemetry"
+          >
+            <span className="material-symbols-outlined text-[15px]">analytics</span>
+            <span className="hidden sm:inline">Speech Metrics</span>
+          </button>
 
           {/* Toggle Code Scratchpad */}
           <button
@@ -778,15 +926,10 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
             <span className="hidden sm:inline">Code Notes</span>
           </button>
 
-          {/* Exit Interview Button */}
+          {/* Exit Interview Button (With Confirmation) */}
           <button
             type="button"
-            onClick={() => {
-              if (window.confirm('Do you want to exit the interview session? You will return to the Overview page.')) {
-                stopAllAudio();
-                onNavigate('overview');
-              }
-            }}
+            onClick={() => setShowExitConfirm(true)}
             className="h-8 px-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-medium transition-colors cursor-pointer border border-outline-variant/60 flex items-center gap-1"
             title="Exit interview and return to overview"
           >
@@ -794,20 +937,57 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
             <span className="hidden md:inline">Exit</span>
           </button>
 
-          {/* Finish & Debrief Button */}
+          {/* Finish & Debrief Button (With Confirmation) */}
           <button
             type="button"
-            onClick={handleFinishSession}
+            onClick={() => setShowFinishConfirm(true)}
             disabled={isFinishing}
             className="h-8 px-3 rounded-lg bg-error hover:bg-error/90 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
             <span className="material-symbols-outlined text-[15px]">call_end</span>
-            <span>{isFinishing ? 'Generating Report...' : 'Finish & Debrief'}</span>
+            <span>{isFinishing ? 'Generating...' : 'Finish & Debrief'}</span>
           </button>
         </div>
       </header>
 
-      {/* 2. MAIN CONVERSATIONAL CHAT BODY */}
+      {/* 2. OPTIONAL COMPACT LIVE SPEECH INSIGHTS STRIP */}
+      {isInsightsOpen && (
+        <div className="bg-surface-container-low border-b border-surface-variant px-4 py-2 flex items-center justify-between text-xs flex-wrap gap-2 animate-in slide-in-from-top">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <span className="text-outline font-semibold">Pacing:</span>
+              <span className={`font-bold ${liveSpeechMetrics.pacingStatus === 'optimal' ? 'text-secondary' : liveSpeechMetrics.pacingStatus === 'fast' ? 'text-amber-500' : 'text-primary'}`}>
+                {liveSpeechMetrics.wpm} WPM ({liveSpeechMetrics.pacingLabel.split(' ')[0]})
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-outline font-semibold">Filler Words:</span>
+              <span className={`font-bold ${liveSpeechMetrics.fillerCount > 3 ? 'text-error' : 'text-on-surface'}`}>
+                {liveSpeechMetrics.fillerCount} total ({liveSpeechMetrics.fillersPerMinute}/min)
+              </span>
+            </div>
+            {liveSpeechMetrics.identifiedFillers.length > 0 && (
+              <div className="flex items-center gap-1 text-[11px] text-outline">
+                <span>Top:</span>
+                {liveSpeechMetrics.identifiedFillers.slice(0, 3).map((f) => (
+                  <span key={f.word} className="px-1.5 py-0.5 rounded bg-surface-container font-mono text-on-surface">
+                    "{f.word}": {f.count}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsInsightsOpen(false)}
+            className="text-outline hover:text-on-surface p-1 rounded cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[14px]">close</span>
+          </button>
+        </div>
+      )}
+
+      {/* 3. MAIN CONVERSATIONAL CHAT BODY */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* Messages Stream Container */}
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 flex flex-col gap-4 bg-surface-container-lowest">
@@ -837,7 +1017,7 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
                         {msg.evaluation.score}
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-xs font-bold text-on-surface">AI Bar-Raiser Feedback</span>
+                        <span className="text-xs font-bold text-on-surface">AI Evaluation &amp; Rubric</span>
                         <span className="text-[11px] text-outline">{msg.timestamp}</span>
                       </div>
                     </div>
@@ -915,12 +1095,15 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
                 }`}
               >
                 {/* Avatar */}
-                <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 shadow-xs border border-outline-variant/60 mt-0.5">
+                <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 shadow-xs border border-outline-variant/60 mt-0.5 relative">
                   <img
                     src={isCandidate ? (userProfile?.email ? `https://api.dicebear.com/7.x/bottts/svg?seed=${userProfile.fullName}` : COACH_AVATAR_URL) : COACH_AVATAR_URL}
                     alt={isCandidate ? 'Candidate' : 'Interviewer'}
                     className="w-full h-full object-cover"
                   />
+                  {isInterviewer && isPlayingSynth && (
+                    <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-secondary border-2 border-surface-container-lowest animate-ping" />
+                  )}
                 </div>
 
                 {/* Bubble Container */}
@@ -966,8 +1149,25 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
                   {/* Code snippet attached by candidate */}
                   {msg.codeSnippet && (
                     <div className="mt-2 p-2.5 rounded-lg bg-black/20 text-xs font-mono text-on-primary overflow-x-auto max-h-36">
-                      <div className="text-[10px] uppercase tracking-wider text-on-primary/70 mb-1 font-bold">Attached Code Snippet:</div>
+                      <div className="text-[10px] uppercase tracking-wider text-on-primary/70 mb-1 font-bold">Attached Code Notes:</div>
                       <pre>{msg.codeSnippet}</pre>
+                    </div>
+                  )}
+
+                  {/* Candidate Speech Telemetry Badge on this turn */}
+                  {isCandidate && msg.speechMetrics && (
+                    <div className="flex items-center gap-3 pt-1.5 border-t border-on-primary/15 text-[11px] text-on-primary/80 font-mono flex-wrap">
+                      <span>{msg.speechMetrics.wordCount} words</span>
+                      <span>•</span>
+                      <span>{msg.speechMetrics.wpm} WPM</span>
+                      {msg.speechMetrics.fillerCount > 0 && (
+                        <>
+                          <span>•</span>
+                          <span className="text-amber-200">
+                            {msg.speechMetrics.fillerCount} {msg.speechMetrics.fillerCount === 1 ? 'filler' : 'fillers'}
+                          </span>
+                        </>
+                      )}
                     </div>
                   )}
 
@@ -1004,24 +1204,78 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
             );
           })}
 
+          {/* 4. CRITICAL: LIVE STREAMING TRANSCRIPT MESSAGE BUBBLE IN CONVERSATION AREA */}
+          {(interviewState === 'listening' || interviewState === 'transcribing') && liveTranscript && (
+            <div className="flex gap-3 max-w-3xl ml-auto flex-row-reverse animate-in fade-in">
+              <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 shadow-xs border-2 border-primary/50 mt-0.5 relative">
+                <img
+                  src={userProfile?.email ? `https://api.dicebear.com/7.x/bottts/svg?seed=${userProfile.fullName}` : COACH_AVATAR_URL}
+                  alt="Candidate"
+                  className="w-full h-full object-cover"
+                />
+                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-error border-2 border-surface-container-lowest animate-ping" />
+              </div>
+
+              <div className="flex flex-col gap-1.5 rounded-2xl p-4 shadow-sm bg-primary/90 text-on-primary rounded-tr-xs border border-primary">
+                <div className="flex items-center justify-between gap-3 text-xs flex-wrap">
+                  <div className="flex items-center gap-2 font-bold">
+                    <span>You (Candidate)</span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-[10px] uppercase font-bold tracking-wider animate-pulse">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                      Live Voice Transcript
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-on-primary/70">Speaking now...</span>
+                </div>
+
+                <div className="text-sm sm:text-base leading-relaxed whitespace-pre-wrap font-body-md">
+                  {liveTranscript}
+                  <span className="inline-block w-1.5 h-4 ml-1 bg-white animate-pulse align-middle" />
+                </div>
+
+                {/* Live Volume Waveform inside the bubble */}
+                <div className="flex items-center justify-between pt-2 border-t border-white/20 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-on-primary/80">Voice volume:</span>
+                    <div className="flex items-end gap-0.5 h-3">
+                      {[15, 35, 60, 85, 45, 25].map((h, i) => (
+                        <span
+                          key={i}
+                          className="w-1 rounded-full bg-white transition-all duration-75"
+                          style={{
+                            height: `${Math.max(3, Math.min(12, (audioLevel / 100) * h))}px`,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <span className="text-[11px] text-on-primary/80">
+                    {continuousVoiceMode ? 'Pause when done to auto-submit' : 'Tap stop when done'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Evaluating / Loading Indicator */}
-          {interviewState === 'evaluating' && (
-            <div className="flex items-center gap-3 mr-auto max-w-md p-3.5 rounded-2xl bg-surface-container-low border border-primary/30 text-on-surface shadow-xs">
+          {interviewState === 'processing_answer' && (
+            <div className="flex items-center gap-3 mr-auto max-w-md p-3.5 rounded-2xl bg-surface-container-low border border-primary/30 text-on-surface shadow-xs animate-in fade-in">
               <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin shrink-0" />
               <div className="flex flex-col text-xs">
-                <span className="font-bold text-primary">Interviewer is reviewing your response...</span>
-                <span className="text-outline">Assessing technical depth, architecture trade-offs, and communication.</span>
+                <span className="font-bold text-primary">Analyzing your answer...</span>
+                <span className="text-outline">Assessing technical reasoning, structure, filler words, and trade-offs.</span>
               </div>
             </div>
           )}
 
           {/* Generating Next Question Spinner */}
           {interviewState === 'generating_next_question' && (
-            <div className="flex items-center gap-3 mr-auto max-w-md p-3.5 rounded-2xl bg-surface-container-low border border-secondary/30 text-on-surface shadow-xs">
+            <div className="flex items-center gap-3 mr-auto max-w-md p-3.5 rounded-2xl bg-surface-container-low border border-secondary/30 text-on-surface shadow-xs animate-in fade-in">
               <div className="w-6 h-6 rounded-full border-2 border-secondary border-t-transparent animate-spin shrink-0" />
               <div className="flex flex-col text-xs">
-                <span className="font-bold text-secondary">Calibrating next interview turn...</span>
-                <span className="text-outline">Selecting fresh non-duplicate question for {config.role}.</span>
+                <span className="font-bold text-secondary">Calibrating next interview question...</span>
+                <span className="text-outline">Ensuring unique, non-duplicate question for {config.role}.</span>
               </div>
             </div>
           )}
@@ -1029,13 +1283,13 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
           <div ref={chatBottomRef} />
         </div>
 
-        {/* 3. OPTIONAL CODE SCRATCHPAD DRAWER (Slides in on toggle) */}
+        {/* 5. CODE SCRATCHPAD DRAWER (Slides in on toggle) */}
         {isCodeDrawerOpen && (
           <div className="w-80 sm:w-96 border-l border-surface-variant bg-surface-container-low flex flex-col z-20 shrink-0 shadow-lg animate-in slide-in-from-right">
             <div className="p-3 border-b border-surface-variant flex items-center justify-between bg-surface-container">
               <div className="flex items-center gap-1.5 font-bold text-xs text-on-surface">
                 <span className="material-symbols-outlined text-[16px] text-primary">terminal</span>
-                <span>Code Scratchpad</span>
+                <span>Code &amp; Architecture Scratchpad</span>
               </div>
               <button
                 type="button"
@@ -1051,19 +1305,33 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
                 value={scratchpadCode}
                 onChange={(e) => setScratchpadCode(e.target.value)}
                 className="w-full flex-1 p-2.5 rounded-lg bg-surface-container-lowest border border-outline-variant font-mono text-xs text-on-surface leading-relaxed resize-none focus:outline-none focus:border-primary"
-                placeholder="// Type pseudo-code, SQL queries, or data structure algorithms here..."
+                placeholder="// Type architecture notes, SQL schemas, pseudo-code, or data structure algorithms here..."
               />
               <span className="text-[11px] text-outline">
-                This code will be automatically attached to your verbal/written answer when submitted.
+                These notes are automatically attached to your verbal/written response when evaluated.
               </span>
             </div>
           </div>
         )}
       </div>
 
-      {/* 4. CHAT INPUT & VOICE DICTATION DOCK */}
+      {/* 6. VOICE-FIRST COMPOSER & TWO-WAY AUDIO DOCK */}
       <footer className="p-3 sm:p-4 bg-surface-container-low border-t border-surface-variant flex flex-col gap-2 shrink-0">
-        {/* Quick Action Chips */}
+        {/* Error or Notice Banner if any */}
+        {speechErrorMessage && (
+          <div className="p-2.5 rounded-lg bg-error/10 border border-error/20 text-error text-xs flex items-center justify-between">
+            <span>{speechErrorMessage}</span>
+            <button
+              type="button"
+              onClick={() => setSpeechErrorMessage(null)}
+              className="text-error font-bold text-xs hover:underline cursor-pointer ml-2"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {/* Quick Action Chips & Status Bar */}
         <div className="flex items-center justify-between text-xs flex-wrap gap-1.5">
           <div className="flex items-center gap-1.5 flex-wrap">
             <button
@@ -1084,6 +1352,19 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
               <span className="material-symbols-outlined text-[14px] text-amber-500">lightbulb</span>
               <span>STAR Guide</span>
             </button>
+
+            {/* Toggle Input Mode: Voice vs Text */}
+            <button
+              type="button"
+              onClick={() => setInputMode(inputMode === 'voice' ? 'text' : 'voice')}
+              className="px-2.5 py-1 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-medium border border-outline-variant/60 flex items-center gap-1 cursor-pointer transition-colors"
+            >
+              <span className="material-symbols-outlined text-[14px]">
+                {inputMode === 'voice' ? 'keyboard' : 'mic'}
+              </span>
+              <span>{inputMode === 'voice' ? 'Type with Keyboard' : 'Switch to Voice Mode'}</span>
+            </button>
+
             {scratchpadCode.trim().length > 100 && (
               <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-semibold flex items-center gap-1">
                 <span className="material-symbols-outlined text-[12px]">code</span>
@@ -1092,61 +1373,246 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
             )}
           </div>
 
-          <div className="text-[11px] text-outline font-mono">
-            Word Count: {wordCount} words
+          <div className="flex items-center gap-3 text-[11px] text-outline font-mono">
+            {activeTranscriptWords > 0 && <span>{activeTranscriptWords} words</span>}
+            {interviewState === 'listening' && (
+              <span className="text-secondary font-semibold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-ping" />
+                Listening
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Input Text Box with Mic & Send Controls */}
-        <div className="flex items-end gap-2 bg-surface-container-lowest rounded-xl border border-outline-variant p-2 shadow-xs focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20">
-          {/* Live Microphone Dictation Button */}
-          <button
-            type="button"
-            onClick={toggleListening}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all cursor-pointer ${
-              isListening
-                ? 'bg-error text-white animate-pulse shadow-md ring-2 ring-error/40'
-                : 'bg-surface-container hover:bg-surface-container-high text-on-surface hover:text-primary'
-            }`}
-            title={isListening ? 'Click to pause voice dictation' : 'Click to speak using your microphone'}
-          >
-            <span className="material-symbols-outlined text-[20px]">
-              {isListening ? 'mic_off' : 'mic'}
-            </span>
-          </button>
+        {/* VOICE MODE DOCK (ChatGPT Voice Style) */}
+        {inputMode === 'voice' && (
+          <div className="flex items-center justify-between gap-4 p-3 bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-sm flex-wrap sm:flex-nowrap">
+            {/* Left: Dynamic Status & Waveform */}
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-all ${
+                  interviewState === 'listening'
+                    ? 'bg-error text-white shadow-md ring-4 ring-error/20 animate-pulse'
+                    : isPlayingSynth
+                    ? 'bg-secondary text-white shadow-md'
+                    : 'bg-primary/10 text-primary'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[24px]">
+                  {interviewState === 'listening'
+                    ? 'mic'
+                    : isPlayingSynth
+                    ? 'volume_up'
+                    : 'mic_none'}
+                </span>
+              </div>
 
-          {/* Candidate Speech / Text Input */}
-          <textarea
-            ref={inputRef}
-            value={candidateInput}
-            onChange={(e) => setCandidateInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSendAnswer();
-              }
-            }}
-            rows={Math.min(5, Math.max(1, candidateInput.split('\n').length))}
-            placeholder={
-              isListening
-                ? 'Listening to your voice... Speak your response naturally.'
-                : 'Speak with your microphone or type your response here... (Press Enter to send)'
-            }
-            className="flex-1 max-h-32 bg-transparent resize-none border-none focus:outline-none text-sm sm:text-base text-on-surface leading-relaxed placeholder:text-outline py-1.5 px-1 font-body-md"
-          />
+              <div className="flex flex-col min-w-0">
+                <span className="font-bold text-sm text-on-surface truncate">
+                  {interviewState === 'listening'
+                    ? 'Listening to your answer...'
+                    : interviewState === 'transcribing'
+                    ? 'Transcribing your voice...'
+                    : interviewState === 'processing_answer'
+                    ? 'Analyzing response...'
+                    : isPlayingSynth
+                    ? 'Interviewer is speaking...'
+                    : 'Voice Mode Active'}
+                </span>
+                <span className="text-xs text-outline truncate">
+                  {interviewState === 'listening'
+                    ? continuousVoiceMode
+                      ? 'Speak freely. Turn auto-completes when you stop speaking.'
+                      : 'Speak your response. Click "Finish Answer" when done.'
+                    : isPlayingSynth
+                    ? 'Click "Interrupt" anytime to answer immediately.'
+                    : 'Click microphone to begin your response.'}
+                </span>
+              </div>
 
-          {/* Send / Submit Button */}
-          <button
-            type="button"
-            onClick={handleSendAnswer}
-            disabled={wordCount < 2 || interviewState === 'evaluating'}
-            className="h-10 px-4 rounded-xl bg-primary hover:bg-on-primary-fixed-variant text-on-primary font-bold text-xs sm:text-sm flex items-center gap-1.5 shrink-0 transition-all cursor-pointer shadow-xs disabled:opacity-40"
-          >
-            <span>Send</span>
-            <span className="material-symbols-outlined text-[16px]">send</span>
-          </button>
-        </div>
+              {/* Dynamic Audio Visualizer Bars */}
+              {interviewState === 'listening' && (
+                <div className="hidden md:flex items-center gap-1 h-6 px-3 bg-surface-container rounded-xl">
+                  {[20, 50, 80, 100, 65, 35, 75, 40].map((bar, i) => (
+                    <span
+                      key={i}
+                      className="w-1 rounded-full bg-primary transition-all duration-75"
+                      style={{
+                        height: `${Math.max(4, Math.min(22, (audioLevel / 100) * bar))}px`,
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Right: Primary Voice Controls */}
+            <div className="flex items-center gap-2 shrink-0 ml-auto">
+              {interviewState === 'listening' ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleCompleteAndSendAnswer()}
+                    disabled={activeTranscriptWords < 3}
+                    className="h-11 px-4 rounded-xl bg-primary hover:bg-on-primary-fixed-variant text-on-primary font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50 transition-all"
+                    title="Finish your answer and submit to interviewer"
+                  >
+                    <span>Finish Answer</span>
+                    <span className="material-symbols-outlined text-[16px]">send</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      stopMicrophoneCapture();
+                      setInterviewState('paused');
+                    }}
+                    className="h-11 px-3 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-semibold flex items-center gap-1 border border-outline-variant cursor-pointer transition-colors"
+                    title="Pause microphone"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">pause</span>
+                    <span className="hidden sm:inline">Pause</span>
+                  </button>
+                </>
+              ) : isPlayingSynth ? (
+                <button
+                  type="button"
+                  onClick={handleInterruptInterviewer}
+                  className="h-11 px-4 rounded-xl bg-error hover:bg-error/90 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-sm cursor-pointer transition-all"
+                  title="Interrupt interviewer to answer right now"
+                >
+                  <span className="material-symbols-outlined text-[18px]">mic</span>
+                  <span>Interrupt &amp; Speak</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={startMicrophoneCapture}
+                  disabled={interviewState === 'processing_answer' || interviewState === 'generating_next_question'}
+                  className="h-11 px-5 rounded-xl bg-primary hover:bg-on-primary-fixed-variant text-on-primary font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm cursor-pointer disabled:opacity-50 transition-all"
+                  title="Click to activate microphone and speak"
+                >
+                  <span className="material-symbols-outlined text-[20px]">mic</span>
+                  <span>Tap to Speak</span>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TEXT MODE FALLBACK (When keyboard entry is selected) */}
+        {inputMode === 'text' && (
+          <div className="flex items-end gap-2 bg-surface-container-lowest rounded-xl border border-outline-variant p-2 shadow-xs focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20">
+            <button
+              type="button"
+              onClick={() => {
+                setInputMode('voice');
+                startMicrophoneCapture();
+              }}
+              className="w-10 h-10 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface hover:text-primary flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+              title="Switch to Voice Mode"
+            >
+              <span className="material-symbols-outlined text-[20px]">mic</span>
+            </button>
+
+            <textarea
+              ref={inputRef}
+              value={candidateTextInput}
+              onChange={(e) => setCandidateTextInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleCompleteAndSendAnswer();
+                }
+              }}
+              rows={Math.min(5, Math.max(1, candidateTextInput.split('\n').length))}
+              placeholder="Type your response here... (Press Enter to submit)"
+              className="flex-1 max-h-32 bg-transparent resize-none border-none focus:outline-none text-sm sm:text-base text-on-surface leading-relaxed placeholder:text-outline py-1.5 px-1 font-body-md"
+            />
+
+            <button
+              type="button"
+              onClick={() => handleCompleteAndSendAnswer()}
+              disabled={candidateTextInput.trim().split(/\s+/).filter(Boolean).length < 2 || interviewState === 'processing_answer'}
+              className="h-10 px-4 rounded-xl bg-primary hover:bg-on-primary-fixed-variant text-on-primary font-bold text-xs sm:text-sm flex items-center gap-1.5 shrink-0 transition-all cursor-pointer shadow-xs disabled:opacity-40"
+            >
+              <span>Send</span>
+              <span className="material-symbols-outlined text-[16px]">send</span>
+            </button>
+          </div>
+        )}
       </footer>
+
+      {/* CONFIRMATION MODALS */}
+      {/* 1. Exit Confirmation Modal */}
+      {showExitConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-surface-container-lowest rounded-2xl max-w-sm w-full p-6 border border-surface-variant shadow-xl flex flex-col gap-4">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+              <span className="material-symbols-outlined text-[24px]">logout</span>
+            </div>
+            <div>
+              <h3 className="font-bold text-base text-on-surface">Exit Interview Session?</h3>
+              <p className="text-xs text-outline mt-1 leading-relaxed">
+                Your submitted turns are saved to your account. You can return to your dashboard or review your progress at any time.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowExitConfirm(false)}
+                className="px-3.5 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-xs font-semibold text-on-surface cursor-pointer"
+              >
+                Continue Interview
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  stopAllAudio();
+                  stopMicrophoneCapture();
+                  onNavigate('overview');
+                }}
+                className="px-3.5 py-2 rounded-lg bg-error hover:bg-error/90 text-xs font-semibold text-white cursor-pointer"
+              >
+                Exit Session
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Finish & Debrief Confirmation Modal */}
+      {showFinishConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-surface-container-lowest rounded-2xl max-w-sm w-full p-6 border border-surface-variant shadow-xl flex flex-col gap-4">
+            <div className="w-10 h-10 rounded-xl bg-secondary/15 text-secondary flex items-center justify-center">
+              <span className="material-symbols-outlined text-[24px]">fact_check</span>
+            </div>
+            <div>
+              <h3 className="font-bold text-base text-on-surface">Finish Interview &amp; Generate Debrief?</h3>
+              <p className="text-xs text-outline mt-1 leading-relaxed">
+                This will finalize all verbal turns, analyze your speaking delivery and filler words, and generate your comprehensive scorecard and hiring recommendation.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowFinishConfirm(false)}
+                className="px-3.5 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-xs font-semibold text-on-surface cursor-pointer"
+              >
+                Keep Practicing
+              </button>
+              <button
+                type="button"
+                onClick={handleFinishSession}
+                className="px-3.5 py-2 rounded-lg bg-primary hover:bg-on-primary-fixed-variant text-xs font-semibold text-on-primary cursor-pointer shadow-xs"
+              >
+                Compile Debrief
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

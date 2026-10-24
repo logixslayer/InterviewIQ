@@ -872,7 +872,7 @@ Return STRICT JSON only:
 // AI Final Session Report Generation Endpoint: Comprehensive debrief
 app.post('/api/interview/generate-report', async (req, res) => {
   try {
-    const { role = 'Frontend Developer', duration = '15 mins', answers = [] } = req.body;
+    const { role = 'Frontend Developer', duration = '15 mins', answers = [], speechAnalytics } = req.body;
 
     const aiConfig = getAiClientConfig();
     if (aiConfig && answers.length > 0) {
@@ -881,6 +881,7 @@ app.post('/api/interview/generate-report', async (req, res) => {
 Generate an executive interview debrief report for a ${role} candidate who completed a ${duration} mock interview session.
 Candidate session log:
 ${JSON.stringify(answers.slice(0, 6))}
+${speechAnalytics ? `Vocal Delivery & Speech Telemetry: ${JSON.stringify(speechAnalytics)}` : ''}
 
 Output STRICT JSON only:
 {
@@ -902,6 +903,7 @@ Output STRICT JSON only:
         const report = extractJsonFromModelOutput(rawText);
 
         if (report && typeof report.overallScore === 'number') {
+          if (speechAnalytics) report.speechAnalytics = speechAnalytics;
           return res.json({ success: true, report, source: aiConfig.provider });
         }
       } catch (aiErr: any) {
@@ -913,7 +915,7 @@ Output STRICT JSON only:
       ? Math.round(answers.reduce((acc: number, a: any) => acc + (a.score || 82), 0) / answers.length)
       : 84;
 
-    const report = {
+    const report: any = {
       overallScore: avgScore,
       grade: avgScore >= 92 ? 'A+' : avgScore >= 87 ? 'A' : avgScore >= 80 ? 'B+' : 'B-',
       hireRecommendation: avgScore >= 88 ? 'Strong Hire' : avgScore >= 78 ? 'Hire' : 'Lean Hire',
@@ -938,6 +940,10 @@ Output STRICT JSON only:
         'Prepare concrete trade-off matrices for state management and caching tiers'
       ]
     };
+
+    if (speechAnalytics) {
+      report.speechAnalytics = speechAnalytics;
+    }
 
     return res.json({ success: true, report, source: 'heuristic' });
   } catch (err: any) {

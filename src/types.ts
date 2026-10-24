@@ -13,10 +13,15 @@ export type ViewMode =
   | 'settings';
 
 export type InterviewState = 
+  | 'idle'
+  | 'requesting_permission'
   | 'preparing'
   | 'interviewer_speaking'
+  | 'speaking'
   | 'listening'
   | 'transcribing'
+  | 'processing_answer'
+  | 'generating_response'
   | 'evaluating'
   | 'generating_follow_up'
   | 'generating_next_question'
@@ -213,6 +218,15 @@ export interface SessionEvaluationReport {
     communication: { score: number; feedback: string };
     technicalKnowledge: { score: number; feedback: string };
     problemSolving: { score: number; feedback: string };
+  };
+  speechAnalytics?: {
+    totalWords: number;
+    averageWpm: number;
+    fillerWordsTotal: number;
+    fillerWordsPerMinute: number;
+    fillerWordBreakdown: Record<string, number>;
+    speakingDurationSeconds: number;
+    pacingFeedback: string;
   };
   keyStrengths: string[];
   growthAreas: string[];

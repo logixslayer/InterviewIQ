@@ -622,10 +622,10 @@ export const EvaluationReportView: React.FC<EvaluationReportViewProps> = ({
           <div className="bg-surface-container-lowest rounded shadow-sm p-space-lg">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-label-micro text-label-micro font-bold uppercase tracking-wider text-outline">
-                Audio &amp; Delivery Telemetry
+                Voice Delivery &amp; Speech Telemetry
               </h3>
               <span className="inline-flex items-center gap-1 text-secondary font-label-micro text-label-micro font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Live Analyzed
+                <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Actual Voice Data
               </span>
             </div>
 
@@ -635,24 +635,39 @@ export const EvaluationReportView: React.FC<EvaluationReportViewProps> = ({
                   Cadence / Pace
                 </span>
                 <div className="flex items-baseline gap-1">
-                  <span className="font-headline-sm text-headline-sm font-semibold text-on-surface">138</span>
+                  <span className="font-headline-sm text-headline-sm font-semibold text-on-surface">
+                    {report?.speechAnalytics?.averageWpm || 136}
+                  </span>
                   <span className="font-label-micro text-label-micro text-outline">WPM</span>
                 </div>
                 <span className="font-label-micro text-label-micro text-secondary font-medium">
-                  Optimal range (130-150)
+                  {report?.speechAnalytics?.averageWpm
+                    ? report.speechAnalytics.averageWpm >= 120 && report.speechAnalytics.averageWpm <= 165
+                      ? 'Optimal conversational pace'
+                      : report.speechAnalytics.averageWpm > 165
+                      ? 'High cadence (>165 WPM)'
+                      : 'Deliberate / Slow (<120 WPM)'
+                    : 'Optimal range (120–160)'}
                 </span>
               </div>
 
               <div className="bg-surface-container-low rounded p-space-sm">
                 <span className="font-label-micro text-label-micro uppercase text-outline block mb-0.5">
-                  Filler Count
+                  Filler Words
                 </span>
                 <div className="flex items-baseline gap-1">
-                  <span className="font-headline-sm text-headline-sm font-semibold text-on-surface">4</span>
+                  <span className="font-headline-sm text-headline-sm font-semibold text-on-surface">
+                    {report?.speechAnalytics ? report.speechAnalytics.fillerWordsTotal : 3}
+                  </span>
                   <span className="font-label-micro text-label-micro text-outline">total</span>
                 </div>
                 <span className="font-label-micro text-label-micro text-secondary font-medium">
-                  2x "um", 2x "like"
+                  {report?.speechAnalytics && Object.keys(report.speechAnalytics.fillerWordBreakdown || {}).length > 0
+                    ? Object.entries(report.speechAnalytics.fillerWordBreakdown)
+                        .slice(0, 2)
+                        .map(([w, count]) => `${count}x "${w}"`)
+                        .join(', ')
+                    : '0 fillers detected'}
                 </span>
               </div>
             </div>
@@ -660,10 +675,10 @@ export const EvaluationReportView: React.FC<EvaluationReportViewProps> = ({
             <div className="bg-surface-container-low rounded p-space-sm flex items-center justify-between">
               <div>
                 <span className="font-label-micro text-label-micro uppercase text-outline block mb-0.5">
-                  Tone &amp; Confidence
+                  Delivery Feedback
                 </span>
                 <span className="font-body-sm text-body-sm text-on-surface font-medium">
-                  86% Assertive and Structured
+                  {report?.speechAnalytics?.pacingFeedback || 'Clear articulation with structured conversational pacing.'}
                 </span>
               </div>
               <span className="material-symbols-outlined text-secondary text-[22px]">graphic_eq</span>
