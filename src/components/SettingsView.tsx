@@ -1,6 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import {
+  Sun,
+  Moon,
+  Laptop,
+  Sliders,
+  Bell,
+  ShieldAlert,
+  Download,
+  Trash2,
+  CheckCircle2,
+  AlertCircle,
+  Save,
+  Loader2,
+  Eye,
+  Volume2,
+  Sparkles,
+  Info
+} from 'lucide-react';
+import { UserSettings, ThemeMode, UserProfile } from '../types';
+import { setTheme, getStoredTheme } from '../services/themeService';
+import { saveUserSettings, exportUserData, deleteUserAccount } from '../services/userService';
+import { AuthUser } from '../services/authService';
 
-const SETTINGS_AVATAR_URL = "https://lh3.googleusercontent.com/aida-public/AB6AXuCjjxolxnff2-9s14RCmPG3ueg30WrwDybKqFNnE1UvPL3k1HN94Rd2FC6riNujEzSWC38cUUKaNmqTieBNIPs5bvFrmnz-lKEbmPj5y0s7neS0L72ofWH5R-d9nUanjfOkEJbzBcQ3gulOGw7N2O-0QgbtQiHNCuDRBGarnADKM2JfyTNHj--imBtE6nRMRYjvtr4Cp-9K8J9A5kSgAT1W2HArG_MIA_tSFTQnGv3dH1zGUyMMrcJYRQ";
+interface SettingsViewProps {
+  userSettings: UserSettings;
+  userProfile: UserProfile | null;
+  authUser: AuthUser | null;
+  onSettingsUpdated: (newSettings: UserSettings) => void;
+  onProfileUpdated?: (updated: UserProfile) => void;
+  onSignOut?: () => void;
+}
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
   userSettings,
@@ -186,10 +215,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('appearance')}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-left transition-colors cursor-pointer ${activeTab === 'appearance'
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-left transition-colors cursor-pointer ${
+              activeTab === 'appearance'
                 ? 'bg-primary/10 text-primary font-semibold border-l-3 border-primary'
                 : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
-              }`}
+            }`}
           >
             <Sun className="w-4 h-4" />
             <span>Appearance &amp; Theme</span>
@@ -198,10 +228,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('interview')}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-left transition-colors cursor-pointer ${activeTab === 'interview'
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-left transition-colors cursor-pointer ${
+              activeTab === 'interview'
                 ? 'bg-primary/10 text-primary font-semibold border-l-3 border-primary'
                 : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
-              }`}
+            }`}
           >
             <Sliders className="w-4 h-4" />
             <span>Interview Defaults</span>
@@ -210,10 +241,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('notifications')}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-left transition-colors cursor-pointer ${activeTab === 'notifications'
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-left transition-colors cursor-pointer ${
+              activeTab === 'notifications'
                 ? 'bg-primary/10 text-primary font-semibold border-l-3 border-primary'
                 : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
-              }`}
+            }`}
           >
             <Bell className="w-4 h-4" />
             <span>Notifications</span>
@@ -222,10 +254,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('privacy')}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-left transition-colors cursor-pointer ${activeTab === 'privacy'
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-left transition-colors cursor-pointer ${
+              activeTab === 'privacy'
                 ? 'bg-primary/10 text-primary font-semibold border-l-3 border-primary'
                 : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
-              }`}
+            }`}
           >
             <ShieldAlert className="w-4 h-4" />
             <span>Privacy &amp; Data</span>
@@ -255,10 +288,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     aria-checked={theme === 'light'}
                     tabIndex={0}
                     onKeyDown={(e) => (e.key === ' ' || e.key === 'Enter') && handleThemeChange('light')}
-                    className={`p-4 rounded-xl border-2 flex flex-col justify-between cursor-pointer transition-all ${theme === 'light'
+                    className={`p-4 rounded-xl border-2 flex flex-col justify-between cursor-pointer transition-all ${
+                      theme === 'light'
                         ? 'border-primary bg-primary/5 shadow-xs'
                         : 'border-surface-variant hover:border-outline bg-surface-container-low'
-                      }`}
+                    }`}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <Sun className="w-5 h-5 text-[#3867F5]" />
@@ -277,10 +311,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     aria-checked={theme === 'dark'}
                     tabIndex={0}
                     onKeyDown={(e) => (e.key === ' ' || e.key === 'Enter') && handleThemeChange('dark')}
-                    className={`p-4 rounded-xl border-2 flex flex-col justify-between cursor-pointer transition-all ${theme === 'dark'
+                    className={`p-4 rounded-xl border-2 flex flex-col justify-between cursor-pointer transition-all ${
+                      theme === 'dark'
                         ? 'border-primary bg-primary/5 shadow-xs'
                         : 'border-surface-variant hover:border-outline bg-surface-container-low'
-                      }`}
+                    }`}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <Moon className="w-5 h-5 text-[#8699ff]" />
@@ -299,10 +334,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     aria-checked={theme === 'system'}
                     tabIndex={0}
                     onKeyDown={(e) => (e.key === ' ' || e.key === 'Enter') && handleThemeChange('system')}
-                    className={`p-4 rounded-xl border-2 flex flex-col justify-between cursor-pointer transition-all ${theme === 'system'
+                    className={`p-4 rounded-xl border-2 flex flex-col justify-between cursor-pointer transition-all ${
+                      theme === 'system'
                         ? 'border-primary bg-primary/5 shadow-xs'
                         : 'border-surface-variant hover:border-outline bg-surface-container-low'
-                      }`}
+                    }`}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <Laptop className="w-5 h-5 text-outline" />
@@ -452,10 +488,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         key={level}
                         type="button"
                         onClick={() => setFeedbackRigor(level)}
-                        className={`py-2 px-3 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${feedbackRigor === level
+                        className={`py-2 px-3 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
+                          feedbackRigor === level
                             ? 'bg-primary text-on-primary border-primary shadow-xs'
                             : 'bg-surface-container text-on-surface border-surface-variant hover:border-outline'
-                          }`}
+                        }`}
                       >
                         {level}
                       </button>
@@ -520,221 +557,164 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <span className="text-sm font-semibold text-on-surface block">New Question Pack Releases</span>
                     <span className="text-xs text-on-surface-variant">Notifications when new questions from Google, Meta, or Stripe are added.</span>
                   </div>
-                  ) : (
+                  <input
+                    type="checkbox"
+                    checked={productAnnouncements}
+                    onChange={(e) => setProductAnnouncements(e.target.checked)}
+                    className="w-4 h-4 text-primary rounded border-surface-variant cursor-pointer"
+                  />
+                </label>
+
+                <div className="flex flex-col gap-1.5 pt-2">
+                  <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
+                    Digest Frequency
+                  </label>
+                  <select
+                    value={frequency}
+                    onChange={(e) => setFrequency(e.target.value as any)}
+                    className="h-10 px-3 rounded-lg bg-surface-container text-on-surface border border-surface-variant focus:outline-none focus:border-primary text-sm font-medium max-w-xs"
+                  >
+                    <option value="daily">Daily Briefing</option>
+                    <option value="weekly">Weekly Recap</option>
+                    <option value="never">Never (Mute notifications)</option>
+                  </select>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* =========================================================================
+              TAB 4: PRIVACY & DATA
+              ========================================================================= */}
+          {activeTab === 'privacy' && (
+            <div className="flex flex-col gap-6">
+              {/* Data Overview Card */}
+              <section className="bg-surface-container-lowest rounded-2xl p-6 sm:p-8 border border-surface-variant shadow-sm flex flex-col gap-4">
+                <div className="pb-4 border-b border-surface-variant">
+                  <h2 className="text-lg font-bold text-on-surface">Data Privacy &amp; Storage Audit</h2>
+                  <p className="text-xs text-on-surface-variant mt-0.5">
+                    InterviewIQ respects your privacy. Here is a transparent breakdown of what is stored:
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-on-surface">
+                  <div className="p-3.5 rounded-xl bg-surface-container-low border border-surface-variant">
+                    <strong className="block text-sm font-semibold text-on-surface mb-1">Authenticated Account</strong>
+                    <span className="text-on-surface-variant">
+                      Managed via Firebase Auth. Credentials, email verification tokens, and passwords are encrypted and never accessible in plaintext.
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-surface-container-low border border-surface-variant">
+                    <strong className="block text-sm font-semibold text-on-surface mb-1">Career &amp; Practice Data</strong>
+                    <span className="text-on-surface-variant">
+                      Isolated per user UID. Transcripts, scores, and target roles are saved exclusively to your user identity.
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-t border-surface-variant">
+                  <div>
+                    <h3 className="text-sm font-semibold text-on-surface">Export Your Account Data</h3>
+                    <p className="text-xs text-on-surface-variant">
+                      Download a complete JSON file containing your profile, preferences, and interview setup.
+                    </p>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => setShowAddCompany(true)}
-                    className="h-6 px-2 rounded text-outline hover:text-on-surface font-label-sm text-label-sm flex items-center gap-1 cursor-pointer"
+                    onClick={handleExportData}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-semibold transition-colors cursor-pointer shadow-xs shrink-0"
                   >
-                    <span className="material-symbols-outlined text-[14px]">add</span>
-                    Add target
+                    <Download className="w-4 h-4 text-primary" />
+                    <span>Export JSON</span>
                   </button>
-                )}
-              </div>
-            </div>
-          </section>
-
-        {/* Section 2: AI Coach Persona & Evaluation Rigor */}
-        <section className="bg-surface-container-lowest rounded-lg p-space-lg shadow-sm flex flex-col gap-space-md">
-          <div className="flex items-center justify-between pb-space-sm border-b border-surface-variant">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-[19px]">psychology</span>
-              <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                AI Coach &amp; Simulation Persona
-              </h2>
-            </div>
-            <span className="font-label-micro text-label-micro text-outline uppercase tracking-wider font-semibold">
-              Simulation Logic
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="font-label-md text-label-md text-on-surface font-medium">Interviewer Voice &amp; Attitude</label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-space-sm">
-              {/* Nova */}
-              <div
-                onClick={() => setVoicePersona('Nova')}
-                className={`relative flex flex-col gap-1.5 p-space-md rounded-lg cursor-pointer transition-all ${voicePersona === 'Nova'
-                    ? 'bg-surface-container-low ring-1 ring-primary'
-                    : 'bg-surface-container-lowest hover:bg-surface-container-low'
-                  }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-label-md text-label-md text-on-surface font-semibold flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-primary text-[16px]">record_voice_over</span>
-                    Nova
-                  </span>
-                  <span className={`w-4 h-4 rounded-full flex items-center justify-center ${voicePersona === 'Nova' ? 'bg-primary text-on-primary' : 'bg-surface-container'
-                    }`}>
-                    {voicePersona === 'Nova' && <span className="material-symbols-outlined text-[12px]">check</span>}
-                  </span>
                 </div>
-                <span className="font-label-micro text-label-micro text-primary font-medium">
-                  Direct &amp; Technical (Default)
-                </span>
-                <p className="font-body-sm text-body-sm text-on-surface-variant text-[11px] leading-tight mt-1">
-                  Concise cadence. Prioritizes architecture depth, algorithmic trade-offs, and edge cases.
-                </p>
-              </div>
+              </section>
 
-              {/* Alloy */}
-              <div
-                onClick={() => setVoicePersona('Alloy')}
-                className={`relative flex flex-col gap-1.5 p-space-md rounded-lg cursor-pointer transition-all ${voicePersona === 'Alloy'
-                    ? 'bg-surface-container-low ring-1 ring-primary'
-                    : 'bg-surface-container-lowest hover:bg-surface-container-low'
-                  }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-label-md text-label-md text-on-surface font-semibold flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-outline text-[16px]">record_voice_over</span>
-                    Alloy
-                  </span>
-                  <span className={`w-4 h-4 rounded-full flex items-center justify-center ${voicePersona === 'Alloy' ? 'bg-primary text-on-primary' : 'bg-surface-container'
-                    }`}>
-                    {voicePersona === 'Alloy' && <span className="material-symbols-outlined text-[12px]">check</span>}
-                  </span>
+              {/* Danger Zone: Account Deletion */}
+              <section className="bg-surface-container-lowest rounded-2xl p-6 sm:p-8 border border-error/30 shadow-sm flex flex-col gap-4">
+                <div className="flex items-center gap-2 text-error">
+                  <Trash2 className="w-5 h-5" />
+                  <h2 className="text-lg font-bold text-error">Danger Zone</h2>
                 </div>
-                <span className="font-label-micro text-label-micro text-outline font-medium">
-                  Supportive &amp; Encouraging
-                </span>
-                <p className="font-body-sm text-body-sm text-on-surface-variant text-[11px] leading-tight mt-1">
-                  Collaborative tone with constructive hints when you face roadblocks during coding.
+                <p className="text-xs text-on-surface-variant">
+                  Permanently delete your InterviewIQ candidate account, career profile, and interview history. This action is irreversible.
                 </p>
-              </div>
 
-              {/* Echo */}
-              <div
-                onClick={() => setVoicePersona('Echo')}
-                className={`relative flex flex-col gap-1.5 p-space-md rounded-lg cursor-pointer transition-all ${voicePersona === 'Echo'
-                    ? 'bg-surface-container-low ring-1 ring-primary'
-                    : 'bg-surface-container-lowest hover:bg-surface-container-low'
-                  }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-label-md text-label-md text-on-surface font-semibold flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-outline text-[16px]">record_voice_over</span>
-                    Echo
-                  </span>
-                  <span className={`w-4 h-4 rounded-full flex items-center justify-center ${voicePersona === 'Echo' ? 'bg-primary text-on-primary' : 'bg-surface-container'
-                    }`}>
-                    {voicePersona === 'Echo' && <span className="material-symbols-outlined text-[12px]">check</span>}
-                  </span>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeleteConfirmationText('');
+                      setDeleteError(null);
+                      setShowDeleteModal(true);
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-error/10 hover:bg-error/20 text-error text-xs font-semibold transition-colors cursor-pointer border border-error/30"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete Account</span>
+                  </button>
                 </div>
-                <span className="font-label-micro text-label-micro text-outline font-medium">
-                  Executive &amp; Challenging
-                </span>
-                <p className="font-body-sm text-body-sm text-on-surface-variant text-[11px] leading-tight mt-1">
-                  Drills into business impact, scale thresholds, and behavioral ownership tradeoffs.
-                </p>
-              </div>
+              </section>
             </div>
-          </div>
-
-          <div className="pt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-t border-surface-variant">
-            <div>
-              <h3 className="text-sm font-semibold text-on-surface">Export Your Account Data</h3>
-              <p className="text-xs text-on-surface-variant">
-                Download a complete JSON file containing your profile, preferences, and interview setup.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleExportData}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-semibold transition-colors cursor-pointer shadow-xs shrink-0"
-            >
-              <Download className="w-4 h-4 text-primary" />
-              <span>Export JSON</span>
-            </button>
-          </div>
-        </section>
-
-        {/* Danger Zone: Account Deletion */}
-        <section className="bg-surface-container-lowest rounded-2xl p-6 sm:p-8 border border-error/30 shadow-sm flex flex-col gap-4">
-          <div className="flex items-center gap-2 text-error">
-            <Trash2 className="w-5 h-5" />
-            <h2 className="text-lg font-bold text-error">Danger Zone</h2>
-          </div>
-          <p className="text-xs text-on-surface-variant">
-            Permanently delete your InterviewIQ candidate account, career profile, and interview history. This action is irreversible.
-          </p>
-
-          <div>
-            <button
-              type="button"
-              onClick={() => {
-                setDeleteConfirmationText('');
-                setDeleteError(null);
-                setShowDeleteModal(true);
-              }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-error/10 hover:bg-error/20 text-error text-xs font-semibold transition-colors cursor-pointer border border-error/30"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span>Delete Account</span>
-            </button>
-          </div>
-        </section>
-      </div>
           )}
-    </div>
-      </div >
-
-  {/* Delete Confirmation Modal */ }
-{
-  showDeleteModal && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-enter-fade">
-      <div className="bg-surface-container-lowest rounded-2xl max-w-md w-full p-6 border border-surface-variant shadow-2xl animate-enter-up">
-        <div className="w-12 h-12 rounded-xl bg-error/10 text-error flex items-center justify-center mb-4">
-          <AlertCircle className="w-6 h-6" />
-        </div>
-
-        <h3 className="text-xl font-bold text-on-surface mb-2">Delete Account Permanently</h3>
-        <p className="text-xs text-on-surface-variant mb-4 leading-relaxed">
-          This will permanently delete your candidate account (<strong>{authUser?.email}</strong>), your saved profile, and all practice interview rubrics.
-        </p>
-
-        <div className="mb-4">
-          <label className="text-xs font-medium text-on-surface block mb-1.5">
-            Type <strong>DELETE</strong> below to confirm:
-          </label>
-          <input
-            type="text"
-            value={deleteConfirmationText}
-            onChange={(e) => setDeleteConfirmationText(e.target.value)}
-            placeholder="DELETE"
-            className="w-full px-3 py-2 rounded-lg bg-surface-container text-on-surface border border-surface-variant focus:outline-none focus:border-error text-sm font-mono"
-          />
-        </div>
-
-        {deleteError && (
-          <div className="mb-4 p-3 rounded-lg bg-error/10 border border-error/20 text-error text-xs">
-            {deleteError}
-          </div>
-        )}
-
-        <div className="flex items-center justify-end gap-2.5">
-          <button
-            type="button"
-            onClick={() => setShowDeleteModal(false)}
-            disabled={isDeletingAccount}
-            className="px-4 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleDeleteAccount}
-            disabled={isDeletingAccount || deleteConfirmationText.trim().toLowerCase() !== 'delete'}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-error hover:bg-error/90 text-white text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
-          >
-            {isDeletingAccount && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            <span>{isDeletingAccount ? 'Deleting...' : 'Confirm Deletion'}</span>
-          </button>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-enter-fade">
+          <div className="bg-surface-container-lowest rounded-2xl max-w-md w-full p-6 border border-surface-variant shadow-2xl animate-enter-up">
+            <div className="w-12 h-12 rounded-xl bg-error/10 text-error flex items-center justify-center mb-4">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+
+            <h3 className="text-xl font-bold text-on-surface mb-2">Delete Account Permanently</h3>
+            <p className="text-xs text-on-surface-variant mb-4 leading-relaxed">
+              This will permanently delete your candidate account (<strong>{authUser?.email}</strong>), your saved profile, and all practice interview rubrics.
+            </p>
+
+            <div className="mb-4">
+              <label className="text-xs font-medium text-on-surface block mb-1.5">
+                Type <strong>DELETE</strong> below to confirm:
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmationText}
+                onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                placeholder="DELETE"
+                className="w-full px-3 py-2 rounded-lg bg-surface-container text-on-surface border border-surface-variant focus:outline-none focus:border-error text-sm font-mono"
+              />
+            </div>
+
+            {deleteError && (
+              <div className="mb-4 p-3 rounded-lg bg-error/10 border border-error/20 text-error text-xs">
+                {deleteError}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeletingAccount}
+                className="px-4 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={isDeletingAccount || deleteConfirmationText.trim().toLowerCase() !== 'delete'}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-error hover:bg-error/90 text-white text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {isDeletingAccount && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <span>{isDeletingAccount ? 'Deleting...' : 'Confirm Deletion'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  )
-}
-    </div >
   );
 };
