@@ -174,6 +174,11 @@ function getUserSettingsPath(uid: string): string {
   return path.join(USERS_DATA_DIR, `${sanitized}-settings.json`);
 }
 
+function getUserInterviewsPath(uid: string): string {
+  const sanitized = uid.replace(/[^a-zA-Z0-9_-]/g, '');
+  return path.join(USERS_DATA_DIR, `${sanitized}-interviews.json`);
+}
+
 // Health & Config Check
 app.get('/api/status', (_req, res) => {
   const key = process.env.NVIDIA_API_KEY;
@@ -260,14 +265,66 @@ app.post('/api/user/settings/:uid', (req, res) => {
   }
 });
 
+// User Interviews History Persistence Endpoints
+app.get('/api/user/interviews/:uid', (req, res) => {
+  const { uid } = req.params;
+  if (!uid || typeof uid !== 'string') return res.status(400).json({ error: 'UID is required' });
+  const filePath = getUserInterviewsPath(uid);
+  if (fs.existsSync(filePath)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      return res.json({ interviews: Array.isArray(data) ? data : [] });
+    } catch (e: any) {
+      console.warn('Failed to parse interviews for uid', uid, e?.message);
+    }
+  }
+  return res.json({ interviews: [] });
+});
+
+app.post('/api/user/interviews/:uid', (req, res) => {
+  const { uid } = req.params;
+  const { session, interviews } = req.body;
+  if (!uid || typeof uid !== 'string') {
+    return res.status(400).json({ error: 'Valid UID is required' });
+  }
+
+  try {
+    const filePath = getUserInterviewsPath(uid);
+    let currentInterviews: any[] = [];
+    if (fs.existsSync(filePath)) {
+      try {
+        const existing = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        if (Array.isArray(existing)) currentInterviews = existing;
+      } catch (_e) {}
+    }
+
+    let updatedList: any[];
+    if (session) {
+      updatedList = [session, ...currentInterviews];
+    } else if (Array.isArray(interviews)) {
+      updatedList = interviews;
+    } else {
+      return res.status(400).json({ error: 'Provide session or interviews array' });
+    }
+
+    fs.writeFileSync(filePath, JSON.stringify(updatedList, null, 2), 'utf-8');
+    return res.json({ success: true, interviews: updatedList });
+  } catch (e: any) {
+    console.error('Failed to save interviews for uid', uid, e);
+    return res.status(500).json({ error: 'Internal server error saving interview history' });
+  }
+});
+
 app.delete('/api/user/data/:uid', (req, res) => {
   const { uid } = req.params;
   if (!uid || typeof uid !== 'string') return res.status(400).json({ error: 'UID is required' });
   try {
     const pPath = getUserProfilePath(uid);
     const sPath = getUserSettingsPath(uid);
+    const iPath = getUserInterviewsPath(uid);
     if (fs.existsSync(pPath)) fs.unlinkSync(pPath);
     if (fs.existsSync(sPath)) fs.unlinkSync(sPath);
+    if (fs.existsSync(iPath)) fs.unlinkSync(iPath);
     return res.json({ success: true, message: 'User data removed' });
   } catch (e: any) {
     console.error('Failed to delete data for uid', uid, e);
@@ -1002,9 +1059,61 @@ function generateDynamicQuestions(role: string, category: string, _difficulty: s
     }
   ];
 
+  const aiMlProgression = [
+    {
+      title: 'Explain the fundamental architectural trade-offs between dense semantic retrieval (bi-encoders) and sparse lexical retrieval (BM25) in production RAG systems.',
+      category: 'RAG & Retrieval Architecture',
+      difficulty: 'Easy' as const,
+      desc: 'Address vocabulary mismatch, out-of-domain generalization, vector similarity latency, hybrid re-ranking (Cross-Encoders), and reciprocal rank fusion.',
+      companies: ['OpenAI', 'Anthropic', 'Google'],
+      time: '3 mins response'
+    },
+    {
+      title: 'How do you detect, monitor, and mitigate training-serving feature store skew and covariate shift in production ML pipelines?',
+      category: 'MLOps & Systems',
+      difficulty: 'Easy' as const,
+      desc: 'Focus on statistical divergence (Population Stability Index, KS-test), online vs offline feature logging, leakage, and automated retraining triggers.',
+      companies: ['Meta', 'Uber', 'Databricks'],
+      time: '3 mins response'
+    },
+    {
+      title: 'Deconstruct the multi-head self-attention mechanism in modern Transformer architectures and explain the memory-bound IO-awareness of FlashAttention.',
+      category: 'Deep Learning & Architecture',
+      difficulty: 'Medium' as const,
+      desc: 'Cover QKV projection complexity, quadratic attention matrix memory bounds O(N^2), GPU SRAM tiling, and fused kernel memory transfers.',
+      companies: ['NVIDIA', 'Scale AI', 'Cohere'],
+      time: '4 mins response'
+    },
+    {
+      title: 'Compare LoRA (Low-Rank Adaptation) and QLoRA for LLM parameter-efficient fine-tuning, explaining rank decomposition and NF4 quantization.',
+      category: 'Model Optimization & Fine-tuning',
+      difficulty: 'Medium' as const,
+      desc: 'Detail frozen weights + adapter matrices delta W = B*A, scaling factor alpha/r, double quantization, and paged optimizers under VRAM constraints.',
+      companies: ['Mistral AI', 'Hugging Face', 'Microsoft'],
+      time: '4 mins response'
+    },
+    {
+      title: 'Design a high-throughput, low-latency LLM inference engine supporting continuous dynamic batching, PagedAttention, and speculative decoding.',
+      category: 'AI Systems & Serving',
+      difficulty: 'Hard' as const,
+      desc: 'Walk through KV cache memory fragmentation, block paging (vLLM style), small draft model verification, tensor parallelism, and TTFT vs ITL metrics.',
+      companies: ['OpenAI', 'Together AI', 'Anyscale'],
+      time: '5 mins response'
+    },
+    {
+      title: 'How do you structure an RLHF and DPO (Direct Preference Optimization) pipeline to align LLMs against hallucination without mode collapse?',
+      category: 'Model Alignment & Safety',
+      difficulty: 'Hard' as const,
+      desc: 'Explain Bradley-Terry preference modeling, implicit reward extraction in DPO, reference policy KL divergence regularization, and length bias mitigation.',
+      companies: ['Anthropic', 'Google DeepMind', 'Meta AI'],
+      time: '5–6 mins response'
+    }
+  ];
+
   const lowerRole = role.toLowerCase();
+  const isAiMl = lowerRole.includes('ai') || lowerRole.includes('ml') || lowerRole.includes('machine learning') || lowerRole.includes('data science') || lowerRole.includes('deep learning');
   const isBlockchain = lowerRole.includes('blockchain') || lowerRole.includes('solidity') || lowerRole.includes('web3') || lowerRole.includes('smart contract');
-  const pool = isBlockchain ? blockchainProgression : isBackend ? backendProgression : frontendProgression;
+  const pool = isAiMl ? aiMlProgression : isBlockchain ? blockchainProgression : isBackend ? backendProgression : frontendProgression;
   const selected = pool.slice(0, Math.min(count, pool.length));
 
   return selected.map((item, i) => ({
