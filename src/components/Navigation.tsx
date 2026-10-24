@@ -8,6 +8,7 @@ interface NavigationProps {
   onSearchChange: (query: string) => void;
   userProfile?: UserProfile | null;
   onOpenResumeModal?: () => void;
+  onSignOut?: () => void;
 }
 
 export const LOGO_URL = "https://lh3.googleusercontent.com/aida/AEtjO1W7bN-uWE4eBNeEzmIyQWD7Khfd1x6Fef-_WlxnkacRgLVf0GRPkzOdprOxVmjz61kWwKGf9Vjbpu2T6SDJkgUSCkSnXcOjFmsiVF2ZWt9f7Nhnwwso94xzh9M3sYJVFtYQvbytw8SG_RlfUe9UE_q_5w0WE0tCQ20tz08BVGSSaZx-bb8_PLJlBRDAAqAEHIe_tJR-KH1tTxarnOPa0Vm4L8mOLtfNEGCy_a5skbSzYUkzB5TorW61_dRR";
@@ -20,6 +21,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   onSearchChange,
   userProfile,
   onOpenResumeModal,
+  onSignOut,
 }) => {
   // Check if live workspace or report is active under mock interviews
   const isMockSubView = currentView === 'mock-interview-workspace' || currentView === 'evaluation-report';
@@ -199,6 +201,16 @@ export const Navigation: React.FC<NavigationProps> = ({
                 >
                   <span className="material-symbols-outlined text-[18px]">tune</span>
                   <span>Settings</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onSignOut ? onSignOut() : onNavigate('welcome')}
+                  className="flex items-center gap-space-sm px-space-md py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md text-left w-full cursor-pointer"
+                  title="Sign Out & Return to Landing Page"
+                >
+                  <span className="material-symbols-outlined text-[18px]">logout</span>
+                  <span>Sign Out</span>
                 </button>
               </nav>
             </div>

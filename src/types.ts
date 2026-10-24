@@ -1,4 +1,7 @@
 export type ViewMode = 
+  | 'welcome'
+  | 'login'
+  | 'signup'
   | 'overview'
   | 'mock-interviews'
   | 'mock-interview-workspace'

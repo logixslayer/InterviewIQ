@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ViewMode, InterviewConfig, QuestionItem, UserProfile, RecentInterviewItem, SessionEvaluationReport } from './types';
 import { RECENT_INTERVIEWS_DATA } from './data/mockData';
 import { Navigation } from './components/Navigation';
@@ -11,117 +11,141 @@ import { QuestionLibraryView } from './components/QuestionLibraryView';
 import { PracticePlanView } from './components/PracticePlanView';
 import { SettingsView } from './components/SettingsView';
 import { ResumeOnboardingModal } from './components/ResumeOnboardingModal';
+import { WelcomeView } from './components/WelcomeView';
+import { LoginView } from './components/LoginView';
+import { SignUpView } from './components/SignUpView';
+import { 
+  AuthUser, 
+  checkAuthSession, 
+  getCurrentAuthUser, 
+  subscribeToAuthChanges,
+  signOut as authSignOut 
+} from './services/authService';
+import { Loader2 } from 'lucide-react';
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+const PUBLIC_ROUTES = new Set(['/', '/login', '/signup']);
 
-// Resilient Error Boundary to prevent React render failures from kicking candidates to overview
-class InterviewErrorBoundary extends Component<
-  { children: ReactNode; onReset?: () => void },
-  { hasError: boolean; error: Error | null }
-> {
-  constructor(props: { children: ReactNode; onReset?: () => void }) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
+const PATH_TO_VIEW_MAP: Record<string, ViewMode> = {
+  '/': 'welcome',
+  '/login': 'login',
+  '/signup': 'signup',
+  '/overview': 'overview',
+  '/app': 'overview',
+  '/dashboard': 'overview',
+  '/mock-interviews': 'mock-interviews',
+  '/mock-interview-workspace': 'mock-interview-workspace',
+  '/workspace': 'mock-interview-workspace',
+  '/evaluation-report': 'evaluation-report',
+  '/report': 'evaluation-report',
+  '/question-library': 'question-library',
+  '/questions': 'question-library',
+  '/my-progress': 'my-progress',
+  '/progress': 'my-progress',
+  '/practice-plan': 'practice-plan',
+  '/plan': 'practice-plan',
+  '/settings': 'settings',
+  '/profile': 'profile',
+};
 
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
+const VIEW_TO_PATH_MAP: Record<ViewMode, string> = {
+  'welcome': '/',
+  'login': '/login',
+  'signup': '/signup',
+  'overview': '/overview',
+  'mock-interviews': '/mock-interviews',
+  'mock-interview-workspace': '/mock-interview-workspace',
+  'evaluation-report': '/evaluation-report',
+  'question-library': '/question-library',
+  'my-progress': '/my-progress',
+  'practice-plan': '/practice-plan',
+  'settings': '/settings',
+  'profile': '/profile',
+};
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('InterviewIQ View ErrorBoundary caught:', error, errorInfo);
-  }
+function resolveViewFromLocation(): ViewMode {
+  if (typeof window === 'undefined') return 'welcome';
+  const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+  return PATH_TO_VIEW_MAP[pathname] || 'welcome';
+}
 
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="p-8 max-w-2xl mx-auto my-12 bg-surface-container-lowest rounded-2xl shadow-md border border-error/30 text-center flex flex-col items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-error-container text-on-error-container flex items-center justify-center">
-            <span className="material-symbols-outlined text-[32px]">warning</span>
-          </div>
-          <h2 className="text-xl font-bold text-on-surface">Mock Interview Room Notice</h2>
-          <p className="text-sm text-on-surface-variant max-w-md">
-            The workspace encountered an audio or rendering exception:
-            <br />
-            <code className="text-xs text-error font-mono bg-surface-container px-2 py-1 rounded mt-2 inline-block">
-              {this.state.error?.message || 'Component initialization error'}
-            </code>
-          </p>
-          <div className="flex items-center gap-3 mt-2">
-            <button
-              type="button"
-              onClick={() => {
-                this.setState({ hasError: false, error: null });
-                if (this.props.onReset) this.props.onReset();
-              }}
-              className="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-semibold hover:bg-on-primary-fixed-variant transition-colors cursor-pointer"
-            >
-              Resume Interview Room
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                try {
-                  localStorage.setItem('interviewiq_current_view', 'overview');
-                  sessionStorage.removeItem('interviewiq_session_id');
-                } catch {}
-                window.location.reload();
-              }}
-              className="px-4 py-2 rounded-lg bg-surface-container text-on-surface text-sm font-medium hover:bg-surface-container-high transition-colors cursor-pointer"
-            >
-              Exit to Overview
-            </button>
-          </div>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
+function isPublicView(view: ViewMode): boolean {
+  return view === 'welcome' || view === 'login' || view === 'signup';
 }
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<ViewMode>(() => {
-    try {
-      // Check URL query parameter first (e.g. ?view=mock-interview-workspace)
-      const urlParams = new URLSearchParams(window.location.search);
-      const urlView = urlParams.get('view') as ViewMode | null;
-      const validViews: ViewMode[] = [
-        'overview',
-        'mock-interviews',
-        'mock-interview-workspace',
-        'evaluation-report',
-        'question-library',
-        'my-progress',
-        'practice-plan',
-        'settings',
-        'profile',
-      ];
-      if (urlView && validViews.includes(urlView)) {
-        return urlView;
-      }
-      const saved = localStorage.getItem('interviewiq_current_view') as ViewMode | null;
-      // Do NOT auto-restore mock-interview-workspace on fresh page loads; only enter live workspace when user clicks "Start Interview"
-      if (saved && saved !== 'mock-interview-workspace' && validViews.includes(saved)) {
-        return saved;
-      }
-    } catch {}
-    return 'overview';
-  });
-
-  const handleNavigate = (view: ViewMode) => {
-    try {
-      // Don't persist mock-interview-workspace so page refreshes don't auto-launch live session calls
-      if (view === 'mock-interview-workspace') {
-        localStorage.setItem('interviewiq_current_view', 'mock-interviews');
-      } else {
-        localStorage.setItem('interviewiq_current_view', view);
-      }
-    } catch {}
-    setCurrentView(view);
-  };
-
+  const [currentView, setCurrentView] = useState<ViewMode>(() => resolveViewFromLocation());
   const [searchQuery, setSearchQuery] = useState('');
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
+
+  // Authentication session state verified with backend / provider
+  const [authUser, setAuthUser] = useState<AuthUser | null>(() => getCurrentAuthUser());
+  const [isVerifyingSession, setIsVerifyingSession] = useState<boolean>(true);
+
+  // Session verification and real-time auth subscription
+  useEffect(() => {
+    let isMounted = true;
+    const unsubscribe = subscribeToAuthChanges((user) => {
+      if (isMounted) {
+        setAuthUser(user);
+        setIsVerifyingSession(false);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, []);
+
+  // Sync route changes with browser History API
+  const handleNavigate = useCallback((target: string | ViewMode) => {
+    let targetView: ViewMode;
+    let targetPath: string;
+
+    if (typeof target === 'string' && target.startsWith('/')) {
+      const clean = target.split('?')[0].replace(/\/+$/, '') || '/';
+      targetView = PATH_TO_VIEW_MAP[clean] || 'welcome';
+      targetPath = target; // preserve full target including query parameters
+    } else {
+      targetView = target as ViewMode;
+      targetPath = VIEW_TO_PATH_MAP[targetView] || '/';
+    }
+
+    if (typeof window !== 'undefined' && (window.location.pathname + window.location.search) !== targetPath) {
+      window.history.pushState({}, '', targetPath);
+    }
+    setCurrentView(targetView);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, []);
+
+  // Listen to browser popstate (back/forward button)
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentView(resolveViewFromLocation());
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // ROUTE GUARD: Intercept unauthorized attempts to access protected routes
+  useEffect(() => {
+    if (isVerifyingSession) return; // Wait for initial session check
+
+    if (!isPublicView(currentView) && !authUser) {
+      // User is not authenticated; redirect to /login preserving intended destination
+      const requestedPath = VIEW_TO_PATH_MAP[currentView] || '/mock-interview-workspace';
+      const redirectUrl = `/login?redirect=${encodeURIComponent(requestedPath)}`;
+      handleNavigate(redirectUrl);
+    }
+  }, [currentView, authUser, isVerifyingSession, handleNavigate]);
+
+  const handleSignOut = async () => {
+    await authSignOut();
+    setAuthUser(null);
+    handleNavigate('/');
+  };
 
   // User Profile State (persisted with fallback default)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
@@ -180,14 +204,16 @@ export default function App() {
     return RECENT_INTERVIEWS_DATA as RecentInterviewItem[];
   });
 
-  // Prompt onboarding on first visit if user hasn't analyzed resume yet
+  // Prompt onboarding on first visit to authenticated workspace only
   useEffect(() => {
+    if (isPublicView(currentView) || !authUser) return;
+
     const hasSeenModal = localStorage.getItem('interviewiq_has_seen_onboarding');
     if (!hasSeenModal) {
       setIsResumeModalOpen(true);
       localStorage.setItem('interviewiq_has_seen_onboarding', 'true');
     }
-  }, []);
+  }, [currentView, authUser]);
 
   const [config, setConfig] = useState<InterviewConfig>({
     role: userProfile?.targetRoles[0]?.title || 'Frontend Developer',
@@ -217,7 +243,6 @@ export default function App() {
       console.warn('Failed to save profile to localStorage:', e);
     }
 
-    // Automatically calibrate interview config to the candidate's primary analyzed major role
     const detectedRole = profile.primaryRole || profile.targetRoles?.[0]?.title || 'Frontend Developer';
     const detectedLevel = profile.experienceLevel || (profile.experienceYears >= 5 ? 'Experienced' : profile.experienceYears >= 2 ? 'Intermediate' : 'Entry Level');
     const calibratedDifficulty = detectedLevel === 'Experienced' ? 'Hard' : detectedLevel === 'Intermediate' ? 'Medium' : 'Easy';
@@ -343,6 +368,50 @@ export default function App() {
     handleNavigate('question-library');
   };
 
+  // =========================================================================
+  // PUBLIC ROUTE RENDERING (Welcome, Login, Sign Up)
+  // =========================================================================
+  if (currentView === 'welcome') {
+    return <WelcomeView onNavigate={handleNavigate} isAuthenticated={!!authUser} />;
+  }
+
+  if (currentView === 'login') {
+    return <LoginView onNavigate={handleNavigate} />;
+  }
+
+  if (currentView === 'signup') {
+    return <SignUpView onNavigate={handleNavigate} />;
+  }
+
+  // =========================================================================
+  // PROTECTED ROUTE SESSION VERIFICATION SPINNER
+  // (Prevents unauthorized flashing of private workspace content)
+  // =========================================================================
+  if (isVerifyingSession) {
+    return (
+      <div className="min-h-screen bg-[#F6F8FC] flex flex-col items-center justify-center text-[#182230]">
+        <div className="w-10 h-10 rounded-xl bg-[#101828] text-[#FFFFFF] flex items-center justify-center font-bold text-lg mb-4 shadow-sm">
+          <span className="text-[#3867F5]">I</span>Q
+        </div>
+        <Loader2 className="w-5 h-5 text-[#3867F5] animate-spin mb-2" />
+        <span className="text-xs font-medium text-[#667085]">Verifying InterviewIQ session...</span>
+      </div>
+    );
+  }
+
+  // If user is unauthenticated on a protected route, do NOT render private content
+  if (!authUser) {
+    return (
+      <div className="min-h-screen bg-[#F6F8FC] flex flex-col items-center justify-center text-[#182230]">
+        <Loader2 className="w-5 h-5 text-[#3867F5] animate-spin mb-2" />
+        <span className="text-xs font-medium text-[#667085]">Redirecting to sign in...</span>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // AUTHENTICATED APPLICATION WORKSPACE (Preserved Dashboard & Interview Suite)
+  // =========================================================================
   return (
     <div className="bg-surface-container font-body-md text-body-md text-on-surface antialiased min-h-screen">
       {/* Navigation Bars (Desktop Sidebar + Desktop Header + Mobile Header + Mobile Bottom Nav) */}
@@ -353,81 +422,80 @@ export default function App() {
         onSearchChange={(q) => setSearchQuery(q)}
         userProfile={userProfile}
         onOpenResumeModal={() => setIsResumeModalOpen(true)}
+        onSignOut={handleSignOut}
       />
 
       {/* Main Content Area: Responsive Padding */}
       <div className="lg:pl-[230px] w-full min-h-screen">
         <main className="relative pt-[56px] lg:pt-[52px] pb-[72px] lg:pb-0 w-full min-h-screen p-space-md sm:p-space-lg">
-          <InterviewErrorBoundary onReset={() => handleNavigate('mock-interviews')}>
-            {currentView === 'overview' && (
-              <OverviewView
-                onNavigate={handleNavigate}
-                onStartInterview={handleStartInterview}
-                onOpenQuestion={handleOpenCuratedQuestion}
-                userProfile={userProfile}
-                recentInterviews={recentInterviews}
-                onOpenResumeModal={() => setIsResumeModalOpen(true)}
-                onAddRole={handleAddTargetRole}
-              />
-            )}
+          {currentView === 'overview' && (
+            <OverviewView
+              onNavigate={handleNavigate}
+              onStartInterview={handleStartInterview}
+              onOpenQuestion={handleOpenCuratedQuestion}
+              userProfile={userProfile}
+              recentInterviews={recentInterviews}
+              onOpenResumeModal={() => setIsResumeModalOpen(true)}
+              onAddRole={handleAddTargetRole}
+            />
+          )}
 
-            {currentView === 'mock-interviews' && (
-              <MockSetupView
-                config={config}
-                onConfigChange={setConfig}
-                onStartSession={handleLaunchSession}
-                userProfile={userProfile}
-                onOpenResumeModal={() => setIsResumeModalOpen(true)}
-                onAddRole={handleAddTargetRole}
-              />
-            )}
+          {currentView === 'mock-interviews' && (
+            <MockSetupView
+              config={config}
+              onConfigChange={setConfig}
+              onStartSession={handleLaunchSession}
+              userProfile={userProfile}
+              onOpenResumeModal={() => setIsResumeModalOpen(true)}
+              onAddRole={handleAddTargetRole}
+            />
+          )}
 
-            {currentView === 'mock-interview-workspace' && (
-              <LiveWorkspaceView
-                config={config}
-                userProfile={userProfile}
-                onNavigate={handleNavigate}
-                onCompleteSession={handleCompleteSession}
-              />
-            )}
+          {currentView === 'mock-interview-workspace' && (
+            <LiveWorkspaceView
+              config={config}
+              userProfile={userProfile}
+              onNavigate={handleNavigate}
+              onCompleteSession={handleCompleteSession}
+            />
+          )}
 
-            {currentView === 'evaluation-report' && (
-              <EvaluationReportView
-                report={activeSessionReport}
-                config={config}
-                userProfile={userProfile}
-                onNavigate={handleNavigate}
-                onRetry={handleStartInterview}
-              />
-            )}
+          {currentView === 'evaluation-report' && (
+            <EvaluationReportView
+              report={activeSessionReport}
+              config={config}
+              userProfile={userProfile}
+              onNavigate={handleNavigate}
+              onRetry={handleStartInterview}
+            />
+          )}
 
-            {currentView === 'question-library' && (
-              <QuestionLibraryView
-                onNavigate={handleNavigate}
-                onPracticeQuestion={handlePracticeQuestion}
-                searchQuery={searchQuery}
-                userProfile={userProfile}
-                onAddRole={handleAddTargetRole}
-              />
-            )}
+          {currentView === 'question-library' && (
+            <QuestionLibraryView
+              onNavigate={handleNavigate}
+              onPracticeQuestion={handlePracticeQuestion}
+              searchQuery={searchQuery}
+              userProfile={userProfile}
+              onAddRole={handleAddTargetRole}
+            />
+          )}
 
-            {currentView === 'my-progress' && (
-              <MyProgressView
-                onNavigate={handleNavigate}
-              />
-            )}
+          {currentView === 'my-progress' && (
+            <MyProgressView
+              onNavigate={handleNavigate}
+            />
+          )}
 
-            {currentView === 'practice-plan' && (
-              <PracticePlanView
-                onNavigate={handleNavigate}
-                onStartDrill={handleLaunchSession}
-              />
-            )}
+          {currentView === 'practice-plan' && (
+            <PracticePlanView
+              onNavigate={handleNavigate}
+              onStartDrill={handleLaunchSession}
+            />
+          )}
 
-            {(currentView === 'settings' || currentView === 'profile') && (
-              <SettingsView />
-            )}
-          </InterviewErrorBoundary>
+          {(currentView === 'settings' || currentView === 'profile') && (
+            <SettingsView />
+          )}
         </main>
       </div>
 
