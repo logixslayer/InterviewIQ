@@ -224,8 +224,15 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
+  const activeUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const speechWatchdogRef = useRef<any>(null);
+
   // Safely stop any running audio
   const stopAllAudio = useCallback(() => {
+    if (speechWatchdogRef.current) {
+      clearTimeout(speechWatchdogRef.current);
+      speechWatchdogRef.current = null;
+    }
     try {
       if (audioPlayerRef.current) {
         audioPlayerRef.current.pause();
@@ -236,10 +243,11 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
         window.speechSynthesis.cancel();
       }
     } catch {}
+    activeUtteranceRef.current = null;
     setIsPlayingSynth(false);
   }, []);
 
-  // Web Speech Fallback for spoken questions
+  // Web Speech Fallback for spoken questions with Chrome GC prevention & safety watchdog
   const fallbackWebSpeech = useCallback((text: string, onEnd?: () => void) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
       onEnd?.();
@@ -248,20 +256,36 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
     try {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
+      activeUtteranceRef.current = utterance; // Prevent Chrome GC from collecting utterance mid-speech
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
+
+      let hasEnded = false;
+      const safeEnd = () => {
+        if (hasEnded) return;
+        hasEnded = true;
+        if (speechWatchdogRef.current) {
+          clearTimeout(speechWatchdogRef.current);
+          speechWatchdogRef.current = null;
+        }
+        activeUtteranceRef.current = null;
+        setIsPlayingSynth(false);
+        onEnd?.();
+      };
+
       utterance.onstart = () => {
         setIsPlayingSynth(true);
         setInterviewState('interviewer_speaking');
       };
-      utterance.onend = () => {
-        setIsPlayingSynth(false);
-        onEnd?.();
-      };
-      utterance.onerror = () => {
-        setIsPlayingSynth(false);
-        onEnd?.();
-      };
+      utterance.onend = safeEnd;
+      utterance.onerror = safeEnd;
+
+      // Chrome safety watchdog: auto-release after estimated duration to avoid getting stuck
+      const wordCount = text.split(/\s+/).filter(Boolean).length;
+      const watchdogMs = Math.max(3000, Math.ceil((wordCount / 2.0) * 1000) + 1500);
+      if (speechWatchdogRef.current) clearTimeout(speechWatchdogRef.current);
+      speechWatchdogRef.current = setTimeout(safeEnd, watchdogMs);
+
       window.speechSynthesis.speak(utterance);
     } catch {
       setIsPlayingSynth(false);
@@ -280,9 +304,7 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
           onEndCallback();
         } else {
           setInterviewState('listening');
-          if (continuousVoiceMode) {
-            startMicrophoneCapture();
-          }
+          startMicrophoneCapture();
         }
       };
 
@@ -305,7 +327,7 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
       }
       fallbackWebSpeech(text, proceedToListen);
     },
-    [stopAllAudio, fallbackWebSpeech, continuousVoiceMode]
+    [stopAllAudio, fallbackWebSpeech]
   );
 
   // Initialize Speech Recognition Service strictly once on mount
@@ -437,9 +459,8 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
           // Interviewer speaks the question aloud
           speakUtterance(`${q.title}. ${q.description}`, turnData.audio?.audioContent, () => {
             setInterviewState('listening');
-            if (continuousVoiceMode) {
-              startMicrophoneCapture();
-            }
+            isSubmittingRef.current = false;
+            startMicrophoneCapture();
           });
           return;
         }
@@ -484,9 +505,8 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
       setMessages((prev) => [...prev, fallbackMsg]);
       speakUtterance(`${fallbackQ.title}. ${fallbackQ.description}`, undefined, () => {
         setInterviewState('listening');
-        if (continuousVoiceMode) {
-          startMicrophoneCapture();
-        }
+        isSubmittingRef.current = false;
+        startMicrophoneCapture();
       });
     },
     [config.role, config.difficulty, config.type, questionNumber, totalQuestions, stopAllAudio, speakUtterance, continuousVoiceMode, userProfile?.uid]
@@ -649,9 +669,7 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
           speakUtterance(turnResult.followUpQuestion.title, turnResult.followUpAudio?.audioContent, () => {
             setInterviewState('listening');
             isSubmittingRef.current = false;
-            if (continuousVoiceMode) {
-              startMicrophoneCapture();
-            }
+            startMicrophoneCapture();
           });
         } else {
           // If no follow-up, advance to next question or complete session
@@ -1077,15 +1095,21 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
                       <div className="grid grid-cols-3 gap-2 pt-1 text-xs">
                         <div className="p-2 rounded-lg bg-surface-container-lowest flex flex-col">
                           <span className="text-[10px] text-outline font-semibold uppercase">Communication</span>
-                          <span className="font-bold text-on-surface">{msg.evaluation.rubricScores.communicationDelivery || 85}%</span>
+                          <span className="font-bold text-on-surface">
+                            {msg.evaluation.rubricScores.communicationDelivery ?? 82}%
+                          </span>
                         </div>
                         <div className="p-2 rounded-lg bg-surface-container-lowest flex flex-col">
                           <span className="text-[10px] text-outline font-semibold uppercase">Tech Depth</span>
-                          <span className="font-bold text-on-surface">{msg.evaluation.rubricScores.technicalKnowledge || 86}%</span>
+                          <span className="font-bold text-on-surface">
+                            {msg.evaluation.rubricScores.technicalKnowledge ?? (msg.evaluation.rubricScores as any).technicalAccuracy ?? 84}%
+                          </span>
                         </div>
                         <div className="p-2 rounded-lg bg-surface-container-lowest flex flex-col">
                           <span className="text-[10px] text-outline font-semibold uppercase">Problem Solving</span>
-                          <span className="font-bold text-on-surface">{msg.evaluation.rubricScores.problemSolving || 83}%</span>
+                          <span className="font-bold text-on-surface">
+                            {msg.evaluation.rubricScores.problemSolving ?? (msg.evaluation.rubricScores as any).architectureDepth ?? 80}%
+                          </span>
                         </div>
                       </div>
                     )}
@@ -1699,29 +1723,7 @@ export const LiveWorkspaceView: React.FC<LiveWorkspaceViewProps> = ({
             </p>
           </div>
 
-          {/* Current Question Focus Card */}
-          {currentQuestion && (
-            <div className="bg-surface-container-lowest rounded-2xl p-3.5 border border-surface-variant/80 shadow-2xs flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase font-bold text-outline tracking-wider">
-                  Question Focus
-                </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
-                  {currentQuestion.category || 'System Architecture'}
-                </span>
-              </div>
-              <p className="text-xs font-bold text-on-surface leading-snug">
-                {currentQuestion.title}
-              </p>
-              <p className="text-[11px] text-outline leading-relaxed line-clamp-3">
-                {currentQuestion.description}
-              </p>
-              <div className="flex items-center justify-between pt-1 border-t border-surface-variant text-[10px] text-outline">
-                <span>Target: {currentQuestion.estimatedTime || '3-4 mins'}</span>
-                <span>Difficulty: {currentQuestion.difficulty || config.difficulty}</span>
-              </div>
-            </div>
-          )}
+
 
           {/* Optional Developer Pipeline Diagnostics */}
           {showDiagnostics && (
