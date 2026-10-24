@@ -230,6 +230,11 @@ function getUserInterviewsPath(uid: string): string {
   return path.join(USERS_DATA_DIR, `${sanitized}-interviews.json`);
 }
 
+function getUserLearningPath(uid: string): string {
+  const sanitized = uid.replace(/[^a-zA-Z0-9_-]/g, '');
+  return path.join(USERS_DATA_DIR, `${sanitized}-learning.json`);
+}
+
 // Health & Config Check
 app.get('/api/status', (_req, res) => {
   const key = process.env.NVIDIA_API_KEY;
@@ -366,6 +371,44 @@ app.post('/api/user/interviews/:uid', (req, res) => {
   }
 });
 
+// User Learning Progress Persistence Endpoints
+app.get('/api/user/learning/:uid', (req, res) => {
+  const { uid } = req.params;
+  if (!uid || typeof uid !== 'string') return res.status(400).json({ error: 'UID is required' });
+  const filePath = getUserLearningPath(uid);
+  if (fs.existsSync(filePath)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      return res.json({ progress: data });
+    } catch (e: any) {
+      console.warn('Failed to parse learning progress for uid', uid, e?.message);
+    }
+  }
+  return res.json({ progress: null });
+});
+
+app.post('/api/user/learning/:uid', (req, res) => {
+  const { uid } = req.params;
+  const { progress } = req.body;
+  if (!uid || typeof uid !== 'string' || !progress) {
+    return res.status(400).json({ error: 'Valid UID and progress data are required' });
+  }
+
+  try {
+    const filePath = getUserLearningPath(uid);
+    const dataToSave = {
+      ...progress,
+      uid,
+      updatedAt: new Date().toISOString()
+    };
+    fs.writeFileSync(filePath, JSON.stringify(dataToSave, null, 2), 'utf-8');
+    return res.json({ success: true, progress: dataToSave });
+  } catch (e: any) {
+    console.error('Failed to save learning progress for uid', uid, e);
+    return res.status(500).json({ error: 'Internal server error saving learning progress' });
+  }
+});
+
 app.delete('/api/user/data/:uid', (req, res) => {
   const { uid } = req.params;
   if (!uid || typeof uid !== 'string') return res.status(400).json({ error: 'UID is required' });
@@ -373,9 +416,11 @@ app.delete('/api/user/data/:uid', (req, res) => {
     const pPath = getUserProfilePath(uid);
     const sPath = getUserSettingsPath(uid);
     const iPath = getUserInterviewsPath(uid);
+    const lPath = getUserLearningPath(uid);
     if (fs.existsSync(pPath)) fs.unlinkSync(pPath);
     if (fs.existsSync(sPath)) fs.unlinkSync(sPath);
     if (fs.existsSync(iPath)) fs.unlinkSync(iPath);
+    if (fs.existsSync(lPath)) fs.unlinkSync(lPath);
     return res.json({ success: true, message: 'User data removed' });
   } catch (e: any) {
     console.error('Failed to delete data for uid', uid, e);

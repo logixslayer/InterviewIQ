@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ViewMode, InterviewConfig, QuestionItem, UserProfile, UserSettings, RecentInterviewItem, SessionEvaluationReport } from './types';
-import { RECENT_INTERVIEWS_DATA } from './data/mockData';
+import { RECENT_INTERVIEWS_DATA, INITIAL_QUESTIONS } from './data/mockData';
 import { Navigation } from './components/Navigation';
 import { OverviewView } from './components/OverviewView';
 import { MockSetupView } from './components/MockSetupView';
@@ -9,6 +9,7 @@ import { EvaluationReportView } from './components/EvaluationReportView';
 import { MyProgressView } from './components/MyProgressView';
 import { QuestionLibraryView } from './components/QuestionLibraryView';
 import { PracticePlanView } from './components/PracticePlanView';
+import { LearningResourcesView } from './components/learning/LearningResourcesView';
 import { ProfileView } from './components/ProfileView';
 import { SettingsView } from './components/SettingsView';
 import { ResumeOnboardingModal } from './components/ResumeOnboardingModal';
@@ -54,6 +55,10 @@ const PATH_TO_VIEW_MAP: Record<string, ViewMode> = {
   '/progress': 'my-progress',
   '/practice-plan': 'practice-plan',
   '/plan': 'practice-plan',
+  '/learning-resources': 'learning-resources',
+  '/learning': 'learning-resources',
+  '/resources': 'learning-resources',
+  '/learn': 'learning-resources',
   '/settings': 'settings',
   '/profile': 'profile',
 };
@@ -69,6 +74,7 @@ const VIEW_TO_PATH_MAP: Record<ViewMode, string> = {
   'question-library': '/question-library',
   'my-progress': '/my-progress',
   'practice-plan': '/practice-plan',
+  'learning-resources': '/learning-resources',
   'settings': '/settings',
   'profile': '/profile',
 };
@@ -585,6 +591,19 @@ export default function App() {
             <PracticePlanView
               onNavigate={handleNavigate}
               onStartDrill={handleLaunchSession}
+            />
+          )}
+
+          {currentView === 'learning-resources' && (
+            <LearningResourcesView
+              onNavigate={handleNavigate}
+              searchQuery={searchQuery}
+              onSearchChange={(q) => setSearchQuery(q)}
+              userProfile={userProfile}
+              recentInterviews={recentInterviews.length > 0 ? recentInterviews : RECENT_INTERVIEWS_DATA}
+              questions={INITIAL_QUESTIONS}
+              onPracticeQuestion={handlePracticeQuestion}
+              onAddRole={handleAddTargetRole}
             />
           )}
 
