@@ -1380,6 +1380,20 @@ app.get('/api/interview/session/:sessionId', (req, res) => {
   res.json({ success: true, session });
 });
 
+// Lists completed and recorded interview sessions for a candidate
+app.get('/api/interview/sessions', (req, res) => {
+  try {
+    const userId = (req.query.userId as string) || '';
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+    const sessions = listUserSessions(userId);
+    res.json({ success: true, sessions });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || 'Failed to list user sessions' });
+  }
+});
+
 // Retrieves delivered question history for user (deduplication verification)
 app.get('/api/interview/questions/history', (req, res) => {
   const userId = (req.query.userId as string) || 'default_user';
