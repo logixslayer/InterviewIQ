@@ -218,3 +218,27 @@
     transform: none !important;
   }
 }
+
+/* Print Optimization for Progress Reports */
+@media print {
+  nav, aside, header .no-print, button, input {
+    display: none !important;
+  }
+  body, html {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .lg\:pl-\[230px\] {
+    padding-left: 0 !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+

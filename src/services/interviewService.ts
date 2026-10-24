@@ -426,4 +426,22 @@ export async function fetchUserQuestionHistory(userId = 'default_user'): Promise
   return res.json();
 }
 
+export async function fetchUserSessions(userId: string): Promise<{
+  success: boolean;
+  sessions: any[];
+}> {
+  try {
+    if (!userId) return { success: true, sessions: [] };
+    const res = await fetch(`/api/interview/sessions?userId=${encodeURIComponent(userId)}`);
+    if (!res.ok) {
+      return { success: false, sessions: [] };
+    }
+    return await res.json();
+  } catch (err) {
+    console.warn('Could not fetch user sessions from API:', err);
+    return { success: false, sessions: [] };
+  }
+}
+
+
 

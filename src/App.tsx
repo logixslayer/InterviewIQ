@@ -575,6 +575,9 @@ export default function App() {
           {currentView === 'my-progress' && (
             <MyProgressView
               onNavigate={handleNavigate}
+              authUser={authUser}
+              userProfile={userProfile}
+              recentInterviews={recentInterviews}
             />
           )}
 
