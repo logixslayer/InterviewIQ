@@ -2,12 +2,12 @@
  * InterviewIQ Real-Time Speech Recognition & Audio Stream Service
  *
  * Capabilities:
- * - Direct microphone capture via Web Audio API & Web Speech API
- * - Incremental streaming transcription with interim partial results
- * - Live audio level / volume visualizer stream (0 - 100)
- * - Intelligent turn-taking silence detection with configurable thinking pause grace period
- * - Resilience against automatic browser recognizer disconnects
- * - Actionable permission and error recovery
+ * - Direct microphone capture via Web Speech API (webkitSpeechRecognition / SpeechRecognition)
+ * - Decoupled Web Audio API volume visualizer stream (0 - 100)
+ * - Deterministic, non-duplicating streaming transcript engine (interim + final)
+ * - Resilient auto-restart across browser recognition pauses / silence events
+ * - Configurable thinking pause / silence detection
+ * - Error isolation and actionable permission recovery
  */
 
 export interface SpeechRecognitionCallbacks {
@@ -23,7 +23,7 @@ export interface SpeechRecognitionOptions {
   lang?: string;
   continuous?: boolean;
   interimResults?: boolean;
-  silenceThresholdMs?: number; // Time of continuous silence before auto-submission in continuous mode (default: 2800ms)
+  silenceThresholdMs?: number; // Time of continuous silence before auto-submission (default: 3000ms)
   minWordsForSilenceSubmit?: number; // Minimum words spoken before silence triggers completion (default: 4)
 }
 
@@ -35,24 +35,28 @@ export class RealTimeSpeechService {
   private animFrameId: number | null = null;
 
   private isRunning = false;
-  private isSpeaking = false;
-  private finalTranscriptAccumulated = '';
-  private currentInterim = '';
+  private accumulatedSessionFinals = '';
+  private currentInstanceFinal = '';
+  private currentInstanceInterim = '';
 
   private silenceTimer: any = null;
+  private restartTimer: any = null;
   private options: Required<SpeechRecognitionOptions>;
   private callbacks: SpeechRecognitionCallbacks;
   private speechStartTime: number | null = null;
-  private wordCountAtLastCheck = 0;
 
   constructor(callbacks: SpeechRecognitionCallbacks, options?: SpeechRecognitionOptions) {
     this.callbacks = callbacks;
+    const defaultLang =
+      options?.lang ||
+      (typeof navigator !== 'undefined' && navigator.language ? navigator.language : 'en-US');
+
     this.options = {
-      lang: options?.lang || 'en-US',
+      lang: defaultLang,
       continuous: options?.continuous ?? true,
       interimResults: options?.interimResults ?? true,
-      silenceThresholdMs: options?.silenceThresholdMs ?? 2800,
-      minWordsForSilenceSubmit: options?.minWordsForSilenceSubmit ?? 4,
+      silenceThresholdMs: options?.silenceThresholdMs ?? 5500,
+      minWordsForSilenceSubmit: options?.minWordsForSilenceSubmit ?? 15,
     };
   }
 
@@ -64,11 +68,37 @@ export class RealTimeSpeechService {
     );
   }
 
+  public setLanguage(lang: string) {
+    this.options.lang = lang;
+    if (this.recognition) {
+      try {
+        this.recognition.lang = lang;
+      } catch {}
+    }
+  }
+
+  public getLanguage(): string {
+    return this.options.lang;
+  }
+
   /**
-   * Initializes audio analysis and microphone capture
+   * Initializes audio analysis and microphone capture for visualizer meter (non-blocking)
    */
-  private async initAudioStream(): Promise<boolean> {
-    if (this.mediaStream) return true;
+  private async initAudioStream(): Promise<void> {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) return;
+
+    // Check if media stream already active and has live audio track
+    if (this.mediaStream) {
+      const liveTracks = this.mediaStream.getAudioTracks().filter((t) => t.readyState === 'live');
+      if (liveTracks.length > 0) {
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+          try {
+            await this.audioContext.resume();
+          } catch {}
+        }
+        return;
+      }
+    }
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -85,40 +115,27 @@ export class RealTimeSpeechService {
       if (AudioCtx) {
         this.audioContext = new AudioCtx();
         if (this.audioContext.state === 'suspended') {
-          await this.audioContext.resume();
+          try {
+            await this.audioContext.resume();
+          } catch {}
         }
 
         const source = this.audioContext.createMediaStreamSource(stream);
         const analyser = this.audioContext.createAnalyser();
         analyser.fftSize = 128;
-        analyser.smoothingTimeConstant = 0.4;
+        analyser.smoothingTimeConstant = 0.3;
         source.connect(analyser);
         this.analyser = analyser;
 
         this.startAudioMeter();
       }
-      return true;
     } catch (err: any) {
-      console.warn('Microphone audio stream notice:', err?.name || err);
-      if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
-        this.callbacks.onError?.({
-          code: 'permission_denied',
-          message: 'Microphone permission was denied. Please allow microphone access in your browser address bar to speak.',
-          fatal: true,
-        });
-      } else {
-        this.callbacks.onError?.({
-          code: 'mic_unavailable',
-          message: 'Microphone is unavailable or in use by another application.',
-          fatal: false,
-        });
-      }
-      return false;
+      console.warn('Audio meter initialization notice (speech recognition will still proceed):', err?.name || err);
     }
   }
 
   /**
-   * Continuous volume level analyzer loop
+   * Continuous volume level analyzer loop with RMS + Peak sensing
    */
   private startAudioMeter() {
     if (!this.analyser) return;
@@ -132,17 +149,22 @@ export class RealTimeSpeechService {
 
       this.analyser.getByteFrequencyData(dataArray);
       let sum = 0;
+      let peak = 0;
       for (let i = 0; i < dataArray.length; i++) {
-        sum += dataArray[i];
+        const val = dataArray[i];
+        sum += val;
+        if (val > peak) peak = val;
       }
       const avg = sum / dataArray.length;
-      // Scale 0 - 100 with non-linear boost for soft voices
-      const normalized = Math.min(100, Math.round((avg / 128) * 100));
+
+      // Responsive composite formula (blend average + peak) scaled to 0-100
+      const composite = (avg * 0.7 + peak * 0.3);
+      const normalized = Math.min(100, Math.round((composite / 140) * 100));
 
       this.callbacks.onAudioLevel?.(normalized);
 
-      // If voice volume is active, reset silence timer if candidate has spoken
-      if (normalized > 12) {
+      // Reset silence evaluation whenever vocal sound energy is detected
+      if (normalized > 6) {
         this.handleVoiceActivity();
       }
 
@@ -153,7 +175,6 @@ export class RealTimeSpeechService {
   }
 
   private handleVoiceActivity() {
-    // If silence timer was ticking, reset it because candidate is still articulating
     if (this.silenceTimer) {
       clearTimeout(this.silenceTimer);
       this.silenceTimer = null;
@@ -167,7 +188,7 @@ export class RealTimeSpeechService {
     const fullText = this.getFullTranscript();
     const words = fullText.trim().split(/\s+/).filter(Boolean);
 
-    // Only auto-submit if candidate has spoken a meaningful answer
+    // Auto-submit after silence only once candidate has articulated a substantial thought
     if (words.length >= this.options.minWordsForSilenceSubmit) {
       this.silenceTimer = setTimeout(() => {
         if (!this.isRunning) return;
@@ -180,20 +201,9 @@ export class RealTimeSpeechService {
   }
 
   /**
-   * Starts listening and streaming transcription
+   * Creates and starts a browser SpeechRecognition instance
    */
-  public async start(): Promise<boolean> {
-    if (this.isRunning) return true;
-
-    // Reset accumulated buffers for new turn
-    this.finalTranscriptAccumulated = '';
-    this.currentInterim = '';
-    this.speechStartTime = null;
-
-    // Ensure mic stream is initialized
-    const micReady = await this.initAudioStream();
-    if (!micReady) return false;
-
+  private setupRecognitionInstance(): boolean {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
@@ -204,6 +214,18 @@ export class RealTimeSpeechService {
         fatal: true,
       });
       return false;
+    }
+
+    // Clean up any lingering previous instance before recreating
+    if (this.recognition) {
+      try {
+        this.recognition.onstart = null;
+        this.recognition.onresult = null;
+        this.recognition.onerror = null;
+        this.recognition.onend = null;
+        this.recognition.abort();
+      } catch {}
+      this.recognition = null;
     }
 
     try {
@@ -219,26 +241,21 @@ export class RealTimeSpeechService {
       };
 
       recognition.onresult = (event: any) => {
-        let interimStr = '';
-        let newlyFinalized = '';
+        let instanceFinal = '';
+        let instanceInterim = '';
 
-        for (let i = event.resultIndex; i < event.results.length; i++) {
+        for (let i = 0; i < event.results.length; i++) {
           const res = event.results[i];
-          const transcript = res[0]?.transcript || '';
-
+          const text = res[0]?.transcript || '';
           if (res.isFinal) {
-            newlyFinalized += transcript + ' ';
+            instanceFinal += text + ' ';
           } else {
-            interimStr += transcript;
+            instanceInterim += text;
           }
         }
 
-        if (newlyFinalized) {
-          this.finalTranscriptAccumulated += newlyFinalized;
-          this.currentInterim = '';
-        } else {
-          this.currentInterim = interimStr;
-        }
+        this.currentInstanceFinal = instanceFinal;
+        this.currentInstanceInterim = instanceInterim;
 
         const fullCurrent = this.getFullTranscript();
 
@@ -246,55 +263,114 @@ export class RealTimeSpeechService {
           this.speechStartTime = Date.now();
         }
 
-        // Notify UI of live interim text
+        // Notify UI with complete up-to-date live transcript
         this.callbacks.onInterimTranscript?.(fullCurrent, false);
         this.handleVoiceActivity();
         this.scheduleSilenceEvaluation();
       };
 
       recognition.onerror = (event: any) => {
-        console.warn('Speech recognition event notice:', event?.error);
-        if (event?.error === 'not-allowed') {
+        const errType = event?.error;
+        console.warn('Speech recognition notice:', errType);
+
+        if (errType === 'not-allowed') {
           this.callbacks.onError?.({
             code: 'permission_denied',
-            message: 'Microphone access was denied. Please allow microphone permissions to speak.',
+            message: 'Microphone access was denied. Click the lock/camera icon in your address bar to allow microphone permissions.',
             fatal: true,
           });
           this.stop();
-        } else if (event?.error === 'no-speech') {
-          // Normal brief silence, do not error out
+        } else if (errType === 'audio-capture') {
+          this.callbacks.onError?.({
+            code: 'audio_capture',
+            message: 'No microphone was detected. Please connect a microphone or use keyboard input.',
+            fatal: true,
+          });
+          this.stop();
+        } else if (errType === 'network') {
+          this.callbacks.onError?.({
+            code: 'network_error',
+            message: 'Speech recognition network interrupted. Reconnecting or switch to keyboard input.',
+            fatal: false,
+          });
+        } else if (errType === 'no-speech') {
+          // Normal brief pause while candidate is thinking; schedule silence check
           this.scheduleSilenceEvaluation();
         }
       };
 
       recognition.onend = () => {
-        // If still supposed to be running (e.g. browser paused after brief pause), auto-restart
+        // If turn is still active, commit finals and restart cleanly
         if (this.isRunning) {
-          try {
-            recognition.start();
-          } catch {
-            // Already started or restarting
+          if (this.currentInstanceFinal.trim()) {
+            this.accumulatedSessionFinals = (
+              this.accumulatedSessionFinals + ' ' + this.currentInstanceFinal
+            ).trim();
           }
+          this.currentInstanceFinal = '';
+          this.currentInstanceInterim = '';
+
+          // 80ms debounce prevents InvalidStateError on Chrome/Edge
+          if (this.restartTimer) clearTimeout(this.restartTimer);
+          this.restartTimer = setTimeout(() => {
+            if (this.isRunning) {
+              this.setupRecognitionInstance();
+            }
+          }, 80);
+        } else {
+          this.callbacks.onStateChange?.('inactive');
         }
       };
 
       this.recognition = recognition;
       recognition.start();
-      this.isRunning = true;
       return true;
     } catch (err: any) {
-      console.warn('Recognition start exception:', err);
-      this.isRunning = false;
+      console.warn('Failed to start SpeechRecognition instance:', err);
       return false;
     }
   }
 
   /**
-   * Returns complete consolidated transcript (finalized + current interim)
+   * Starts listening and streaming transcription
+   */
+  public async start(): Promise<boolean> {
+    if (this.isRunning) {
+      this.stop();
+    }
+
+    // Clear turn buffers
+    this.accumulatedSessionFinals = '';
+    this.currentInstanceFinal = '';
+    this.currentInstanceInterim = '';
+    this.speechStartTime = null;
+    this.isRunning = true;
+
+    if (this.silenceTimer) clearTimeout(this.silenceTimer);
+    if (this.restartTimer) clearTimeout(this.restartTimer);
+
+    // Resume or init audio level meter in background (non-blocking)
+    if (this.audioContext && this.audioContext.state === 'suspended') {
+      try {
+        await this.audioContext.resume();
+      } catch {}
+    }
+    this.initAudioStream().catch(() => {});
+
+    // Launch speech recognizer
+    const started = this.setupRecognitionInstance();
+    if (!started) {
+      this.isRunning = false;
+    }
+    return started;
+  }
+
+  /**
+   * Returns complete consolidated transcript (all finalized segments + current interim)
    */
   public getFullTranscript(): string {
-    const combined = `${this.finalTranscriptAccumulated} ${this.currentInterim}`.trim();
-    // Normalize multi-spaces
+    const combined = `${this.accumulatedSessionFinals} ${this.currentInstanceFinal} ${this.currentInstanceInterim}`.trim();
+    // Normalize multiple spaces into single space
     return combined.replace(/\s+/g, ' ');
   }
 
@@ -304,13 +380,19 @@ export class RealTimeSpeechService {
   }
 
   /**
-   * Stops listening and cleans up streams
+   * Stops listening and returns finalized answer
    */
   public stop(): string {
     this.isRunning = false;
+
     if (this.silenceTimer) {
       clearTimeout(this.silenceTimer);
       this.silenceTimer = null;
+    }
+
+    if (this.restartTimer) {
+      clearTimeout(this.restartTimer);
+      this.restartTimer = null;
     }
 
     if (this.animFrameId) {
@@ -320,7 +402,10 @@ export class RealTimeSpeechService {
 
     if (this.recognition) {
       try {
+        this.recognition.onstart = null;
+        this.recognition.onresult = null;
         this.recognition.onend = null;
+        this.recognition.onerror = null;
         this.recognition.stop();
       } catch {}
       this.recognition = null;
@@ -341,7 +426,11 @@ export class RealTimeSpeechService {
     this.stop();
 
     if (this.mediaStream) {
-      this.mediaStream.getTracks().forEach((track) => track.stop());
+      this.mediaStream.getTracks().forEach((track) => {
+        try {
+          track.stop();
+        } catch {}
+      });
       this.mediaStream = null;
     }
 
@@ -351,5 +440,8 @@ export class RealTimeSpeechService {
       } catch {}
       this.audioContext = null;
     }
+    this.analyser = null;
   }
 }
+
+

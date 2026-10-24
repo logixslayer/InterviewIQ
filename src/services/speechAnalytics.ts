@@ -16,29 +16,58 @@ export interface FillerWordRule {
 
 // Configurable dictionary of conversational filler words with context-awareness
 export const DEFAULT_FILLER_RULES: FillerWordRule[] = [
-  { term: 'um', regex: /\b(um+)\b/gi },
-  { term: 'uh', regex: /\b(uh+|err?)\b/gi },
-  { term: 'you know', regex: /\b(you know)\b/gi },
-  { term: 'I mean', regex: /\b(i mean)\b/gi },
-  { term: 'basically', regex: /\b(basically)\b/gi },
+  // Hesitation vocables
+  { term: 'um', regex: /(?:^|[,\s\.!?-])(um+)(?=[,\s\.!?-]|$)/gi },
+  { term: 'uh', regex: /(?:^|[,\s\.!?-])(uh+|err?)(?=[,\s\.!?-]|$)/gi },
+  { term: 'erm', regex: /(?:^|[,\s\.!?-])(erm+)(?=[,\s\.!?-]|$)/gi },
+  { term: 'hmm', regex: /(?:^|[,\s\.!?-])(h+m+)(?=[,\s\.!?-]|$)/gi, isContextual: true },
+
+  // Conversational hesitation phrases
+  { term: 'you know', regex: /(?:^|[,\s])(you know)(?=[,\s\.!?-]|$)/gi },
+  { term: 'I mean', regex: /(?:^|[,\s])(i mean)(?=[,\s\.!?-]|$)/gi },
+  { term: 'kind of', regex: /(?:^|[,\s])(kind of|kinda)(?=[,\s\.!?-]|$)/gi },
+  { term: 'sort of', regex: /(?:^|[,\s])(sort of)(?=[,\s\.!?-]|$)/gi },
+
+  // Contextual fillers: "like", "basically", "actually"
+  // "like" as filler:
+  // - surrounded by punctuation: ", like,"
+  // - at beginning of utterance followed by pause/clause: "^like, "
+  // - followed by pronouns/hesitations: "like um", "like we", "like you know", "like basically"
+  // Note: "I like React" or "looks like" is NOT matched!
   {
     term: 'like',
-    // Matches "like" when isolated by punctuation/commas, or followed by hesitation or clauses
-    regex: /(?:^|[,\s])like(?=[,\s]+(?:you know|uh|um|i mean|so|we|i|it|the|yeah|when|how|what|\.\.\.|$|[,\.!?]))/gi,
+    regex: /(?:^|[,\s])like(?=[,\s]+(?:you know|uh|um|erm|hmm|i mean|so|we|i|it|the|yeah|when|how|what|really|\.\.\.|$|[,\.!?]))/gi,
     isContextual: true,
   },
+  // "basically" as filler: at beginning of sentence or surrounded by punctuation/clause padding
+  {
+    term: 'basically',
+    regex: /(?:^|[,\s])basically(?=[,\s]+(?:we|i|it|the|so|like|uh|um|you know|in|to|\.\.\.|$|[,\.!?]))/gi,
+    isContextual: true,
+  },
+  // "actually" as filler: at beginning of sentence or surrounded by punctuation/hesitation
   {
     term: 'actually',
-    // Matches "actually" when used at beginning of clauses or as padding
-    regex: /(?:^|[,\s])actually(?=[,\s]+(?:we|i|it|the|so|like|uh|um))/gi,
+    regex: /(?:^|[,\s])actually(?=[,\s]+(?:we|i|it|the|so|like|uh|um|you know|\.\.\.|$|[,\.!?]))/gi,
     isContextual: true,
   },
-  { term: 'sort of', regex: /\b(sort of|kinda|kind of)\b/gi },
 ];
 
 export interface TurnSpeechMetrics {
   wordCount: number;
   durationSeconds: number;
+  wpm: number;
+  pacingStatus: 'slow' | 'optimal' | 'fast';
+  pacingLabel: string;
+  fillerCount: number;
+  fillersPerMinute: number;
+  fillerBreakdown: Record<string, number>;
+  identifiedFillers: Array<{ word: string; count: number }>;
+}
+
+export interface CombinedSpeechMetrics {
+  totalWords: number;
+  totalDurationSeconds: number;
   wpm: number;
   pacingStatus: 'slow' | 'optimal' | 'fast';
   pacingLabel: string;
@@ -80,7 +109,7 @@ export function analyzeSpeech(
   const minutes = effectiveDuration / 60;
 
   // WPM
-  const wpm = Math.round((wordCount / minutes));
+  const wpm = Math.round(wordCount / minutes);
 
   // Pacing calibration (Standard tech interview optimal range is 120 - 165 WPM)
   let pacingStatus: 'slow' | 'optimal' | 'fast' = 'optimal';
@@ -99,8 +128,9 @@ export function analyzeSpeech(
   let totalFillers = 0;
 
   for (const rule of customRules) {
-    const matches = cleanText.match(rule.regex);
-    if (matches && matches.length > 0) {
+    rule.regex.lastIndex = 0;
+    const matches = [...cleanText.matchAll(rule.regex)];
+    if (matches.length > 0) {
       fillerBreakdown[rule.term] = matches.length;
       totalFillers += matches.length;
     }
@@ -122,6 +152,76 @@ export function analyzeSpeech(
     fillerCount: totalFillers,
     fillersPerMinute,
     fillerBreakdown,
+    identifiedFillers,
+  };
+}
+
+/**
+ * Computes combined live and session speech metrics so filler count does not reset to 0
+ * when the candidate is between turns.
+ */
+export function computeCombinedMetrics(
+  turnsList: TurnSpeechMetrics[],
+  activeTurnMetrics?: TurnSpeechMetrics
+): CombinedSpeechMetrics {
+  const completedWords = turnsList.reduce((acc, t) => acc + t.wordCount, 0);
+  const completedSeconds = turnsList.reduce((acc, t) => acc + t.durationSeconds, 0);
+  const completedFillers = turnsList.reduce((acc, t) => acc + t.fillerCount, 0);
+
+  const activeWords = activeTurnMetrics ? activeTurnMetrics.wordCount : 0;
+  const activeSeconds = activeTurnMetrics ? activeTurnMetrics.durationSeconds : 0;
+  const activeFillers = activeTurnMetrics ? activeTurnMetrics.fillerCount : 0;
+
+  const totalWords = completedWords + activeWords;
+  const totalDurationSeconds = Math.max(1, completedSeconds + activeSeconds);
+  const totalMinutes = Math.max(0.1, totalDurationSeconds / 60);
+
+  const totalFillers = completedFillers + activeFillers;
+  const fillersPerMinute = parseFloat((totalFillers / totalMinutes).toFixed(1));
+
+  // Determine current active or overall WPM
+  const wpm = activeTurnMetrics && activeTurnMetrics.wpm > 0
+    ? activeTurnMetrics.wpm
+    : Math.round(totalWords / totalMinutes);
+
+  let pacingStatus: 'slow' | 'optimal' | 'fast' = 'optimal';
+  let pacingLabel = 'Optimal Pacing (120–160 WPM)';
+
+  if (wpm < 110 && totalWords > 8) {
+    pacingStatus = 'slow';
+    pacingLabel = 'Deliberate / Slow Pace (<110 WPM)';
+  } else if (wpm > 175 && totalWords > 15) {
+    pacingStatus = 'fast';
+    pacingLabel = 'Rapid Cadence (>175 WPM)';
+  }
+
+  // Combine filler breakdown
+  const combinedBreakdown: Record<string, number> = {};
+  for (const t of turnsList) {
+    for (const [w, c] of Object.entries(t.fillerBreakdown)) {
+      combinedBreakdown[w] = (combinedBreakdown[w] || 0) + c;
+    }
+  }
+  if (activeTurnMetrics) {
+    for (const [w, c] of Object.entries(activeTurnMetrics.fillerBreakdown)) {
+      combinedBreakdown[w] = (combinedBreakdown[w] || 0) + c;
+    }
+  }
+
+  const identifiedFillers = Object.entries(combinedBreakdown).map(([word, count]) => ({
+    word,
+    count,
+  }));
+
+  return {
+    totalWords,
+    totalDurationSeconds,
+    wpm,
+    pacingStatus,
+    pacingLabel,
+    fillerCount: totalFillers,
+    fillersPerMinute,
+    fillerBreakdown: combinedBreakdown,
     identifiedFillers,
   };
 }
@@ -176,3 +276,4 @@ export function aggregateSessionSpeech(turnsMetrics: TurnSpeechMetrics[]) {
     pacingFeedback,
   };
 }
+
